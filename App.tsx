@@ -1295,7 +1295,7 @@ const CartPage = () => {
 };
 
 const CheckoutPage = () => {
-  const { cart, settings, clearCart, addOrder, appliedCoupon, removeCoupon } = useApp();
+  const { cart, settings, clearCart, addOrder, appliedCoupon, removeCoupon, groups } = useApp();
   const [customerName, setCustomerName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -1336,8 +1336,26 @@ const CheckoutPage = () => {
 
     const itemsText = cart.map(i => {
       let txt = `${i.quantity}x ${i.product.name}`;
-      const opts = Object.entries(i.selectedOptions).map(([k, v]) => (v as number) > 0 ? `+${v} opc` : '').join(' ');
-      if (opts) txt += ` (${opts})`;
+
+      // Get option names from groups
+      const selectedOptionsText: string[] = [];
+      Object.entries(i.selectedOptions).forEach(([optionId, qty]) => {
+        if ((qty as number) > 0) {
+          // Find the option name
+          for (const group of groups) {
+            const option = group.options.find(opt => opt.id === optionId);
+            if (option) {
+              selectedOptionsText.push(`${option.name} ${qty}x`);
+              break;
+            }
+          }
+        }
+      });
+
+      if (selectedOptionsText.length > 0) {
+        txt += `\n   (${selectedOptionsText.join(', ')})`;
+      }
+
       if (i.note) txt += `\n   Obs: ${i.note}`;
       return txt;
     }).join('\n');
@@ -1447,7 +1465,7 @@ const AdminPanel = () => {
 };
 
 const OrdersPage = () => {
-  const { orders, updateOrderStatus } = useApp();
+  const { orders, updateOrderStatus, groups } = useApp();
   const navigate = useNavigate();
   const { printText, connectedDevice } = usePrinter();
 
@@ -1459,8 +1477,26 @@ const OrdersPage = () => {
 
     const itemsText = order.fullDetails.map(item => {
       let txt = `[L]${item.quantity}x ${item.product.name} R$${item.totalPrice.toFixed(2)}`;
-      const opts = Object.entries(item.selectedOptions).map(([k, v]) => (v as number) > 0 ? `+${v} opc` : '').join(' ');
-      if (opts) txt += `\n[L]   (${opts})`;
+
+      // Get option names from groups
+      const selectedOptionsText: string[] = [];
+      Object.entries(item.selectedOptions).forEach(([optionId, qty]) => {
+        if ((qty as number) > 0) {
+          // Find the option name
+          for (const group of groups) {
+            const option = group.options.find(opt => opt.id === optionId);
+            if (option) {
+              selectedOptionsText.push(`${option.name} ${qty}x`);
+              break;
+            }
+          }
+        }
+      });
+
+      if (selectedOptionsText.length > 0) {
+        txt += `\n[L]   (${selectedOptionsText.join(', ')})`;
+      }
+
       if (item.note) txt += `\n[L]   Obs: ${item.note}`;
       return txt;
     }).join('\n');
