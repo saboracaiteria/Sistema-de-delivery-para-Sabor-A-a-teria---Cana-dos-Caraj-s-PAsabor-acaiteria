@@ -941,6 +941,75 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   );
 };
 
+// Product Carousel with scroll arrows
+const ProductCarousel: React.FC<{ products: Product[] }> = ({ products }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setShowLeftArrow(scrollLeft > 10);
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const el = scrollRef.current;
+    el?.addEventListener('scroll', checkScroll);
+    return () => el?.removeEventListener('scroll', checkScroll);
+  }, [products]);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = 200;
+      scrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  return (
+    <div className="relative group">
+      {/* Left Arrow */}
+      {showLeftArrow && (
+        <button
+          onClick={() => scroll('left')}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-md rounded-full p-1.5 transition-all duration-200 opacity-70 hover:opacity-100"
+          aria-label="Rolar para esquerda"
+        >
+          <ChevronLeft size={20} className="text-gray-600" />
+        </button>
+      )}
+
+      {/* Product Container */}
+      <div
+        ref={scrollRef}
+        className="flex overflow-x-auto pb-4 no-scrollbar scroll-smooth"
+        onScroll={checkScroll}
+      >
+        {products.map(product => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+
+      {/* Right Arrow */}
+      {showRightArrow && products.length > 2 && (
+        <button
+          onClick={() => scroll('right')}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-md rounded-full p-1.5 transition-all duration-200 opacity-70 hover:opacity-100"
+          aria-label="Rolar para direita"
+        >
+          <ChevronRight size={20} className="text-gray-600" />
+        </button>
+      )}
+    </div>
+  );
+};
+
 const ProductModal = ({ product, onClose }: { product: Product; onClose: () => void }) => {
   const { groups, addToCart } = useApp();
   const [selectedOptions, setSelectedOptions] = useState<Record<string, number>>({});
@@ -1222,11 +1291,7 @@ const HomePage = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="flex overflow-x-auto pb-4 no-scrollbar">
-                    {catProducts.map(product => (
-                      <ProductCard key={product.id} product={product} />
-                    ))}
-                  </div>
+                  <ProductCarousel products={catProducts} />
                 )}
               </div>
             );
