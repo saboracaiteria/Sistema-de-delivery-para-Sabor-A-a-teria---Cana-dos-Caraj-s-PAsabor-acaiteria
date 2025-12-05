@@ -39,7 +39,16 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ products }) => {
             if (suppliersData) setSuppliers(suppliersData);
 
             const { data: stockData } = await supabase.from('stock_items').select('*');
-            if (stockData) setStockItems(stockData);
+            if (stockData) {
+                // Mapear snake_case do DB para camelCase
+                const mappedStock: StockItem[] = stockData.map((item: any) => ({
+                    id: item.id,
+                    productId: item.product_id,
+                    quantity: item.quantity,
+                    minQuantity: item.min_quantity
+                }));
+                setStockItems(mappedStock);
+            }
 
             const { data: purchasesData } = await supabase.from('purchases').select(`
                 *,
@@ -131,11 +140,30 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ products }) => {
     const updateStock = async (productId: string, quantity: number, minQuantity: number) => {
         const existing = stockItems.find(s => s.productId === productId);
         if (existing) {
-            await supabase.from('stock_items').update({ quantity, min_quantity: minQuantity }).eq('id', existing.id);
+            const { error } = await supabase.from('stock_items').update({
+                quantity: quantity,
+                min_quantity: minQuantity
+            }).eq('id', existing.id);
+
+            if (error) {
+                console.error('Erro ao atualizar estoque:', error);
+                alert('Erro ao atualizar estoque: ' + error.message);
+                return;
+            }
         } else {
-            await supabase.from('stock_items').insert([{ product_id: productId, quantity, min_quantity: minQuantity }]);
+            const { error } = await supabase.from('stock_items').insert([{
+                product_id: productId,
+                quantity: quantity,
+                min_quantity: minQuantity
+            }]);
+
+            if (error) {
+                console.error('Erro ao inserir estoque:', error);
+                alert('Erro ao inserir estoque: ' + error.message);
+                return;
+            }
         }
-        fetchInventoryData();
+        await fetchInventoryData();
     };
 
     // Helper for Purchase Modal
