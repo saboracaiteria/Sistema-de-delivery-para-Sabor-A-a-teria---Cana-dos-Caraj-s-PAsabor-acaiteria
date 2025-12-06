@@ -30,6 +30,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
     const [inlineEditId, setInlineEditId] = useState<string | null>(null);
     const [inlineEditData, setInlineEditData] = useState<Partial<Category>>({});
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string, title: string } | null>(null);
+    const [activeConfirmation, setActiveConfirmation] = useState<{ category: Category, newActive: boolean } | null>(null);
     const navigate = useNavigate();
 
     const handleSave = () => {
@@ -63,10 +64,19 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
         setInlineEditData({});
     };
 
-    const handleToggleActive = async (cat: Category) => {
-        const newActive = !(cat.active ?? true);
+    const handleToggleActiveClick = (cat: Category) => {
+        const isActive = cat.active ?? true;
+        if (isActive) {
+            setActiveConfirmation({ category: cat, newActive: false });
+        } else {
+            performToggleActive(cat, true);
+        }
+    };
+
+    const performToggleActive = async (cat: Category, newActive: boolean) => {
         updateCategory({ ...cat, active: newActive });
         await supabase.from('categories').update({ active: newActive }).eq('id', cat.id);
+        setActiveConfirmation(null);
     };
 
     const handleMove = async (index: number, direction: 'up' | 'down') => {
@@ -82,15 +92,10 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
         newCategories[targetIndex] = temp;
 
         // Update displayOrder for swapped items
-        // Assuming displayOrder matches index for simplicity, or we assign new indices
         const updates = newCategories.map((cat, idx) => ({
             id: cat.id,
             display_order: idx
         }));
-
-        // Optimistic update (passed via props? No, props are read-only array)
-        // We need to call a prop function to update parent state or just trigger DB update
-        // Since we don't have setCategories here, we rely on DB update + realtime or parent refresh
 
         try {
             for (const update of updates) {
@@ -105,33 +110,6 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
 
     const handleDragStart = (index: number) => {
         setDraggedItemIndex(index);
-    };
-
-    const handleDragOver = (e: React.DragEvent, index: number) => {
-        e.preventDefault();
-        if (draggedItemIndex === null || draggedItemIndex === index) return;
-
-        const newCategories = [...categories];
-        const draggedItem = newCategories[draggedItemIndex];
-
-        // Remove dragged item
-        newCategories.splice(draggedItemIndex, 1);
-        // Insert at new position
-        newCategories.splice(index, 0, draggedItem);
-
-        // Update local state immediately for visual feedback
-        // Note: We need a way to update the parent state. 
-        // Since we don't have setCategories prop, we might need to trigger the move logic differently
-        // or just rely on the final drop to save.
-        // However, for smooth DND, we usually need to update the list state.
-        // Given the current props, we can't update the parent state smoothly without a setCategories prop.
-        // BUT, we can implement the "drop" to trigger the reorder save.
-        // For visual feedback *during* drag without setCategories, it's tricky.
-        // Let's implement the "Drop" logic which is safer given the props constraints.
-        // Or better, we can just use the handleMove logic but adapted.
-
-        // Actually, without setCategories, visual drag-and-drop is jerky if we only update on drop.
-        // But let's try to implement the onDrop to trigger the reorder.
     };
 
     const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
@@ -153,27 +131,10 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
         }));
 
         try {
-            // Optimistic update would be nice here, but we'll just save
             for (const update of updates) {
                 await supabase.from('categories').update({ display_order: update.display_order }).eq('id', update.id);
             }
-            // Trigger a refresh if possible, or wait for realtime/parent update
-            // Since addCategory/updateCategory/deleteCategory triggers refresh in parent, we might need a refresh function.
-            // But handleMove didn't have one? Ah, handleMove updated DB and relied on parent fetching? 
-            // Actually handleMove in the previous code just updated DB. 
-            // If App.tsx uses realtime subscription, it updates automatically.
-            // If not, we might need to force update. 
-            // Let's assume App.tsx handles updates or we might need to reload.
-            // Wait, handleMove implementation:
-            // const handleMove = ... await supabase... 
-            // It doesn't seem to call any prop to update parent. 
-            // Let's check App.tsx fetchCategories again. It's called in fetchData.
-            // If we don't have realtime, the UI won't update until refresh.
-            // But let's stick to the requested DND logic.
-
-            // To make it smoother, we can reload the page or call a prop if available.
-            // For now, we'll just do the DB update.
-            window.location.reload(); // Simple brute force update for now to ensure order is seen
+            window.location.reload();
         } catch (error) {
             console.error('Error reordering:', error);
         }
@@ -258,7 +219,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
                                 <div className="flex gap-1">
                                     {/* Toggle Active/Inactive */}
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); handleToggleActive(cat); }}
+                                        onClick={(e) => { e.stopPropagation(); handleToggleActiveClick(cat); }}
                                         className={`p-2 rounded transition-colors ${(cat.active ?? true) ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}
                                         title={(cat.active ?? true) ? 'Desativar Categoria' : 'Ativar Categoria'}
                                     >
@@ -339,6 +300,20 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
                 onCancel={() => setDeleteConfirmation(null)}
                 isDestructive
                 confirmText="Excluir"
+            />
+
+            <ConfirmModal
+                isOpen={!!activeConfirmation}
+                title="Desativar Categoria"
+                message={`Tem certeza que deseja desativar a categoria "${activeConfirmation?.category.title}"?`}
+                onConfirm={() => {
+                    if (activeConfirmation) {
+                        performToggleActive(activeConfirmation.category, activeConfirmation.newActive);
+                    }
+                }}
+                onCancel={() => setActiveConfirmation(null)}
+                isDestructive={true}
+                confirmText="Desativar"
             />
         </div>
     );

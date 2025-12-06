@@ -133,6 +133,12 @@ export interface GlobalSettings {
   themeColors?: ThemeColors; // Configurações de cores do tema
   closedMessage?: string; // Mensagem quando a loja está fechada
   openMessage?: string; // Mensagem quando a loja está aberta
+  deliveryTime?: string; // e.g. "40min à 1h"
+  pickupTime?: string; // e.g. "20min à 45min"
+  deliveryCloseTime?: string; // e.g. "21:00"
+  instagramUrl?: string;
+  businessAddress?: string;
+  copyrightText?: string;
 }
 
 export type Role = 'admin' | 'employee' | null;

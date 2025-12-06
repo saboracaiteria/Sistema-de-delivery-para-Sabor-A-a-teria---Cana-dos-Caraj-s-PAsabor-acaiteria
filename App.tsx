@@ -88,47 +88,51 @@ const usePersistedState = <T,>(key: string, initialValue: T) => {
 };
 
 // --- Footer Component ---
-const Footer = () => (
-  <div className="bg-gray-800 text-gray-300 py-6 px-4 mt-12">
-    <div className="max-w-4xl mx-auto">
-      {/* Instagram Link */}
-      <div className="flex justify-center mb-4">
-        <a
-          href="https://www.instagram.com/obba_acai_/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white px-6 py-3 rounded-full font-bold hover:opacity-90 transition-opacity shadow-lg"
-        >
-          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-          </svg>
-          Siga-nos no Instagram
-        </a>
-      </div>
+const Footer = () => {
+  const { settings } = useApp();
 
-      {/* Location & Year */}
-      <div className="text-center mb-3">
-        <p className="text-sm">Canaã dos Carajás - PA</p>
-        <p className="text-xs text-gray-400 mt-1">© 2025-2026 Obba Açaí</p>
-      </div>
-
-      {/* Developer Credit */}
-      <div className="text-center pt-3 border-t border-gray-700">
-        <p className="text-xs">
-          Desenvolvido por{' '}
+  return (
+    <div className="bg-gray-800 text-gray-300 py-6 px-4 mt-12">
+      <div className="max-w-4xl mx-auto">
+        {/* Instagram Link */}
+        <div className="flex justify-center mb-4">
           <a
-            href="https://www.instagram.com/_nildoxz/"
+            href={settings.instagramUrl || "https://www.instagram.com/obba_acai_/"}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-purple-400 font-semibold hover:text-purple-300 transition-colors"
+            className="flex items-center gap-2 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white px-6 py-3 rounded-full font-bold hover:opacity-90 transition-opacity shadow-lg"
           >
-            @_nildoxz
+            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+            </svg>
+            Siga-nos no Instagram
           </a>
-        </p>
+        </div>
+
+        {/* Location & Year */}
+        <div className="text-center mb-3">
+          <p className="text-sm">{settings.businessAddress || "Canaã dos Carajás - PA"}</p>
+          <p className="text-xs text-gray-400 mt-1">{settings.copyrightText || "© 2025-2026 Obba Açaí"}</p>
+        </div>
+
+        {/* Developer Credit */}
+        <div className="text-center pt-3 border-t border-gray-700">
+          <p className="text-xs">
+            Desenvolvido por{' '}
+            <a
+              href="https://www.instagram.com/_nildoxz/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-purple-400 font-semibold hover:text-purple-300 transition-colors"
+            >
+              @_nildoxz
+            </a>
+          </p>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // --- Context ---
 
@@ -403,7 +407,13 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         openingHours: data.opening_hours,
         themeColors: data.theme_colors,
         closedMessage: data.closed_message || '🔴 Loja Fechada',
-        openMessage: data.open_message || '🟢 Aberto até às 23:00'
+        openMessage: data.open_message || '🟢 Aberto até às 23:00',
+        deliveryTime: data.delivery_time || '40min à 1h',
+        pickupTime: data.pickup_time || '20min à 45min',
+        deliveryCloseTime: data.delivery_close_time || '21:00',
+        instagramUrl: data.instagram_url,
+        businessAddress: data.business_address,
+        copyrightText: data.copyright_text
       });
     }
   };
@@ -475,13 +485,17 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   const updateProduct = async (p: Product) => {
+    // 0. Update Local State Immediately (Optimistic)
+    setProducts(prev => prev.map(prod => prod.id === p.id ? p : prod));
+
     // 1. Atualizar produto
     await supabase.from('products').update({
       name: p.name,
       description: p.description,
       price: p.price,
       image: p.image,
-      category_id: p.categoryId
+      category_id: p.categoryId,
+      active: p.active // Include active status
     }).eq('id', p.id);
 
     // 2. Atualizar relações (remover todas e adicionar novas)
@@ -498,6 +512,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   const deleteProduct = async (id: string) => {
+    setProducts(prev => prev.filter(p => p.id !== id)); // Optimistic delete
     await supabase.from('products').delete().eq('id', id);
   };
 
@@ -517,14 +532,22 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   const addCategory = async (c: Category) => {
+    // Wait for ID from DB for insert usually, so manual optimistic update is harder without ID.
+    // relying on realtime for add is okay.
     await supabase.from('categories').insert([{ title: c.title, icon: c.icon }]);
   };
 
   const updateCategory = async (c: Category) => {
-    await supabase.from('categories').update({ title: c.title, icon: c.icon }).eq('id', c.id);
+    setCategories(prev => prev.map(cat => cat.id === c.id ? c : cat)); // Optimistic
+    await supabase.from('categories').update({
+      title: c.title,
+      icon: c.icon,
+      active: c.active // Include active status
+    }).eq('id', c.id);
   };
 
   const deleteCategory = async (id: string) => {
+    setCategories(prev => prev.filter(c => c.id !== id)); // Optimistic
     await supabase.from('categories').delete().eq('id', id);
   };
 
@@ -551,11 +574,14 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   const updateGroup = async (g: ProductGroup) => {
+    setGroups(prev => prev.map(grp => grp.id === g.id ? g : grp)); // Optimistic
+
     // 1. Atualizar grupo
     await supabase.from('product_groups').update({
       title: g.title,
       min: g.min,
-      max: g.max
+      max: g.max,
+      active: g.active // Include active status
     }).eq('id', g.id);
 
     // 2. Atualizar opções (estratégia simples: delete all + insert all)
@@ -568,13 +594,15 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         group_id: g.id,
         name: o.name,
         price: o.price,
-        description: o.description
+        description: o.description,
+        active: o.active // Persist option active status too
       }));
       await supabase.from('product_options').insert(options);
     }
   };
 
   const deleteGroup = async (id: string) => {
+    setGroups(prev => prev.filter(g => g.id !== id)); // Optimistic
     await supabase.from('product_groups').delete().eq('id', id);
   };
 
@@ -630,6 +658,12 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     if (s.themeColors !== undefined) dbSettings.theme_colors = s.themeColors;
     if (s.closedMessage !== undefined) dbSettings.closed_message = s.closedMessage;
     if (s.openMessage !== undefined) dbSettings.open_message = s.openMessage;
+    if (s.deliveryTime !== undefined) dbSettings.delivery_time = s.deliveryTime;
+    if (s.pickupTime !== undefined) dbSettings.pickup_time = s.pickupTime;
+    if (s.deliveryCloseTime !== undefined) dbSettings.delivery_close_time = s.deliveryCloseTime;
+    if (s.instagramUrl !== undefined) dbSettings.instagram_url = s.instagramUrl;
+    if (s.businessAddress !== undefined) dbSettings.business_address = s.businessAddress;
+    if (s.copyrightText !== undefined) dbSettings.copyright_text = s.copyrightText;
 
     await supabase.from('settings').update(dbSettings).eq('id', 1);
   };
@@ -1277,13 +1311,13 @@ const HomePage = () => {
             <div className="flex items-center gap-1 text-gray-700 font-bold text-sm">
               <Clock size={16} /> Entrega
             </div>
-            <span className="text-gray-600 text-xs font-medium">40min à 1h</span>
+            <span className="text-gray-600 text-xs font-medium">{settings.deliveryTime || '40min à 1h'}</span>
           </div>
           <div className="flex flex-col items-center flex-1">
             <div className="flex items-center gap-1 text-gray-700 font-bold text-sm">
               <Clock size={16} /> Retirada
             </div>
-            <span className="text-gray-600 text-xs font-medium">20min à 45min</span>
+            <span className="text-gray-600 text-xs font-medium">{settings.pickupTime || '20min à 45min'}</span>
           </div>
         </div>
 
@@ -1295,7 +1329,7 @@ const HomePage = () => {
 
         {/* Warning Alert */}
         <div className="border border-red-200 bg-red-50 text-red-600 px-4 py-3 rounded-md mb-4 text-center text-sm font-medium">
-          Entregas somente até as 21:00hrs!
+          Entregas somente até as {settings.deliveryCloseTime || '21:00'}hrs!
         </div>
 
         {/* Categories */}
@@ -2055,6 +2089,12 @@ const AddonsPage = () => {
   const [inlineEditId, setInlineEditId] = useState<string | null>(null);
   const [inlineEditData, setInlineEditData] = useState<Partial<ProductGroup>>({});
 
+  // Confirmation States
+  const [deleteGroupConfirmation, setDeleteGroupConfirmation] = useState<{ id: string, title: string } | null>(null);
+  const [deleteOptionConfirmation, setDeleteOptionConfirmation] = useState<{ groupId: string, option: ProductOption } | null>(null);
+  const [activeGroupConfirmation, setActiveGroupConfirmation] = useState<{ group: ProductGroup, newActive: boolean } | null>(null);
+  const [activeOptionConfirmation, setActiveOptionConfirmation] = useState<{ groupId: string, option: ProductOption, newActive: boolean } | null>(null);
+
   const handleAddGroup = () => {
     setEditingGroup({
       id: Date.now().toString(),
@@ -2084,10 +2124,13 @@ const AddonsPage = () => {
     setEditingGroup(null);
   };
 
-  const handleDeleteGroup = (id: string) => {
-    if (confirm('Tem certeza que deseja deletar este grupo?')) {
-      deleteGroup(id);
-    }
+  const handleDeleteGroupClick = (group: ProductGroup) => {
+    setDeleteGroupConfirmation({ id: group.id, title: group.title });
+  };
+
+  const performDeleteGroup = (id: string) => {
+    deleteGroup(id);
+    setDeleteGroupConfirmation(null);
   };
 
   const handleAddOption = (groupId: string) => {
@@ -2129,14 +2172,17 @@ const AddonsPage = () => {
     setEditingOption(null);
   };
 
-  const handleDeleteOption = (groupId: string, optionId: string) => {
-    if (confirm('Tem certeza que deseja deletar esta opção?')) {
-      const group = groups.find(g => g.id === groupId);
-      if (!group) return;
+  const handleDeleteOptionClick = (groupId: string, option: ProductOption) => {
+    setDeleteOptionConfirmation({ groupId, option });
+  };
 
-      const updatedOptions = group.options.filter(o => o.id !== optionId);
-      updateGroup({ ...group, options: updatedOptions });
-    }
+  const performDeleteOption = (groupId: string, optionId: string) => {
+    const group = groups.find(g => g.id === groupId);
+    if (!group) return;
+
+    const updatedOptions = group.options.filter(o => o.id !== optionId);
+    updateGroup({ ...group, options: updatedOptions });
+    setDeleteOptionConfirmation(null);
   };
 
   const handleInlineEdit = (group: ProductGroup) => {
@@ -2159,14 +2205,31 @@ const AddonsPage = () => {
     setInlineEditData({});
   };
 
-  const handleToggleGroupActive = async (group: ProductGroup) => {
-    const newActive = !(group.active ?? true);
-    updateGroup({ ...group, active: newActive });
-    await supabase.from('product_groups').update({ active: newActive }).eq('id', group.id);
+  const handleToggleGroupActiveClick = (group: ProductGroup) => {
+    const isActive = group.active ?? true;
+    if (isActive) {
+      setActiveGroupConfirmation({ group, newActive: false });
+    } else {
+      performToggleGroupActive(group, true);
+    }
   };
 
-  const handleToggleOptionActive = async (groupId: string, option: ProductOption) => {
-    const newActive = !(option.active ?? true);
+  const performToggleGroupActive = async (group: ProductGroup, newActive: boolean) => {
+    updateGroup({ ...group, active: newActive });
+    await supabase.from('product_groups').update({ active: newActive }).eq('id', group.id);
+    setActiveGroupConfirmation(null);
+  };
+
+  const handleToggleOptionActiveClick = (groupId: string, option: ProductOption) => {
+    const isActive = option.active ?? true;
+    if (isActive) {
+      setActiveOptionConfirmation({ groupId, option, newActive: false });
+    } else {
+      performToggleOptionActive(groupId, option, true);
+    }
+  };
+
+  const performToggleOptionActive = async (groupId: string, option: ProductOption, newActive: boolean) => {
     await supabase.from('product_options').update({ active: newActive }).eq('id', option.id);
     // Refresh via updateGroup
     const group = groups.find(g => g.id === groupId);
@@ -2174,6 +2237,7 @@ const AddonsPage = () => {
       const updatedOptions = group.options.map(o => o.id === option.id ? { ...o, active: newActive } : o);
       updateGroup({ ...group, options: updatedOptions });
     }
+    setActiveOptionConfirmation(null);
   };
 
   return (
@@ -2247,7 +2311,7 @@ const AddonsPage = () => {
                 <div className="flex items-center gap-1">
                   {/* Toggle Active/Inactive */}
                   <button
-                    onClick={() => handleToggleGroupActive(group)}
+                    onClick={() => handleToggleGroupActiveClick(group)}
                     className={`p-2 rounded transition-colors ${(group.active ?? true) ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}
                     title={(group.active ?? true) ? 'Desativar Grupo' : 'Ativar Grupo'}
                   >
@@ -2275,7 +2339,7 @@ const AddonsPage = () => {
                     <Edit size={18} />
                   </button>
                   <button
-                    onClick={() => handleDeleteGroup(group.id)}
+                    onClick={() => handleDeleteGroupClick(group)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
                     title="Deletar"
                   >
@@ -2311,7 +2375,7 @@ const AddonsPage = () => {
                       <div className="flex gap-1">
                         {/* Toggle Active/Inactive */}
                         <button
-                          onClick={() => handleToggleOptionActive(group.id, option)}
+                          onClick={() => handleToggleOptionActiveClick(group.id, option)}
                           className={`p-1 rounded transition-colors ${(option.active ?? true) ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}
                           title={(option.active ?? true) ? 'Desativar Opção' : 'Ativar Opção'}
                         >
@@ -2324,7 +2388,7 @@ const AddonsPage = () => {
                           <Edit size={16} />
                         </button>
                         <button
-                          onClick={() => handleDeleteOption(group.id, option.id)}
+                          onClick={() => handleDeleteOptionClick(group.id, option)}
                           className="p-1 text-red-600 hover:bg-red-50 rounded"
                         >
                           <Trash2 size={16} />
@@ -2469,6 +2533,62 @@ const AddonsPage = () => {
           </div>
         </div>
       )}
+      {/* Confirmation Modals */}
+      <ConfirmModal
+        isOpen={!!deleteGroupConfirmation}
+        title="Excluir Grupo"
+        message={`Tem certeza que deseja excluir o grupo "${deleteGroupConfirmation?.title}"?`}
+        onConfirm={() => {
+          if (deleteGroupConfirmation) {
+            performDeleteGroup(deleteGroupConfirmation.id);
+          }
+        }}
+        onCancel={() => setDeleteGroupConfirmation(null)}
+        isDestructive
+        confirmText="Excluir"
+      />
+
+      <ConfirmModal
+        isOpen={!!deleteOptionConfirmation}
+        title="Excluir Opção"
+        message={`Tem certeza que deseja excluir a opção "${deleteOptionConfirmation?.option.name}"?`}
+        onConfirm={() => {
+          if (deleteOptionConfirmation) {
+            performDeleteOption(deleteOptionConfirmation.groupId, deleteOptionConfirmation.option.id);
+          }
+        }}
+        onCancel={() => setDeleteOptionConfirmation(null)}
+        isDestructive
+        confirmText="Excluir"
+      />
+
+      <ConfirmModal
+        isOpen={!!activeGroupConfirmation}
+        title="Desativar Grupo"
+        message={`Tem certeza que deseja desativar o grupo "${activeGroupConfirmation?.group.title}"?`}
+        onConfirm={() => {
+          if (activeGroupConfirmation) {
+            performToggleGroupActive(activeGroupConfirmation.group, activeGroupConfirmation.newActive);
+          }
+        }}
+        onCancel={() => setActiveGroupConfirmation(null)}
+        isDestructive
+        confirmText="Desativar"
+      />
+
+      <ConfirmModal
+        isOpen={!!activeOptionConfirmation}
+        title="Desativar Opção"
+        message={`Tem certeza que deseja desativar a opção "${activeOptionConfirmation?.option.name}"?`}
+        onConfirm={() => {
+          if (activeOptionConfirmation) {
+            performToggleOptionActive(activeOptionConfirmation.groupId, activeOptionConfirmation.option, activeOptionConfirmation.newActive);
+          }
+        }}
+        onCancel={() => setActiveOptionConfirmation(null)}
+        isDestructive
+        confirmText="Desativar"
+      />
     </div>
   );
 };
@@ -2637,6 +2757,116 @@ const SettingsPage = () => {
               className="w-full bg-purple-600 text-white py-2 rounded-lg font-bold hover:bg-purple-700 transition-colors"
             >
               Salvar Mensagens
+            </button>
+          </div>
+        </div>
+
+        {/* Estimates and Hours Configuration */}
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+            <Clock size={20} /> Estimativas e Horários
+          </h3>
+          <p className="text-xs text-gray-500 mb-4">Configure as estimativas de tempo e horário limite de entrega</p>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tempo de Entrega
+              </label>
+              <input
+                type="text"
+                value={settings.deliveryTime || ''}
+                onChange={(e) => updateSettings({ deliveryTime: e.target.value })}
+                placeholder="Ex: 40min à 1h"
+                className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tempo de Retirada
+              </label>
+              <input
+                type="text"
+                value={settings.pickupTime || ''}
+                onChange={(e) => updateSettings({ pickupTime: e.target.value })}
+                placeholder="Ex: 20min à 45min"
+                className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Horário Limite de Entrega
+              </label>
+              <input
+                type="text"
+                value={settings.deliveryCloseTime || ''}
+                onChange={(e) => updateSettings({ deliveryCloseTime: e.target.value })}
+                placeholder="Ex: 21:00"
+                className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+              />
+              <p className="text-xs text-gray-400 mt-1">Exibido como "Entregas somente até as [HORÁRIO]hrs!"</p>
+            </div>
+
+            <button
+              onClick={handleSave}
+              className="w-full bg-purple-600 text-white py-2 rounded-lg font-bold hover:bg-purple-700 transition-colors"
+            >
+              Salvar Estimativas
+            </button>
+          </div>
+        </div>
+
+        {/* Footer Info Configuration */}
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+            <Info size={20} /> Rodapé
+          </h3>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Link do Instagram
+              </label>
+              <input
+                type="text"
+                value={settings.instagramUrl || ''}
+                onChange={(e) => updateSettings({ instagramUrl: e.target.value })}
+                placeholder="https://www.instagram.com/seu_perfil"
+                className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Endereço Comercial
+              </label>
+              <input
+                type="text"
+                value={settings.businessAddress || ''}
+                onChange={(e) => updateSettings({ businessAddress: e.target.value })}
+                placeholder="Ex: Canaã dos Carajás - PA"
+                className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Texto de Copyright
+              </label>
+              <input
+                type="text"
+                value={settings.copyrightText || ''}
+                onChange={(e) => updateSettings({ copyrightText: e.target.value })}
+                placeholder="Ex: © 2025-2026 Obba Açaí"
+                className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+              />
+            </div>
+
+            <button
+              onClick={handleSave}
+              className="w-full bg-purple-600 text-white py-2 rounded-lg font-bold hover:bg-purple-700 transition-colors"
+            >
+              Salvar Rodapé
             </button>
           </div>
         </div>

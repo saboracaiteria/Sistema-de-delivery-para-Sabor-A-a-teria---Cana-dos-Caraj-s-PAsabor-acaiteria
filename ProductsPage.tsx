@@ -56,6 +56,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string, name: string } | null>(null);
     const [draggedProduct, setDraggedProduct] = useState<Product | null>(null);
     const [dragOverProduct, setDragOverProduct] = useState<string | null>(null);
+    const [activeConfirmation, setActiveConfirmation] = useState<{ product: Product, newActive: boolean } | null>(null);
     const navigate = useNavigate();
 
     const handleOpenModal = (product?: Product) => {
@@ -155,12 +156,23 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
         setInlineEditData({});
     };
 
-    const handleToggleActive = async (product: Product) => {
-        const newActive = !(product.active ?? true);
+    const handleToggleActiveClick = (product: Product) => {
+        const isActive = product.active ?? true;
+        // Se estiver ativo, vai desativar -> PEDIR CONFIRMAÇÃO
+        if (isActive) {
+            setActiveConfirmation({ product, newActive: false });
+        } else {
+            // Se estiver inativo, vai ativar -> DIRETO
+            performToggleActive(product, true);
+        }
+    };
+
+    const performToggleActive = async (product: Product, newActive: boolean) => {
         // Optimistic update via updateProduct
         updateProduct({ ...product, active: newActive });
         // Persist to Supabase
         await supabase.from('products').update({ active: newActive }).eq('id', product.id);
+        setActiveConfirmation(null);
     };
 
     // --- Drag and Drop Handlers ---
@@ -341,7 +353,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
                                             <div className="flex flex-col gap-1">
                                                 {/* Toggle Active/Inactive */}
                                                 <button
-                                                    onClick={(e) => { e.stopPropagation(); handleToggleActive(product); }}
+                                                    onClick={(e) => { e.stopPropagation(); handleToggleActiveClick(product); }}
                                                     className={`p-2 rounded transition-colors ${(product.active ?? true) ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}
                                                     title={(product.active ?? true) ? 'Desativar Produto' : 'Ativar Produto'}
                                                 >
@@ -500,6 +512,20 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
                 onCancel={() => setDeleteConfirmation(null)}
                 isDestructive
                 confirmText="Excluir"
+            />
+
+            <ConfirmModal
+                isOpen={!!activeConfirmation}
+                title="Desativar Produto"
+                message={`Tem certeza que deseja desativar "${activeConfirmation?.product.name}"?`}
+                onConfirm={() => {
+                    if (activeConfirmation) {
+                        performToggleActive(activeConfirmation.product, activeConfirmation.newActive);
+                    }
+                }}
+                onCancel={() => setActiveConfirmation(null)}
+                isDestructive={true}
+                confirmText="Desativar"
             />
         </div>
     );
