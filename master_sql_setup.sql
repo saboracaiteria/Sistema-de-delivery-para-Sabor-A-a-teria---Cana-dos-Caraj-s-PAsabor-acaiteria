@@ -1,5 +1,5 @@
 ﻿-- =====================================================
--- OBBA AÃ‡AÃ - SCHEMA DO BANCO DE DADOS SUPABASE
+-- OBBA AÇAÍ - SCHEMA DO BANCO DE DADOS SUPABASE
 -- =====================================================
 -- Execute este script completo no SQL Editor do Supabase
 -- =====================================================
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS categories (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 2. GRUPOS DE OPÃ‡Ã•ES (complementos, sabores, etc)
+-- 2. GRUPOS DE OPÇÕES (complementos, sabores, etc)
 CREATE TABLE IF NOT EXISTS product_groups (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS product_groups (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. OPÃ‡Ã•ES DENTRO DOS GRUPOS
+-- 3. OPÇÕES DENTRO DOS GRUPOS
 CREATE TABLE IF NOT EXISTS product_options (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id UUID NOT NULL REFERENCES product_groups(id) ON DELETE CASCADE,
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS products (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 5. RELAÃ‡ÃƒO N:N entre PRODUTOS e GRUPOS
+-- 5. RELAÇÃO N:N entre PRODUTOS e GRUPOS
 CREATE TABLE IF NOT EXISTS product_group_relations (
   product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
   group_id UUID NOT NULL REFERENCES product_groups(id) ON DELETE CASCADE,
@@ -84,10 +84,10 @@ CREATE TABLE IF NOT EXISTS orders (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 8. CONFIGURAÃ‡Ã•ES GLOBAIS (apenas 1 linha)
+-- 8. CONFIGURAÇÕES GLOBAIS (apenas 1 linha)
 CREATE TABLE IF NOT EXISTS settings (
   id INTEGER PRIMARY KEY DEFAULT 1,
-  store_name TEXT NOT NULL DEFAULT 'Obba AÃ§aÃ­',
+  store_name TEXT NOT NULL DEFAULT 'Obba Açaí',
   logo_url TEXT,
   banner_url TEXT,
   whatsapp_number TEXT,
@@ -100,11 +100,11 @@ CREATE TABLE IF NOT EXISTS settings (
   CONSTRAINT single_row CHECK (id = 1)
 );
 
--- Inserir configuraÃ§Ãµes padrÃ£o
+-- Inserir configurações padrão
 INSERT INTO settings (id, store_name, store_status, delivery_fee, delivery_only, opening_hours)
 VALUES (
   1,
-  'Obba AÃ§aÃ­',
+  'Obba Açaí',
   'open',
   5.00,
   false,
@@ -145,7 +145,7 @@ ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 
 -- =====================================================
--- POLÃTICAS - LEITURA PÃšBLICA
+-- POLÃTICAS - LEITURA PÚBLICA
 -- =====================================================
 
 -- Categorias
@@ -160,15 +160,15 @@ CREATE POLICY "Public read products" ON products FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Public read product_groups" ON product_groups;
 CREATE POLICY "Public read product_groups" ON product_groups FOR SELECT USING (true);
 
--- OpÃ§Ãµes
+-- Opções
 DROP POLICY IF EXISTS "Public read product_options" ON product_options;
 CREATE POLICY "Public read product_options" ON product_options FOR SELECT USING (true);
 
--- RelaÃ§Ãµes produto-grupo
+-- Relações produto-grupo
 DROP POLICY IF EXISTS "Public read product_group_relations" ON product_group_relations;
 CREATE POLICY "Public read product_group_relations" ON product_group_relations FOR SELECT USING (true);
 
--- ConfiguraÃ§Ãµes
+-- configurações
 DROP POLICY IF EXISTS "Public read settings" ON settings;
 CREATE POLICY "Public read settings" ON settings FOR SELECT USING (true);
 
@@ -177,11 +177,11 @@ DROP POLICY IF EXISTS "Public read active coupons" ON coupons;
 CREATE POLICY "Public read active coupons" ON coupons FOR SELECT USING (active = true);
 
 -- =====================================================
--- POLÃTICAS - ESCRITA PÃšBLICA (TEMPORÃRIO)
+-- POLÃTICAS - ESCRITA PÚBLICA (TEMPORÃRIO)
 -- =====================================================
--- ATENÃ‡ÃƒO: Estas polÃ­ticas permitem escrita sem autenticaÃ§Ã£o
+-- ATENÇÃO: Estas políticas permitem escrita sem autenticação
 -- Ideal para desenvolvimento e testes
--- TODO: Remover estas polÃ­ticas e adicionar autenticaÃ§Ã£o em produÃ§Ã£o
+-- TODO: Remover estas políticas e adicionar autenticação em produção
 
 DROP POLICY IF EXISTS "Public insert categories" ON categories;
 CREATE POLICY "Public insert categories" ON categories FOR INSERT WITH CHECK (true);
@@ -287,62 +287,62 @@ CREATE TRIGGER update_settings_updated_at BEFORE UPDATE ON settings
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================
--- FINALIZADO! âœ…
+-- FINALIZADO! ✅
 -- =====================================================
 
-SELECT 'Schema criado com sucesso! âœ…' AS status;
+SELECT 'Schema criado com sucesso! ✅' AS status;
 
 -- Add display_order to categories
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS display_order INTEGER DEFAULT 0;
 
 -- =====================================================
--- OBBA AÃ‡AÃ - STORAGE SETUP
+-- OBBA AÇAÍ - STORAGE SETUP
 -- =====================================================
 -- Execute este script no SQL Editor do Supabase para
 -- configurar o bucket de imagens.
 -- =====================================================
 
--- 1. Criar o bucket 'product-images' (se nÃ£o existir)
+-- 1. Criar o bucket 'product-images' (se não existir)
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('product-images', 'product-images', true)
 ON CONFLICT (id) DO NOTHING;
 
--- 2. Remover polÃ­ticas antigas para evitar duplicidade
+-- 2. Remover políticas antigas para evitar duplicidade
 DROP POLICY IF EXISTS "Public Access" ON storage.objects;
 DROP POLICY IF EXISTS "Public Insert" ON storage.objects;
 DROP POLICY IF EXISTS "Public Update" ON storage.objects;
 DROP POLICY IF EXISTS "Public Delete" ON storage.objects;
 
--- 3. Criar PolÃ­ticas de SeguranÃ§a (RLS) para o Storage
+-- 3. Criar políticas de SeguranÃ§a (RLS) para o Storage
 
--- Permitir leitura pÃºblica (qualquer um pode ver as imagens)
+-- Permitir leitura pública (qualquer um pode ver as imagens)
 CREATE POLICY "Public Access"
 ON storage.objects FOR SELECT
 USING ( bucket_id = 'product-images' );
 
--- Permitir upload pÃºblico (para facilitar o desenvolvimento)
--- Em produÃ§Ã£o, vocÃª deve restringir isso apenas para admins
+-- Permitir upload público (para facilitar o desenvolvimento)
+-- Em produção, você deve restringir isso apenas para admins
 CREATE POLICY "Public Insert"
 ON storage.objects FOR INSERT
 WITH CHECK ( bucket_id = 'product-images' );
 
--- Permitir atualizaÃ§Ã£o pÃºblica
+-- Permitir atualizaÃ§Ã£o pública
 CREATE POLICY "Public Update"
 ON storage.objects FOR UPDATE
 USING ( bucket_id = 'product-images' );
 
--- Permitir deleÃ§Ã£o pÃºblica
+-- Permitir deleÃ§Ã£o pública
 CREATE POLICY "Public Delete"
 ON storage.objects FOR DELETE
 USING ( bucket_id = 'product-images' );
 
 -- =====================================================
--- FINALIZADO! âœ…
+-- FINALIZADO! ✅
 -- =====================================================
 
-SELECT 'Storage configurado com sucesso! âœ…' AS status;
+SELECT 'Storage configurado com sucesso! ✅' AS status;
 -- =====================================================
--- OBBA AÃ‡AÃ - SCHEMA DE ESTOQUE
+-- OBBA AÇAÍ - SCHEMA DE ESTOQUE
 -- =====================================================
 
 -- 1. FORNECEDORES
@@ -381,7 +381,7 @@ ALTER TABLE suppliers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE purchases ENABLE ROW LEVEL SECURITY;
 
--- PolÃ­ticas PÃºblicas (Simplificado para dev)
+-- políticas Públicas (Simplificado para dev)
 CREATE POLICY "Public read suppliers" ON suppliers FOR SELECT USING (true);
 CREATE POLICY "Public insert suppliers" ON suppliers FOR INSERT WITH CHECK (true);
 CREATE POLICY "Public update suppliers" ON suppliers FOR UPDATE USING (true);
@@ -430,40 +430,40 @@ FROM (
   FROM products
 ) sub
 WHERE products.id = sub.id AND products.display_order = 0;
--- Adicionar campos para mensagens de status editÃ¡veis
+-- Adicionar campos para mensagens de status editáveis
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS closed_message TEXT DEFAULT 'ðŸ”´ Loja Fechada';
-ALTER TABLE settings ADD COLUMN IF NOT EXISTS open_message TEXT DEFAULT 'ðŸŸ¢ Aberto atÃ© Ã s 23:00';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS open_message TEXT DEFAULT '🟢 Aberto até Ã s 23:00';
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS theme_colors JSONB;
 ALTER TABLE settings 
 ADD COLUMN IF NOT EXISTS instagram_url TEXT DEFAULT 'https://www.instagram.com/obba_acai_/',
-ADD COLUMN IF NOT EXISTS business_address TEXT DEFAULT 'CanaÃ£ dos CarajÃ¡s - PA',
-ADD COLUMN IF NOT EXISTS copyright_text TEXT DEFAULT 'Â© 2025-2026 Obba AÃ§aÃ­';
+ADD COLUMN IF NOT EXISTS business_address TEXT DEFAULT 'Canaàdos Carajás - PA',
+ADD COLUMN IF NOT EXISTS copyright_text TEXT DEFAULT '© 2025-2026 Obba Açaí';
 -- Add columns for editable home page info
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS delivery_time TEXT DEFAULT '40min Ã  1h';
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS pickup_time TEXT DEFAULT '20min Ã  45min';
--- Storing just the time "21:00" might be flexible enough if we keep the "Entregas somente atÃ© as ...hrs!" hardcoded or configurable.
--- Let's make the whole text configurable or just the time. User said "Entregas somente atÃ© as 21:00hrs! esses campos...".
+-- Storing just the time "21:00" might be flexible enough if we keep the "Entregas somente até as ...hrs!" hardcoded or configurable.
+-- Let's make the whole text configurable or just the time. User said "Entregas somente até as 21:00hrs! esses campos...".
 -- I'll define a column for the time.
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS delivery_close_time TEXT DEFAULT '21:00'; -- stores "21:00"
 -- =====================================================
 -- MIGRATION: FORCE OPEN / CLOSE / AUTO
 -- =====================================================
 
--- 1. Remover a restriÃ§Ã£o antiga que sÃ³ aceitava 'open' ou 'closed'
+-- 1. Remover a restrição antiga que só aceitava 'open' ou 'closed'
 ALTER TABLE settings DROP CONSTRAINT IF EXISTS settings_store_status_check;
 
--- 2. Adicionar nova restriÃ§Ã£o aceitando 'auto'
+-- 2. Adicionar nova restrição aceitando 'auto'
 ALTER TABLE settings ADD CONSTRAINT settings_store_status_check 
 CHECK (store_status IN ('open', 'closed', 'auto'));
 
--- 3. Atualizar o status atual para 'auto' (padrÃ£o seguro)
+-- 3. Atualizar o status atual para 'auto' (padrão seguro)
 UPDATE settings SET store_status = 'auto' WHERE id = 1;
 
-SELECT 'MigraÃ§Ã£o concluÃ­da! Agora vocÃª pode usar o modo AutomÃ¡tico. âœ…' AS status;
--- Atualizar informaÃ§Ãµes do rodapÃ© para 2025-2026
+SELECT 'Migração concluída! Agora você pode usar o modo Automático. ✅' AS status;
+-- Atualizar informações do rodapé para 2025-2026
 UPDATE settings
 SET 
   instagram_url = 'https://www.instagram.com/sabor_acaiteria/',
-  business_address = 'CanaÃ£ dos CarajÃ¡s-PA 2025-2026',
-  copyright_text = 'Â© 2025-2026'
+  business_address = 'Canaàdos Carajás-PA 2025-2026',
+  copyright_text = '© 2025-2026'
 WHERE id = 1;
