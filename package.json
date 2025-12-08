@@ -1,14 +1,17 @@
 {
-  "name": "obba-açaí-delivery",
+  "name": "sabor1",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "sync": "npm run build && npx cap sync android",
-    "android": "npm run sync && npx cap open android"
+    "android": "npm run sync && npx cap open android",
+    "verify": "npx tsx verify_environment.ts",
+    "import": "npx tsx import_user_data.ts",
+    "migrate": "npm run verify && npm run import"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.4",
@@ -29,9 +32,13 @@
     "vite-plugin-pwa": "^1.2.0"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
+    "@types/node": "^22.19.1",
+    "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "dotenv": "^17.2.3",
+    "tsx": "^4.19.2",
     "typescript": "~5.8.2",
+    "uuid": "^13.0.0",
     "vite": "^6.2.0"
   }
 }

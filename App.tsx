@@ -1,4 +1,5 @@
 
+
 import React, { useState, createContext, useContext, useEffect, useMemo, useRef } from 'react';
 import { HashRouter, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -28,7 +29,15 @@ import { PrinterSettingsPage } from './PrinterSettingsPage';
 import { ImageCropModal } from './ImageCropModal';
 import { InventoryPage } from './InventoryPage';
 import { ConfirmModal } from './ConfirmModal';
-import { supabase } from './supabaseClient';
+import { supabase, isConfigured } from './supabaseClient';
+import {
+  mockCategories,
+  mockGroups,
+  mockProducts,
+  mockSettings,
+  mockCoupons
+} from './mockData';
+
 
 
 
@@ -278,14 +287,28 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const fetchData = async () => {
     try {
-      await Promise.all([
-        fetchProducts().catch(e => console.error('Erro products:', e)),
-        fetchCategories().catch(e => console.error('Erro categories:', e)),
-        fetchGroups().catch(e => console.error('Erro groups:', e)),
-        fetchCoupons().catch(e => console.error('Erro coupons:', e)),
-        fetchOrders().catch(e => console.error('Erro orders:', e)),
-        fetchSettings().catch(e => console.error('Erro settings:', e))
-      ]);
+      if (isConfigured) {
+        // Online Mode: Fetch from Supabase
+        await Promise.all([
+          fetchProducts().catch(e => console.error('Erro products:', e)),
+          fetchCategories().catch(e => console.error('Erro categories:', e)),
+          fetchGroups().catch(e => console.error('Erro groups:', e)),
+          fetchCoupons().catch(e => console.error('Erro coupons:', e)),
+          fetchOrders().catch(e => console.error('Erro orders:', e)),
+          fetchSettings().catch(e => console.error('Erro settings:', e))
+        ]);
+      } else {
+        // Offline Mode: Load mock data (Sabor Açaíteria)
+        console.warn("⚠️ MODO OFFLINE: Carregando dados mock da Sabor Açaíteria...");
+        setProducts(mockProducts);
+        setCategories(mockCategories);
+        setGroups(mockGroups);
+        setCoupons(mockCoupons);
+        setOrders([]);
+        setSettings(mockSettings);
+        console.log("✅ Dados mock carregados com sucesso!");
+        console.log(`   📦 ${mockProducts.length} produtos | 📂 ${mockCategories.length} categorias | 🎁 ${mockCoupons.length} cupons`);
+      }
     } catch (e) {
       console.error('Erro no Promise.all:', e);
     }
@@ -460,6 +483,14 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const clearCart = () => setCart([]);
 
   const addProduct = async (p: Product) => {
+    if (!isConfigured) {
+      console.warn("OFFLINE: Product added locally.");
+      const mockId = Date.now().toString();
+      const newProduct = { ...p, id: mockId };
+      setProducts(prev => [...prev, newProduct]);
+      return;
+    }
+
     // 1. Inserir produto
     const { data: productData, error } = await supabase.from('products').insert([{
       name: p.name,
@@ -532,6 +563,12 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   const addCategory = async (c: Category) => {
+    if (!isConfigured) {
+      console.warn("OFFLINE: Category added locally.");
+      const newCat = { ...c, id: Date.now().toString() };
+      setCategories(prev => [...prev, newCat]);
+      return;
+    }
     // Wait for ID from DB for insert usually, so manual optimistic update is harder without ID.
     // relying on realtime for add is okay.
     await supabase.from('categories').insert([{ title: c.title, icon: c.icon }]);
@@ -552,6 +589,13 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   const addGroup = async (g: ProductGroup) => {
+    if (!isConfigured) {
+      console.warn("OFFLINE: Group added locally.");
+      const newGroup = { ...g, id: Date.now().toString() };
+      setGroups(prev => [...prev, newGroup]);
+      return;
+    }
+
     // 1. Inserir grupo
     const { data: groupData, error } = await supabase.from('product_groups').insert([{
       title: g.title,
@@ -607,6 +651,13 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   const addCoupon = async (c: Coupon) => {
+    if (!isConfigured) {
+      console.warn("OFFLINE: Coupon added locally.");
+      const newCoupon = { ...c, id: Date.now().toString() };
+      setCoupons(prev => [...prev, newCoupon]);
+      return;
+    }
+
     const { data, error } = await supabase.from('coupons').insert([{
       code: c.code,
       type: c.type,
@@ -644,6 +695,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     // Optimistic Update: Update local state immediately
     setSettings(prev => ({ ...prev, ...s }));
 
+    if (!isConfigured) return;
+
     // Mapear camelCase para snake_case
     const dbSettings: any = {};
     if (s.storeName !== undefined) dbSettings.store_name = s.storeName;
@@ -669,6 +722,12 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   const addOrder = async (o: OrderRecord) => {
+    if (!isConfigured) {
+      console.warn("OFFLINE: Order added locally.");
+      setOrders(prev => [o, ...prev]);
+      return;
+    }
+
     await supabase.from('orders').insert([{
       date: o.date,
       customer_name: o.customerName,
