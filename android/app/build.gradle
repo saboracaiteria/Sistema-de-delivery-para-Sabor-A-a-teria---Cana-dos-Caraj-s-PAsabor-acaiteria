@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.obba.acai"
+    namespace "com.sabor.acai"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.obba.acai"
+        applicationId "com.sabor.acai"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

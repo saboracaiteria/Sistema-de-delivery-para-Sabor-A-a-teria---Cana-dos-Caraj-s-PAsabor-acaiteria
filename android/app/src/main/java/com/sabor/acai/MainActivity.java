@@ -1,4 +1,4 @@
-package com.obba.acai;
+package com.sabor.acai;
 
 import com.getcapacitor.BridgeActivity;
 

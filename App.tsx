@@ -3371,7 +3371,7 @@ const AppContent = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-brand-purple">
         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white mb-4"></div>
-        <p className="text-white text-lg font-bold animate-pulse">Carregando Obba Açaí...</p>
+        <p className="text-white text-lg font-bold animate-pulse">Carregando sabor acaiteria...</p>
       </div>
     );
   }

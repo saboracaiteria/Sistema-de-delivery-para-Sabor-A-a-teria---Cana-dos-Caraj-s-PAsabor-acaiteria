@@ -1,0 +1,27 @@
+-- =====================================================
+-- SABOR AÇAÍTERIA - SETUP COMPLETO DO BANCO DE DADOS
+-- =====================================================
+-- Sistema de Delivery - Canaã dos Carajás-PA 2025-2026
+-- 
+-- Este arquivo consolida TODOS os scripts SQL do projeto
+-- na ordem correta de execução.
+-- 
+-- ⚡ PRONTO PARA USAR: Copie e cole tudo no SQL Editor
+-- do Supabase e execute de uma vez!
+-- 
+-- 📋 Conteúdo (13 scripts consolidados):
+--   1. supabase-schema.sql       - Estrutura base
+--   2. supabase-storage.sql      - Bucket de imagens
+--   3. inventory_schema.sql      - Sistema de estoque
+--   4. add_active_column.sql     - Toggle ativo/inativo
+--   5. add_logo_shape.sql        - Forma do logo
+--   6. add_min_order_value.sql   - Valor mínimo cupom
+--   7. add_product_display_order.sql - Ordenação produtos
+--   8. add_status_messages.sql   - Mensagens de status
+--   9. add_theme_colors.sql      - Cores do tema
+--   10. update_footer_info.sql   - Campos do rodapé
+--   11. update_settings_info.sql - Tempos de entrega
+--   12. migration-force-open.sql - Modo automático
+--   13. update_footer_2025.sql   - Dados 2025-2026
+-- =====================================================
+
