@@ -3139,6 +3139,33 @@ const SettingsPage = () => {
             onChange={e => updateSettings({ deliveryFee: parseFloat(e.target.value) })}
           />
         </div>
+
+        {/* DIAGNÓSTICO DE CONEXÃO (DEBUG) */}
+        <div className="bg-gray-800 text-white p-4 rounded-lg shadow-sm border border-gray-600">
+          <h3 className="font-bold mb-2 flex items-center gap-2">
+            <Info size={20} className="text-blue-400" /> Diagnóstico de Conexão
+          </h3>
+          <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+            <div>STATUS DO APP:</div>
+            <div className={isConfigured ? "text-green-400 font-bold" : "text-red-400 font-bold"}>
+              {isConfigured ? 'ONLINE (Supabase)' : 'OFFLINE (Mock Data)'}
+            </div>
+
+            <div>MUDANÇAS SALVAM?</div>
+            <div className={isConfigured ? "text-green-400" : "text-red-400"}>
+              {isConfigured ? 'SIM (No Banco de Dados)' : 'NÃO (Apenas Memória)'}
+            </div>
+
+            <div>TESTE DE ENV VARS:</div>
+            <div>
+              URL: {import.meta.env.VITE_SUPABASE_URL ? '✅ OK' : '❌ VAZIO'}<br />
+              KEY: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ OK' : '❌ VAZIO'}
+            </div>
+          </div>
+          <p className="mt-2 text-[10px] text-gray-400">
+            Se estiver OFFLINE no Vercel, verifique em Settings -> Environment Variables se as chaves estão exatamente iguais ao .env.local e faça um Redeploy.
+          </p>
+        </div>
       </div>
 
       {/* Save Confirmation Toast */}
