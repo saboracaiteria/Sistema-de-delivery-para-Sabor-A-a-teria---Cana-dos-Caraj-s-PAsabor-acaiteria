@@ -3163,7 +3163,7 @@ const SettingsPage = () => {
             </div>
           </div>
           <p className="mt-2 text-[10px] text-gray-400">
-            Se estiver OFFLINE no Vercel, verifique em Settings -> Environment Variables se as chaves estão exatamente iguais ao .env.local e faça um Redeploy.
+            Se estiver OFFLINE no Vercel, verifique em Settings &rarr; Environment Variables se as chaves estão exatamente iguais ao .env.local e faça um Redeploy.
           </p>
         </div>
       </div>
