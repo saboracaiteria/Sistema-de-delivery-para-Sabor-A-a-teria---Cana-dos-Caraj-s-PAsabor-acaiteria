@@ -5,8 +5,11 @@ import { createClient } from '@supabase/supabase-js';
 const localUrl = localStorage.getItem('OBBA_SUPABASE_URL');
 const localKey = localStorage.getItem('OBBA_SUPABASE_ANON_KEY');
 
-const envUrl = import.meta.env.VITE_SUPABASE_URL;
-const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Force offline mode if build with VITE_FORCE_OFFLINE=true
+const forceOffline = import.meta.env.VITE_FORCE_OFFLINE === 'true';
+
+const envUrl = forceOffline ? '' : import.meta.env.VITE_SUPABASE_URL;
+const envKey = forceOffline ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 const supabaseUrl = localUrl || envUrl || '';
 const supabaseAnonKey = localKey || envKey || '';

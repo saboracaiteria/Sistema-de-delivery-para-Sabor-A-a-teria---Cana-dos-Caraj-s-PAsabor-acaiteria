@@ -11,7 +11,8 @@
     "android": "npm run sync && npx cap open android",
     "verify": "npx tsx verify_environment.ts",
     "import": "npx tsx import_user_data.ts",
-    "migrate": "npm run verify && npm run import"
+    "migrate": "npm run verify && npm run import",
+    "build:offline": "vite build --mode offline"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.4",
