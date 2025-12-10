@@ -189,6 +189,7 @@ interface AppContextType {
   copyOrderToClipboard: (order: OrderRecord) => void;
 
   checkStoreStatus: () => 'open' | 'closed';
+  isStoreOpen: boolean;
   isSidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   loading: boolean;
@@ -224,7 +225,90 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     openingHours: []
   });
 
-  // Carregar dados iniciais e configurar Realtime
+  // Reactive Store Status
+  const [isStoreOpen, setIsStoreOpen] = useState(false);
+
+  // Helper function for store status logic (Pure)
+  const calculateStoreStatus = (currentSettings: GlobalSettings): boolean => {
+    if (!currentSettings || !currentSettings.openingHours || !Array.isArray(currentSettings.openingHours)) {
+      return false;
+    }
+
+    if (currentSettings.storeStatus === 'open') return true;
+    if (currentSettings.storeStatus === 'closed') return false;
+
+    // Auto Mode
+    const now = new Date();
+    const day = now.getDay();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+
+    // 1. Check Today's Schedule
+    const todayConfig = currentSettings.openingHours.find(h => h.dayOfWeek === day);
+    if (todayConfig && todayConfig.enabled && todayConfig.open && todayConfig.close) {
+      const [oh, om] = todayConfig.open.split(':').map(Number);
+      const [ch, cm] = todayConfig.close.split(':').map(Number);
+
+      if (!isNaN(oh) && !isNaN(om) && !isNaN(ch) && !isNaN(cm)) {
+        const openTime = oh * 60 + om;
+        const closeTime = ch * 60 + cm;
+
+        if (closeTime < openTime) {
+          // Crosses midnight (e.g. 18:00 - 02:00)
+          // Open if we are AFTER open time (evening) OR BEFORE close time (early morning of next day logic handled below? No, "Today" covers 18:00-23:59)
+          // Actually, for "Today" 18:00-02:00, if it's 20:00, it's > 18:00.
+          // If it's 01:00, that is technically "Tomorrow" in day-of-week terms.
+          // So for "Today's" config, we only match if time >= openTime (until midnight).
+          // OR if time <= closeTime? No, 01:00 on "Tuesday" config means Wednesday morning.
+          // But `day` is Tuesday. 01:00 on Tuesday is Tuesday morning.
+          // So if today is Tuesday, and Tuesday config is 18:00-02:00.
+          // 01:00 Tuesday is BEFORE 18:00. It's likely part of Monday's shift.
+          // So for "Today's" config (Tuesday), we are open if time >= 18:00.
+          if (currentTime >= openTime) return true;
+        } else {
+          // Normal day (e.g. 08:00 - 20:00)
+          if (currentTime >= openTime && currentTime <= closeTime) return true;
+        }
+      }
+    }
+
+    // 2. Check Yesterday's Schedule (Early Morning Handling)
+    const yesterdayDay = day === 0 ? 6 : day - 1;
+    const yesterdayConfig = currentSettings.openingHours.find(h => h.dayOfWeek === yesterdayDay);
+    if (yesterdayConfig && yesterdayConfig.enabled && yesterdayConfig.open && yesterdayConfig.close) {
+      const [oh, om] = yesterdayConfig.open.split(':').map(Number);
+      const [ch, cm] = yesterdayConfig.close.split(':').map(Number);
+
+      if (!isNaN(oh) && !isNaN(om) && !isNaN(ch) && !isNaN(cm)) {
+        const openTime = oh * 60 + om;
+        const closeTime = ch * 60 + cm;
+
+        // Only matters if yesterday crossed midnight
+        if (closeTime < openTime) {
+          // We are in the "early morning" part of yesterday's shift
+          // e.g. Yesterday (Mon) 18:00 - 02:00. Today (Tue) 01:00.
+          // We are open if currentTime <= closeTime
+          if (currentTime <= closeTime) return true;
+        }
+      }
+    }
+
+    return false;
+  };
+
+  // Timer Effect
+  useEffect(() => {
+    const updateStatus = () => {
+      const status = calculateStoreStatus(settings);
+      setIsStoreOpen(status);
+    };
+
+    updateStatus(); // Initial check
+    const interval = setInterval(updateStatus, 30000); // Check every 30s
+
+    return () => clearInterval(interval);
+  }, [settings]); // Re-run when settings change
+
+
   useEffect(() => {
     const init = async () => {
       try {
@@ -823,40 +907,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const removeCoupon = () => setAppliedCoupon(null);
 
-  const checkStoreStatus = () => {
-    try {
-      // Defensive check: return closed if settings not fully initialized
-      if (!settings || !settings.openingHours || !Array.isArray(settings.openingHours)) {
-        return 'closed';
-      }
 
-      // 1. Force Open/Closed
-      if (settings.storeStatus === 'open') return 'open';
-      if (settings.storeStatus === 'closed') return 'closed';
-
-      // 2. Automatic Mode (default if 'auto' or undefined)
-      const now = new Date();
-      const day = now.getDay();
-      const config = settings.openingHours.find(h => h.dayOfWeek === day);
-
-      if (!config || !config.enabled) return 'closed';
-      if (!config.open || !config.close) return 'closed';
-
-      const currentTime = now.getHours() * 60 + now.getMinutes();
-      const [openH, openM] = config.open.split(':').map(Number);
-      const [closeH, closeM] = config.close.split(':').map(Number);
-
-      if (isNaN(openH) || isNaN(openM) || isNaN(closeH) || isNaN(closeM)) return 'closed';
-
-      const openTime = openH * 60 + openM;
-      const closeTime = closeH * 60 + closeM;
-
-      return (currentTime >= openTime && currentTime <= closeTime) ? 'open' : 'closed';
-    } catch (e) {
-      console.error('Error checking store status:', e);
-      return 'closed';
-    }
-  };
 
   return (
     <AppContext.Provider value={{
@@ -870,7 +921,9 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       updateOrderStatus,
       deleteOrder,
       copyOrderToClipboard,
-      checkStoreStatus, setSidebarOpen,
+      checkStoreStatus: () => isStoreOpen ? 'open' : 'closed',
+      isStoreOpen,
+      setSidebarOpen,
       appliedCoupon, applyCoupon, removeCoupon,
       loading
     }}>
@@ -992,15 +1045,14 @@ const Header = () => {
 
 // Modified ProductCard to match horizontal scrolling layout
 const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
-  const { addToCart, checkStoreStatus } = useApp();
+  const { addToCart, isStoreOpen } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showClosedToast, setShowClosedToast] = useState(false);
 
   const hasOptions = product.groupIds && product.groupIds.length > 0;
 
   const handleAdd = () => {
-    const status = checkStoreStatus();
-    if (status === 'closed') {
+    if (!isStoreOpen) {
       setShowClosedToast(true);
       setTimeout(() => setShowClosedToast(false), 2000);
       return;
@@ -1022,7 +1074,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   return (
     <>
       <div
-        className={`flex-shrink-0 w-[170px] bg-white rounded-xl shadow-md border border-gray-200 mr-3 mb-2 overflow-hidden cursor-pointer pb-2 transition-all duration-300 ease-out hover:shadow-xl hover:scale-[1.02] hover:bg-gray-50 active:scale-[0.98] active:shadow-sm ${checkStoreStatus() === 'closed' ? 'opacity-75 grayscale' : ''}`}
+        className={`flex-shrink-0 w-[170px] bg-white rounded-xl shadow-md border border-gray-200 mr-3 mb-2 overflow-hidden cursor-pointer pb-2 transition-all duration-300 ease-out hover:shadow-xl hover:scale-[1.02] hover:bg-gray-50 active:scale-[0.98] active:shadow-sm ${!isStoreOpen ? 'opacity-75 grayscale' : ''}`}
         onClick={handleAdd}
       >
         <div className="h-[130px] w-full overflow-hidden">
@@ -1312,8 +1364,8 @@ const ProductModal = ({ product, onClose }: { product: Product; onClose: () => v
 // --- Pages ---
 
 const HomePage = () => {
-  const { categories, products, settings, checkStoreStatus } = useApp();
-  const status = checkStoreStatus();
+  const { categories, products, settings, isStoreOpen } = useApp();
+  const status = isStoreOpen ? 'open' : 'closed';
 
   return (
     <div className="bg-[#f6f6f6] min-h-screen">
@@ -1643,7 +1695,7 @@ const CartPage = () => {
             <button onClick={() => navigate('/')} className="flex-1 py-3 bg-gray-200 text-gray-700 font-bold rounded text-xs uppercase">
               CONTINUAR COMPRANDO
             </button>
-            {checkStoreStatus() === 'closed' ? (
+            {!isStoreOpen ? (
               <button disabled className="flex-1 py-3 bg-gray-400 text-white font-bold rounded text-xs uppercase cursor-not-allowed flex flex-col items-center justify-center leading-tight">
                 <span>LOJA FECHADA</span>
                 <span className="text-[9px]">Não aceitamos pedidos</span>
@@ -1661,20 +1713,19 @@ const CartPage = () => {
 };
 
 const CheckoutPage = () => {
-  const { cart, settings, clearCart, addOrder, appliedCoupon, removeCoupon, groups } = useApp();
+  const { cart, settings, clearCart, addOrder, appliedCoupon, removeCoupon, groups, isStoreOpen } = useApp();
   const [customerName, setCustomerName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>(DeliveryMethod.DELIVERY);
   const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS[0]);
   const navigate = useNavigate();
-  const { checkStoreStatus } = useApp();
 
   useEffect(() => {
-    if (checkStoreStatus() === 'closed') {
+    if (!isStoreOpen) {
       navigate('/');
     }
-  }, [checkStoreStatus, navigate]);
+  }, [isStoreOpen, navigate]);
 
   const subtotal = cart.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0);
   const discount = appliedCoupon ? (appliedCoupon.type === 'percent' ? subtotal * (appliedCoupon.value / 100) : appliedCoupon.value) : 0;
@@ -2653,7 +2704,7 @@ const AddonsPage = () => {
 };
 
 const SettingsPage = () => {
-  const { settings, updateSettings, checkStoreStatus } = useApp();
+  const { settings, updateSettings, isStoreOpen } = useApp();
   const navigate = useNavigate();
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -2768,8 +2819,8 @@ const SettingsPage = () => {
 
             <div className="text-center p-2 rounded bg-gray-50 border border-gray-100">
               <span className="text-xs text-gray-500">
-                Status Atual: <strong className={checkStoreStatus() === 'open' ? 'text-green-600' : 'text-red-600'}>
-                  {checkStoreStatus() === 'open' ? '🟢 ABERTO AGORA' : '🔴 FECHADO AGORA'}
+                Status Atual: <strong className={isStoreOpen ? 'text-green-600' : 'text-red-600'}>
+                  {isStoreOpen ? '🟢 ABERTO AGORA' : '🔴 FECHADO AGORA'}
                 </strong>
               </span>
             </div>
