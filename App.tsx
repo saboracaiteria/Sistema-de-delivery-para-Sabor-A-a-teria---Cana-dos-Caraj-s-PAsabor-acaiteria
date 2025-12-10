@@ -1732,7 +1732,7 @@ const CheckoutPage = () => {
   const total = Math.max(0, subtotal - discount) + (deliveryMethod === DeliveryMethod.DELIVERY ? settings.deliveryFee : 0);
 
   const handleFinish = () => {
-    if (!customerName || !phone) return alert('Preencha nome e telefone');
+    if (!customerName) return alert('Preencha o nome');
     if (deliveryMethod === DeliveryMethod.DELIVERY && !address) return alert('Preencha o endereço');
 
     const newOrder: OrderRecord = {
@@ -1796,7 +1796,7 @@ const CheckoutPage = () => {
 
         <div className="bg-white rounded-lg p-4 text-gray-800 space-y-4 shadow-lg">
           <input className="w-full border p-2 rounded bg-white" placeholder="Nome completo" value={customerName} onChange={e => setCustomerName(e.target.value)} />
-          <input className="w-full border p-2 rounded bg-white" placeholder="WhatsApp" value={phone} onChange={e => setPhone(e.target.value)} />
+          <input className="w-full border p-2 rounded bg-white" placeholder="WhatsApp (Opcional)" value={phone} onChange={e => setPhone(e.target.value)} />
 
           <div className="flex border rounded overflow-hidden">
             <button onClick={() => setDeliveryMethod(DeliveryMethod.DELIVERY)} className={`flex-1 py-2 ${deliveryMethod === DeliveryMethod.DELIVERY ? 'bg-gray-100 font-bold' : 'bg-white'}`}>ENTREGAR</button>
