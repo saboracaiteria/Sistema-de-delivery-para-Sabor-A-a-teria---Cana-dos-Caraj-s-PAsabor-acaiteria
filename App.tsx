@@ -317,6 +317,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         console.error('Erro fatal ao carregar dados:', error);
       } finally {
         setLoading(false);
+        console.log('App loaded', new Date().toISOString());
       }
     };
     if (isStorageLoaded) {
