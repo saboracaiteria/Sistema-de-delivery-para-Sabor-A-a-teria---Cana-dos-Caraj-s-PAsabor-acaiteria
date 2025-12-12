@@ -1509,7 +1509,7 @@ const FloatingCartButton = () => {
 };
 
 const CartPage = () => {
-  const { cart, updateCartQuantity, removeFromCart, updateCartNote, settings, checkStoreStatus, appliedCoupon, applyCoupon, removeCoupon, groups } = useApp();
+  const { cart, updateCartQuantity, removeFromCart, updateCartNote, settings, checkStoreStatus, appliedCoupon, applyCoupon, removeCoupon, groups, isStoreOpen } = useApp();
   const navigate = useNavigate();
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
