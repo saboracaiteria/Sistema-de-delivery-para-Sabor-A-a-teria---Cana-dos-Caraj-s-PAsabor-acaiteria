@@ -325,6 +325,33 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   }, [isStorageLoaded]);
 
+  // Visitor Tracking
+  useEffect(() => {
+    const trackVisitor = async () => {
+      // Check if already visited this session
+      if (sessionStorage.getItem('visited_today')) return;
+
+      try {
+        if (!isConfigured) return; // Don't track if offline/mock
+
+        const { error } = await supabase.rpc('increment_visitor_count');
+
+        if (!error) {
+          sessionStorage.setItem('visited_today', 'true');
+          console.log("Visitor tracked");
+        } else {
+          console.error("Error tracking visitor:", error);
+        }
+      } catch (err) {
+        console.error("Error in visitor tracking:", err);
+      }
+    };
+
+    // Only track if configured and not already tracked
+    trackVisitor();
+  }, []); // Run once on mount
+
+
 
   // Configurar subscriptions para atualizações em tempo real
   useEffect(() => {

@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, BarChart2, DollarSign, FileText, Printer, Calendar, Search, Filter } from 'lucide-react';
+import { ChevronLeft, BarChart2, DollarSign, FileText, Printer, Calendar, Search, Filter, Users as UsersIcon } from 'lucide-react';
 import { usePrinter } from './PrinterContext';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -10,6 +10,7 @@ import { format, subDays, startOfMonth, endOfMonth, isWithinInterval, parseISO, 
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { supabase } from './supabaseClient';
 
 interface OrderRecord {
     id: string;
@@ -36,6 +37,69 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ orders }) => {
     // Date State
     const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
     const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+
+    // Visitor State
+    const [visitorStats, setVisitorStats] = useState({
+        today: 0,
+        week: 0,
+        month: 0,
+        last120: 0
+    });
+
+    useEffect(() => {
+        const fetchVisitors = async () => {
+            const today = new Date();
+            const date120DaysAgo = new Date();
+            date120DaysAgo.setDate(today.getDate() - 120);
+
+            const { data, error } = await supabase
+                .from('daily_visitors')
+                .select('date, count')
+                .gte('date', format(date120DaysAgo, 'yyyy-MM-dd'));
+
+            if (data) {
+                const todayStr = format(today, 'yyyy-MM-dd');
+                const weekStart = subDays(today, 7);
+                const monthStart = subDays(today, 30);
+
+                let todayCount = 0;
+                let weekCount = 0;
+                let monthCount = 0;
+                let last120Count = 0;
+
+                data.forEach((row: any) => {
+                    const rowDate = parseISO(row.date);
+                    const count = row.count;
+
+                    // 120 Days (All fetched)
+                    last120Count += count;
+
+                    // Today
+                    if (row.date === todayStr) {
+                        todayCount = count;
+                    }
+
+                    // Week (Last 7 days)
+                    if (rowDate >= weekStart) {
+                        weekCount += count;
+                    }
+
+                    // Month (Last 30 days)
+                    if (rowDate >= monthStart) {
+                        monthCount += count;
+                    }
+                });
+
+                setVisitorStats({
+                    today: todayCount,
+                    week: weekCount,
+                    month: monthCount,
+                    last120: last120Count
+                });
+            }
+        };
+        fetchVisitors();
+    }, []);
 
     // Filter Logic
     const filteredOrders = useMemo(() => {
@@ -275,6 +339,31 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ orders }) => {
                         </div>
                         <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
                             <BarChart2 size={24} />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-cyan-500 col-span-1 md:col-span-3 lg:col-span-3">
+                    <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <UsersIcon size={20} className="text-cyan-600" />
+                        Visitantes
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-cyan-50 p-4 rounded-lg">
+                            <p className="text-xs text-cyan-600 font-bold uppercase">Hoje</p>
+                            <p className="text-2xl font-bold text-gray-800">{visitorStats.today}</p>
+                        </div>
+                        <div className="bg-cyan-50 p-4 rounded-lg">
+                            <p className="text-xs text-cyan-600 font-bold uppercase">7 Dias</p>
+                            <p className="text-2xl font-bold text-gray-800">{visitorStats.week}</p>
+                        </div>
+                        <div className="bg-cyan-50 p-4 rounded-lg">
+                            <p className="text-xs text-cyan-600 font-bold uppercase">30 Dias</p>
+                            <p className="text-2xl font-bold text-gray-800">{visitorStats.month}</p>
+                        </div>
+                        <div className="bg-cyan-50 p-4 rounded-lg">
+                            <p className="text-xs text-cyan-600 font-bold uppercase">120 Dias</p>
+                            <p className="text-2xl font-bold text-gray-800">{visitorStats.last120}</p>
                         </div>
                     </div>
                 </div>

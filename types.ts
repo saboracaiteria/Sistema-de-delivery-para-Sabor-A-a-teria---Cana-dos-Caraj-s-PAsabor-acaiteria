@@ -122,23 +122,40 @@ export interface ThemeColors {
 
 export interface GlobalSettings {
   storeName: string;
-  logoUrl: string;
-  logoShape: 'circle' | 'rectangle';
-  bannerUrl: string;
+  logoUrl?: string; // URL da logo no Storage
+  logoShape?: 'circle' | 'rectangle'; // Formato da logo
+  bannerUrl?: string; // URL do banner no Storage
   whatsappNumber: string;
   storeStatus: 'open' | 'closed' | 'auto';
   deliveryFee: number;
-  openingHours: OpeningHour[];
-  deliveryOnly: boolean; // true = only pickup, false = delivery available
-  themeColors?: ThemeColors; // Configurações de cores do tema
-  closedMessage?: string; // Mensagem quando a loja está fechada
-  openMessage?: string; // Mensagem quando a loja está aberta
-  deliveryTime?: string; // e.g. "40min à 1h"
-  pickupTime?: string; // e.g. "20min à 45min"
-  deliveryCloseTime?: string; // e.g. "21:00"
+  deliveryOnly?: boolean; // Se true, desativa opção "Retirada"
+  openingHours?: OpeningHour[]; // Horários de funcionamento
+  // New visual settings
+  themeColors?: {
+    headerBg?: string;    // #1F2937 (gray-800 default)
+    headerText?: string;  // #F3F4F6 (gray-100)
+    background?: string;  // #F9FAFB (gray-50)
+    cardBg?: string;      // #FFFFFF
+    cardText?: string;    // #1F2937
+    buttonPrimary?: string; // #8B5CF6 (purple-500)
+    buttonText?: string;    // #FFFFFF
+    textPrimary?: string;
+    textSecondary?: string;
+  };
+  // Text customization
+  closedMessage?: string;
+  openMessage?: string;
+  deliveryTime?: string;
+  pickupTime?: string;
+  deliveryCloseTime?: string;
   instagramUrl?: string;
   businessAddress?: string;
   copyrightText?: string;
+}
+
+export interface VisitorStat {
+  date: string;
+  count: number;
 }
 
 export type Role = 'admin' | 'employee' | null;
