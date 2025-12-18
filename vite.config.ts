@@ -16,9 +16,9 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
         manifest: {
-          name: 'Obba Açaí Delivery',
-          short_name: 'Obba Açaí',
-          description: 'Delivery de Açaí',
+          name: 'Sabor Açaíteria',
+          short_name: 'Sabor Açaíteria',
+          description: 'Delivery de Açaí e Lanches',
           theme_color: '#ffffff',
           icons: [
             {

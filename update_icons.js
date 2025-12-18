@@ -20,7 +20,12 @@ const filesToUpdate = [
     'android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png',
     'android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png',
     'android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png',
-    'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png'
+    'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png',
+    'android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png',
+    'android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png',
+    'android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png',
+    'android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png',
+    'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png'
 ];
 
 async function downloadImage(url, dest) {
@@ -44,14 +49,15 @@ async function downloadImage(url, dest) {
 }
 
 async function run() {
-    console.log(`Baixando logo de: ${logoUrl}`);
+    const sourceFile = path.resolve(process.cwd(), 'new_app_icon.png');
+    console.log(`Usando imagem local (Perfil): ${sourceFile}`);
 
-    // Baixar para um arquivo temporário primeiro
-    const tempFile = 'temp_logo.jpg';
+    if (!fs.existsSync(sourceFile)) {
+        console.error('❌ Arquivo profile_icon.jpg não encontrado!');
+        return;
+    }
+
     try {
-        await downloadImage(logoUrl, tempFile);
-        console.log('Download concluído.');
-
         for (const relPath of filesToUpdate) {
             const destPath = path.resolve(process.cwd(), relPath);
             const dir = path.dirname(destPath);
@@ -60,12 +66,11 @@ async function run() {
                 fs.mkdirSync(dir, { recursive: true });
             }
 
-            fs.copyFileSync(tempFile, destPath);
+            fs.copyFileSync(sourceFile, destPath);
             console.log(`✅ Ícone atualizado: ${relPath}`);
         }
 
-        fs.unlinkSync(tempFile);
-        console.log('🎉 Todos os ícones foram atualizados com a foto do perfil!');
+        console.log('🎉 Todos os ícones foram atualizados com a nova imagem!');
 
     } catch (error) {
         console.error('❌ Erro ao atualizar ícones:', error);
