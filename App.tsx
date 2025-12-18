@@ -1916,10 +1916,7 @@ const OrdersPage = () => {
   const { printText, connectedDevice } = usePrinter();
 
   const handlePrintOrder = async (order: OrderRecord) => {
-    if (!connectedDevice) {
-      alert('Conecte uma impressora primeiro!');
-      return;
-    }
+
 
     const itemsText = order.fullDetails.map(item => {
       let txt = `[L]${item.quantity}x ${item.product.name} R$${item.totalPrice.toFixed(2)}`;

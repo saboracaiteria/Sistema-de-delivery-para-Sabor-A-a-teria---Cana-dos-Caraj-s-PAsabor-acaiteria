@@ -186,11 +186,3 @@ export const mockCoupons = [
     { id: 'coupon-4', code: 'SABOR25', type: 'percent' as const, value: 25, active: true, usageCount: 0 }
 ];
 
-console.log('📦 Mock Data Carregado:');
-console.log(`  ✅ ${mockCategories.length} categorias`);
-console.log(`  ✅ ${mockProducts.length} produtos (${mockProductsAcai.length} tradicionais + ${mockProductsCombos.length} combos)`);
-console.log(`  ✅ ${mockGroups.length} grupos de opções`);
-console.log(`  ✅ ${mockToppings.length} acompanhamentos`);
-console.log(`  ✅ ${mockSauces.length} caldas`);
-console.log(`  ✅ ${mockSizes.length} tamanhos`);
-console.log(`  ✅ ${mockCoupons.length} cupons`);

@@ -199,7 +199,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ orders }) => {
     };
 
     const handlePrint = async () => {
-        if (!connectedDevice) return alert('Conecte uma impressora!');
+
 
         const report =
             "[C]<b>RELATORIO FINANCEIRO</b>\n" +
