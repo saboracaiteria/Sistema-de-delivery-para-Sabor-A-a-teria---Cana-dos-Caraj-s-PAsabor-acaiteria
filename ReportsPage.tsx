@@ -6,7 +6,7 @@ import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend, BarChart, Bar
 } from 'recharts';
-import { format, subDays, startOfMonth, endOfMonth, isWithinInterval, parseISO, startOfDay, endOfDay } from 'date-fns';
+import { format, subDays, startOfMonth, endOfMonth, isWithinInterval, parseISO, startOfDay, endOfDay, startOfYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -43,19 +43,25 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ orders }) => {
         today: 0,
         week: 0,
         month: 0,
-        last120: 0
+        year: 0
     });
 
     useEffect(() => {
         const fetchVisitors = async () => {
             const today = new Date();
-            const date120DaysAgo = new Date();
-            date120DaysAgo.setDate(today.getDate() - 120);
+            const startYearDate = startOfYear(today);
+            const date30DaysAgo = subDays(today, 30);
+
+            // Ensure we have enough data for both "This Year" AND "Last 30 Days"
+            // If we are in Jan, 30 days ago is in Dec (prev year).
+            // If we are in June, 30 days ago is May (this year), but StartOfYear is Jan.
+            // So we take the earliest of the two.
+            const fetchStartDate = date30DaysAgo < startYearDate ? date30DaysAgo : startYearDate;
 
             const { data, error } = await supabase
                 .from('daily_visitors')
                 .select('date, count')
-                .gte('date', format(date120DaysAgo, 'yyyy-MM-dd'));
+                .gte('date', format(fetchStartDate, 'yyyy-MM-dd'));
 
             if (data) {
                 const todayStr = format(today, 'yyyy-MM-dd');
@@ -65,14 +71,16 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ orders }) => {
                 let todayCount = 0;
                 let weekCount = 0;
                 let monthCount = 0;
-                let last120Count = 0;
+                let yearCount = 0;
 
                 data.forEach((row: any) => {
                     const rowDate = parseISO(row.date);
                     const count = row.count;
 
-                    // 120 Days (All fetched)
-                    last120Count += count;
+                    // Year (Only count rows from this year)
+                    if (rowDate >= startYearDate) {
+                        yearCount += count;
+                    }
 
                     // Today
                     if (row.date === todayStr) {
@@ -94,7 +102,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ orders }) => {
                     today: todayCount,
                     week: weekCount,
                     month: monthCount,
-                    last120: last120Count
+                    year: yearCount
                 });
             }
         };
@@ -362,8 +370,8 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ orders }) => {
                             <p className="text-2xl font-bold text-gray-800">{visitorStats.month}</p>
                         </div>
                         <div className="bg-cyan-50 p-4 rounded-lg">
-                            <p className="text-xs text-cyan-600 font-bold uppercase">120 Dias</p>
-                            <p className="text-2xl font-bold text-gray-800">{visitorStats.last120}</p>
+                            <p className="text-xs text-cyan-600 font-bold uppercase">Este Ano</p>
+                            <p className="text-2xl font-bold text-gray-800">{visitorStats.year}</p>
                         </div>
                     </div>
                 </div>
