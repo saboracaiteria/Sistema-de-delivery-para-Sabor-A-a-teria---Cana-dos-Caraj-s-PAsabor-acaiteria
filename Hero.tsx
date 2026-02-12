@@ -29,7 +29,7 @@ export const Hero = () => {
                     className="w-full h-full object-cover"
                     alt="Banner"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#4E0797] via-[#4E0797]/40 to-transparent opacity-60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#4E0797] via-[#4E0797]/40 to-transparent opacity-40" />
             </motion.div>
 
             {/* Content Container - Glassmorphism */}
@@ -83,23 +83,6 @@ export const Hero = () => {
                     <span className="flex items-center gap-1 bg-white/10 px-2 md:px-3 py-0.5 md:py-1 rounded-full backdrop-blur-sm">
                         <MapPin className="w-2.5 h-2.5 md:w-[14px] md:h-[14px] text-cyan-400" /> Entrega: R$ {settings.deliveryFee?.toFixed(2)}
                     </span>
-                </motion.div>
-
-                {/* Opening Hours Message - Replaced Search Bar */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
-                    className="w-full max-w-sm md:max-w-md"
-                >
-                    <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 text-center border border-white/20 shadow-lg">
-                        <p className="text-sm md:text-base font-medium text-white">
-                            {isStoreOpen
-                                ? settings.openMessage || "Aberto agora"
-                                : settings.closedMessage || "Fechado no momento"
-                            }
-                        </p>
-                    </div>
                 </motion.div>
 
             </div>
