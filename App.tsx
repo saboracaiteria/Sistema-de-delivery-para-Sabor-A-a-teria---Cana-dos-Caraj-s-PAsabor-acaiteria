@@ -1424,10 +1424,10 @@ const HomePage = () => {
   return (
     <div className="bg-[#f6f6f6] min-h-screen">
       {/* Cover Image with Overlapping Logo */}
-      <div className="px-4 pt-6">
+      <div className="px-4 pt-1">
 
         {/* Status Message */}
-        <div className="text-center mb-3">
+        <div className="text-center mb-1">
           <p className="text-xs font-medium text-gray-500">
             {isStoreOpen
               ? settings.openMessage || "Aberto agora"
@@ -1437,7 +1437,7 @@ const HomePage = () => {
         </div>
 
         {/* Hours Link */}
-        <div className="flex justify-center items-center gap-1 text-gray-600 mb-3">
+        <div className="flex justify-center items-center gap-1 text-gray-600 mb-2">
           <Info size={16} />
           <span className="font-bold text-sm">Horários</span>
         </div>
