@@ -1,6 +1,7 @@
 
 
 import React, { useState, createContext, useContext, useEffect, useMemo, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { HashRouter, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   ShoppingCart, Menu, X, ChevronRight, Minus, Plus, Trash2,
@@ -28,7 +29,9 @@ import { PrinterProvider } from './PrinterContext';
 import { PrinterSettingsPage } from './PrinterSettingsPage';
 import { ImageCropModal } from './ImageCropModal';
 import { InventoryPage } from './InventoryPage';
+import { SetupPage } from './SetupPage';
 import { ConfirmModal } from './ConfirmModal';
+import { Hero } from './Hero';
 import { supabase, isConfigured } from './supabaseClient';
 import {
   mockCategories,
@@ -960,7 +963,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
-const useApp = () => {
+export const useApp = () => {
   const context = useContext(AppContext);
   if (!context) throw new Error("useApp must be used within AppProvider");
   return context;
@@ -1101,21 +1104,44 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
 
   return (
     <>
-      <div
-        className={`flex-shrink-0 w-[170px] bg-white rounded-xl shadow-md border border-gray-200 mr-3 mb-2 overflow-hidden cursor-pointer pb-2 transition-all duration-300 ease-out hover:shadow-xl hover:scale-[1.02] hover:bg-gray-50 active:scale-[0.98] active:shadow-sm ${!isStoreOpen ? 'opacity-75 grayscale' : ''}`}
+      <motion.div
+        layout
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{
+          y: -8,
+          scale: 1.03,
+          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)"
+        }}
+        whileTap={{ scale: 0.95 }}
+        className={`relative flex-shrink-0 w-[170px] bg-white rounded-2xl shadow-sm border border-gray-100 mr-4 mb-4 overflow-hidden cursor-pointer ${!isStoreOpen ? 'opacity-75 grayscale' : ''}`}
         onClick={handleAdd}
       >
-        <div className="h-[130px] w-full overflow-hidden">
-          <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-300 ease-out hover:scale-105" />
-        </div>
-        <div className="p-2.5 flex flex-col h-[125px]">
-          <h3 className="font-bold text-gray-800 text-[13px] leading-tight mb-1.5 line-clamp-2 h-9">{product.name}</h3>
-          <p className="text-[9px] text-gray-500 line-clamp-3 mb-auto">{product.description}</p>
-          <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-gray-100">
-            <span className="font-bold text-green-600 text-sm">R$ {product.price.toFixed(2)}</span>
+        <div className="h-[130px] w-full overflow-hidden relative group">
+          <motion.img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover"
+            whileHover={{ scale: 1.1 }}
+            transition={{ duration: 0.4 }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-2">
+            <span className="text-white text-xs font-bold bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/30">
+              Adicionar
+            </span>
           </div>
         </div>
-      </div>
+        <div className="p-3 flex flex-col h-[115px]">
+          <h3 className="font-bold text-gray-800 text-[13px] leading-tight mb-1 line-clamp-2 h-9">{product.name}</h3>
+          <p className="text-[10px] text-gray-500 line-clamp-2 mb-auto leading-relaxed">{product.description}</p>
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
+            <span className="font-extrabold text-gray-900 text-sm">R$ {product.price.toFixed(2)}</span>
+            <div className={`p-1.5 rounded-full ${hasOptions ? 'bg-gray-100 text-gray-600' : 'bg-red-50 text-red-500'}`}>
+              {hasOptions ? <Settings size={14} /> : <Plus size={14} />}
+            </div>
+          </div>
+        </div>
+      </motion.div>
       {isModalOpen && <ProductModal product={product} onClose={() => setIsModalOpen(false)} />}
 
       {/* Closed Store Toast */}
@@ -1398,67 +1424,7 @@ const HomePage = () => {
   return (
     <div className="bg-[#f6f6f6] min-h-screen">
       {/* Cover Image with Overlapping Logo */}
-      <div className="relative">
-        {/* Cover Image - Only show if bannerUrl exists */}
-        {settings.bannerUrl && (
-          <div className="w-full h-48 md:h-64 lg:h-72 overflow-hidden">
-            <img
-              src={settings.bannerUrl}
-              alt="Cover"
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
-
-        {/* Logo positioned to overlap cover */}
-        <div className={`${settings.bannerUrl ? 'absolute -bottom-16' : 'relative'} left-0 right-0 flex justify-center`}>
-          <div className={`bg-white ${settings.logoShape === 'circle' ? 'rounded-full' : 'rounded-lg'} p-2 shadow-lg`}>
-            <img
-              src={settings.logoUrl}
-              alt="Logo"
-              className={`w-32 h-32 object-cover ${settings.logoShape === 'circle' ? 'rounded-full' : 'rounded-lg'} border border-white`}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Reduced spacer when banner exists */}
-      {settings.bannerUrl && <div className="h-16 bg-white"></div>}
-
-      <div className="px-4 -mt-0">
-        {/* Status Badge */}
-        <div className="flex flex-col items-center gap-2 -mt-0 mb-3 pt-2">
-          {status === 'closed' ? (
-            <span className="bg-red-600 text-white px-6 py-2 rounded-md font-medium text-sm shadow-sm uppercase tracking-wide">
-              {settings.closedMessage || '🔴 Loja Fechada'}
-            </span>
-          ) : (
-            <span className="bg-[#4caf50] text-white px-6 py-2 rounded-md font-medium text-sm shadow-sm uppercase tracking-wide">
-              {settings.openMessage || '🟢 Aberto até às 23:00'}
-            </span>
-          )}
-          {settings.deliveryOnly && status === 'open' && (
-            <span className="bg-orange-500 text-white px-4 py-1.5 rounded-md font-medium text-xs shadow-sm">
-              📦 Aceitando pedidos para retirada
-            </span>
-          )}
-        </div>
-
-        {/* Info Rows */}
-        <div className="flex justify-between items-center bg-transparent mb-3 px-2">
-          <div className="flex flex-col items-center flex-1">
-            <div className="flex items-center gap-1 text-gray-700 font-bold text-sm">
-              <Clock size={16} /> Entrega
-            </div>
-            <span className="text-gray-600 text-xs font-medium">{settings.deliveryTime || '40min à 1h'}</span>
-          </div>
-          <div className="flex flex-col items-center flex-1">
-            <div className="flex items-center gap-1 text-gray-700 font-bold text-sm">
-              <Clock size={16} /> Retirada
-            </div>
-            <span className="text-gray-600 text-xs font-medium">{settings.pickupTime || '20min à 45min'}</span>
-          </div>
-        </div>
+      <div className="px-4 pt-6">
 
         {/* Hours Link */}
         <div className="flex justify-center items-center gap-1 text-gray-600 mb-3">
@@ -1896,14 +1862,25 @@ const AdminPanel = () => {
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {menuItems.filter(item => item.role.includes(adminRole || '')).map((item) => (
-          <div
+          <motion.div
             key={item.title}
+            layout
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{
+              y: -5,
+              scale: 1.05,
+              boxShadow: "0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)"
+            }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => navigate(item.path)}
-            className="bg-white p-4 rounded-xl shadow-sm flex flex-col items-center justify-center gap-2 hover:shadow-md transition-all duration-300 hover:scale-[1.02] cursor-pointer min-h-[100px]"
+            className="bg-white p-6 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-3 cursor-pointer min-h-[140px] border border-gray-50 relative overflow-hidden group"
           >
-            <div className="text-gray-600">{React.cloneElement(item.icon, { size: 24 })}</div>
-            <span className="font-medium text-gray-700 text-sm text-center">{item.title}</span>
-          </div>
+            <div className="text-purple-600 bg-purple-50 p-4 rounded-full group-hover:bg-purple-600 group-hover:text-white transition-colors duration-300">
+              {React.cloneElement(item.icon, { size: 32 })}
+            </div>
+            <span className="font-bold text-gray-700 text-sm text-center">{item.title}</span>
+          </motion.div>
         ))}
       </div>
     </div>
@@ -3486,12 +3463,19 @@ const AppContent = () => {
         onClose={() => setShowExitModal(false)}
         onConfirm={handleConfirmExit}
       />
-      {!isAdminRoute && <Header />}
+      {!isAdminRoute && location.pathname !== '/' && <Header />}
 
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={
+          <>
+            <Hero />
+            <HomePage />
+          </>
+        } />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+
+        <Route path="/setup" element={<SetupPage />} />
 
         <Route path="/panel" element={<AdminPanel />} />
         <Route path="/panel/orders" element={<OrdersPage />} />
