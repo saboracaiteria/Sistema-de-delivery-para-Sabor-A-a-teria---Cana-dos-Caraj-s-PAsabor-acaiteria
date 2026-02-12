@@ -1114,10 +1114,10 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)"
         }}
         whileTap={{ scale: 0.95 }}
-        className={`relative flex-shrink-0 w-[170px] bg-white rounded-2xl shadow-sm border border-gray-100 mr-4 mb-4 overflow-hidden cursor-pointer ${!isStoreOpen ? 'opacity-75 grayscale' : ''}`}
+        className={`relative flex-shrink-0 w-[140px] bg-white rounded-xl shadow-sm border border-gray-100 mr-3 mb-3 overflow-hidden cursor-pointer ${!isStoreOpen ? 'opacity-75 grayscale' : ''}`}
         onClick={handleAdd}
       >
-        <div className="h-[130px] w-full overflow-hidden relative group">
+        <div className="h-[110px] w-full overflow-hidden relative group">
           <motion.img
             src={product.image}
             alt={product.name}
@@ -1126,18 +1126,18 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
             transition={{ duration: 0.4 }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-2">
-            <span className="text-white text-xs font-bold bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/30">
+            <span className="text-white text-[10px] font-bold bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/30">
               Adicionar
             </span>
           </div>
         </div>
-        <div className="p-3 flex flex-col h-[115px]">
-          <h3 className="font-bold text-gray-800 text-[13px] leading-tight mb-1 line-clamp-2 h-9">{product.name}</h3>
-          <p className="text-[10px] text-gray-500 line-clamp-2 mb-auto leading-relaxed">{product.description}</p>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
-            <span className="font-extrabold text-gray-900 text-sm">R$ {product.price.toFixed(2)}</span>
-            <div className={`p-1.5 rounded-full ${hasOptions ? 'bg-gray-100 text-gray-600' : 'bg-red-50 text-red-500'}`}>
-              {hasOptions ? <Settings size={14} /> : <Plus size={14} />}
+        <div className="p-2 flex flex-col h-[95px]">
+          <h3 className="font-bold text-gray-800 text-[11px] leading-tight mb-1 line-clamp-2 h-7">{product.name}</h3>
+          <p className="text-[9px] text-gray-500 line-clamp-2 mb-auto leading-relaxed">{product.description}</p>
+          <div className="flex items-center justify-between mt-1 pt-1 border-t border-gray-50">
+            <span className="font-extrabold text-gray-900 text-xs">R$ {product.price.toFixed(2)}</span>
+            <div className={`p-1 rounded-full ${hasOptions ? 'bg-gray-100 text-gray-600' : 'bg-red-50 text-red-500'}`}>
+              {hasOptions ? <Settings size={12} /> : <Plus size={12} />}
             </div>
           </div>
         </div>
