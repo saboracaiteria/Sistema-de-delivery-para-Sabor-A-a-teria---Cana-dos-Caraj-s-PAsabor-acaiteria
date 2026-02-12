@@ -85,21 +85,21 @@ export const Hero = () => {
                     </span>
                 </motion.div>
 
-                {/* Search Bar - Modern & Floating */}
+                {/* Opening Hours Message - Replaced Search Bar */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.6 }}
-                    className="w-full max-w-sm md:max-w-md relative group"
+                    className="w-full max-w-sm md:max-w-md"
                 >
-                    <div className="absolute inset-y-0 left-3 md:left-4 flex items-center pointer-events-none">
-                        <Search className="h-3.5 w-3.5 md:h-5 md:w-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
+                    <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 text-center border border-white/20 shadow-lg">
+                        <p className="text-sm md:text-base font-medium text-white">
+                            {isStoreOpen
+                                ? settings.openMessage || "Aberto agora"
+                                : settings.closedMessage || "Fechado no momento"
+                            }
+                        </p>
                     </div>
-                    <input
-                        type="text"
-                        placeholder="O que você deseja pedir hoje?"
-                        className="w-full pl-9 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-4 rounded-xl md:rounded-2xl bg-white/95 text-xs md:text-base text-gray-800 placeholder-gray-400 shadow-xl focus:ring-4 focus:ring-purple-500/30 focus:outline-none transition-all transform group-hover:scale-[1.02]"
-                    />
                 </motion.div>
 
             </div>
