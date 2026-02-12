@@ -1426,6 +1426,16 @@ const HomePage = () => {
       {/* Cover Image with Overlapping Logo */}
       <div className="px-4 pt-6">
 
+        {/* Status Message */}
+        <div className="text-center mb-3">
+          <p className="text-xs font-medium text-gray-500">
+            {isStoreOpen
+              ? settings.openMessage || "Aberto agora"
+              : settings.closedMessage || "Fechado no momento"
+            }
+          </p>
+        </div>
+
         {/* Hours Link */}
         <div className="flex justify-center items-center gap-1 text-gray-600 mb-3">
           <Info size={16} />
