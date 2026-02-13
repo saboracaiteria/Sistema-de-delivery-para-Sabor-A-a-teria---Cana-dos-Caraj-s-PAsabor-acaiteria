@@ -8,7 +8,7 @@ export const Hero = () => {
     const { settings, isStoreOpen, setSidebarOpen } = useApp();
 
     return (
-        <div className="relative w-full h-[200px] md:h-[400px] overflow-hidden rounded-b-[1.5rem] md:rounded-b-[2.5rem] shadow-2xl mb-2 md:mb-4">
+        <div className="relative w-full h-[250px] md:h-[400px] overflow-hidden rounded-b-[1.5rem] md:rounded-b-[2.5rem] shadow-2xl mb-2 md:mb-4">
             {/* Menu Button - Absolute Top Left */}
             <button
                 onClick={() => setSidebarOpen(true)}
