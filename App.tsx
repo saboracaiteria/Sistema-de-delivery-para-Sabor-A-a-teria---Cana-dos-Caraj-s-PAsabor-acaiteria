@@ -1114,7 +1114,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)"
         }}
         whileTap={{ scale: 0.95 }}
-        className={`relative flex-shrink-0 w-[140px] bg-white rounded-xl shadow-sm border border-gray-100 mr-3 mb-3 overflow-hidden cursor-pointer ${!isStoreOpen ? 'opacity-75 grayscale' : ''}`}
+        className={`relative flex-shrink-0 w-[140px] bg-white rounded-xl shadow-sm border border-gray-100 mr-3 mb-3 overflow-hidden cursor-pointer`}
         onClick={handleAdd}
       >
         <div className="h-[110px] w-full overflow-hidden relative group">
