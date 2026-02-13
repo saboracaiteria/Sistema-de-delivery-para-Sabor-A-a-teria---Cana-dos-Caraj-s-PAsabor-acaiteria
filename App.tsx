@@ -1448,12 +1448,12 @@ const HomePage = () => {
         </div>
 
         {/* Categories */}
-        <div className="space-y-5">
+        <div className="space-y-2">
           {categories.filter(cat => cat.active !== false).map(cat => {
             const catProducts = products.filter(p => p.categoryId === cat.id && p.active !== false);
             return (
               <div key={cat.id} id={`cat-${cat.id}`}>
-                <h2 className="text-xl font-bold text-gray-700 mb-3 pl-1 flex items-center gap-2">
+                <h2 className="text-lg font-bold text-gray-700 mb-3 pl-1 flex items-center gap-2">
                   {cat.title} {cat.icon}
                 </h2>
                 {/* Horizontal scrolling container */}
