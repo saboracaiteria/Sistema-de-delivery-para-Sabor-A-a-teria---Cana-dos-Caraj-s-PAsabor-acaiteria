@@ -996,62 +996,126 @@ const Sidebar = () => {
   };
 
   return (
-    <>
+    <AnimatePresence>
       {isSidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setSidebarOpen(false)} />
-      )}
-      <div className={`fixed top-0 left-0 h-full w-64 bg-white shadow-2xl z-[70] transform transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div
-          className="p-4 text-white font-bold text-lg flex justify-between items-center transition-colors duration-300"
-          style={{
-            backgroundColor: 'var(--color-header-bg, #4E0797)',
-            color: 'var(--color-header-text, #ffffff)'
-          }}
-        >
-          <span>Menu</span>
-          <button onClick={() => setSidebarOpen(false)}><X style={{ color: 'var(--color-header-text, #ffffff)' }} /></button>
-        </div>
-        <div className="py-2">
-          <button onClick={() => { navigate('/'); setSidebarOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-100 border-l-4 border-transparent hover:border-brand-purple font-medium text-gray-700">
-            Início
-          </button>
-          <div className="border-t border-gray-100 my-2" />
-          {categories.map(cat => (
-            <button key={cat.id} onClick={() => {
-              navigate('/');
-              setTimeout(() => document.getElementById(`cat-${cat.id}`)?.scrollIntoView({ behavior: 'smooth' }), 100);
-              setSidebarOpen(false);
-            }} className="w-full text-left px-4 py-3 hover:bg-gray-100 text-gray-600 flex items-center gap-2">
-              <span>{cat.icon}</span> {cat.title}
-            </button>
-          ))}
-          <div className="border-t border-gray-100 my-2" />
-          <button onClick={() => setShowPassword(true)} className="w-full text-left px-4 py-3 hover:bg-gray-100 text-gray-600 flex items-center justify-center gap-2">
-            <LockIcon size={24} />
-          </button>
-        </div>
-      </div>
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+          />
 
+          {/* Sidebar Panel */}
+          <motion.div
+            initial={{ x: '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed top-0 left-0 h-full w-[75vw] sm:w-[320px] bg-white shadow-2xl z-[70] rounded-r-3xl overflow-hidden flex flex-col"
+          >
+            {/* Header */}
+            <div
+              className="p-6 text-white font-bold text-xl flex justify-between items-center"
+              style={{
+                backgroundColor: 'var(--color-header-bg, #4E0797)',
+                color: 'var(--color-header-text, #ffffff)'
+              }}
+            >
+              <span className="tracking-wide">Menu</span>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="p-1 hover:bg-white/10 rounded-full transition-colors"
+              >
+                <X style={{ color: 'var(--color-header-text, #ffffff)' }} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+              <button
+                onClick={() => { navigate('/'); setSidebarOpen(false); }}
+                className="w-full text-left px-4 py-3.5 hover:bg-purple-50 text-gray-700 font-medium rounded-xl transition-all flex items-center gap-3"
+              >
+                <span className="w-8 h-8 flex items-center justify-center bg-purple-100 text-purple-600 rounded-lg">
+                  <Menu size={18} />
+                </span>
+                Início
+              </button>
+
+              <div className="border-t border-gray-100 my-2 mx-4" />
+
+              <div className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                Categorias
+              </div>
+
+              {categories.map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    navigate('/');
+                    setTimeout(() => document.getElementById(`cat-${cat.id}`)?.scrollIntoView({ behavior: 'smooth' }), 100);
+                    setSidebarOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 hover:bg-gray-50 text-gray-600 rounded-xl transition-all flex items-center gap-3 group"
+                >
+                  <span className="text-xl group-hover:scale-110 transition-transform">{cat.icon}</span>
+                  <span className="font-medium">{cat.title}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Footer / Admin Access */}
+            <div className="p-4 border-t border-gray-100 bg-gray-50">
+              <button
+                onClick={() => setShowPassword(true)}
+                className="w-full text-left px-4 py-3 bg-white border border-gray-200 hover:border-purple-300 text-gray-500 hover:text-purple-600 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
+              >
+                <LockIcon size={18} />
+                <span className="text-sm font-medium">Área Administrativa</span>
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+
+      {/* Password Modal (kept as is, but could be animated too) */}
       {showPassword && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-2xl">
-            <h3 className="text-xl font-bold mb-4 text-center">Acesso Restrito</h3>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl"
+          >
+            <h3 className="text-xl font-bold mb-4 text-center text-gray-800">Acesso Restrito</h3>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="Digite a senha"
-              className="w-full p-3 border rounded-lg mb-4 text-center text-lg bg-gray-50 outline-none focus:ring-2 focus:ring-brand-purple"
+              className="w-full p-3 border border-gray-200 rounded-xl mb-4 text-center text-lg bg-gray-50 outline-none focus:ring-2 focus:ring-purple-500 transition-all font-bold tracking-widest"
               autoFocus
             />
-            <div className="flex gap-2">
-              <button onClick={() => setShowPassword(false)} className="flex-1 py-3 bg-gray-200 rounded-lg font-bold text-gray-700">Cancelar</button>
-              <button onClick={handleAdminAccess} className="flex-1 py-3 bg-brand-purple text-white rounded-lg font-bold">Entrar</button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowPassword(false)}
+                className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-bold text-gray-600 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleAdminAccess}
+                className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold transition-colors shadow-lg shadow-purple-200"
+              >
+                Entrar
+              </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
-    </>
+    </AnimatePresence>
   );
 };
 
