@@ -12,7 +12,7 @@ export const Hero = () => {
             {/* Menu Button - Absolute Top Left */}
             <button
                 onClick={() => setSidebarOpen(true)}
-                className="absolute top-3 left-3 md:top-4 md:left-4 z-50 p-1.5 md:p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-colors shadow-lg"
+                className="absolute top-3 left-3 md:top-4 md:left-4 z-50 p-1.5 md:p-2 bg-white/20 rounded-full text-white hover:bg-white/30 transition-colors shadow-lg"
             >
                 <Menu size={18} className="md:w-6 md:h-6" />
             </button>
@@ -29,7 +29,6 @@ export const Hero = () => {
                     className="w-full h-full object-cover"
                     alt="Banner"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#4E0797] via-[#4E0797]/40 to-transparent opacity-40" />
             </motion.div>
 
             {/* Content Container - Glassmorphism */}
@@ -66,7 +65,7 @@ export const Hero = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
-                    className="text-xl md:text-3xl font-bold mb-1 md:mb-2 tracking-tight leading-tight"
+                    className="text-xl md:text-3xl font-bold mb-1 md:mb-2 tracking-tight leading-tight drop-shadow-md"
                 >
                     {settings.storeName}
                 </motion.h1>
@@ -75,12 +74,12 @@ export const Hero = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
-                    className="flex items-center justify-center gap-2 md:gap-4 text-[10px] md:text-sm text-white/80 mb-3 md:mb-6"
+                    className="flex items-center justify-center gap-2 md:gap-4 text-[10px] md:text-sm text-white/90 mb-3 md:mb-6 drop-shadow-sm"
                 >
-                    <span className="flex items-center gap-1 bg-white/10 px-2 md:px-3 py-0.5 md:py-1 rounded-full backdrop-blur-sm">
+                    <span className="flex items-center gap-1 bg-black/30 px-2 md:px-3 py-0.5 md:py-1 rounded-full">
                         <Clock className="w-2.5 h-2.5 md:w-[14px] md:h-[14px] text-cyan-400" /> {settings.deliveryTime || '30-45 min'}
                     </span>
-                    <span className="flex items-center gap-1 bg-white/10 px-2 md:px-3 py-0.5 md:py-1 rounded-full backdrop-blur-sm">
+                    <span className="flex items-center gap-1 bg-black/30 px-2 md:px-3 py-0.5 md:py-1 rounded-full">
                         <MapPin className="w-2.5 h-2.5 md:w-[14px] md:h-[14px] text-cyan-400" /> Entrega: R$ {settings.deliveryFee?.toFixed(2)}
                     </span>
                 </motion.div>
