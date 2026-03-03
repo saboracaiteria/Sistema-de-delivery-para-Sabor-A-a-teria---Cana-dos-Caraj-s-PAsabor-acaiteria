@@ -1354,22 +1354,22 @@ const ProductModal = ({ product, onClose }: { product: Product; onClose: () => v
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-md h-[95vh] sm:h-auto sm:max-h-[90vh] rounded-t-2xl sm:rounded-2xl flex flex-col overflow-hidden animate-slide-up">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-white w-full max-w-md h-[95vh] sm:h-auto sm:max-h-[90vh] rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden animate-slide-up shadow-2xl">
         {/* Header */}
         <div
-          className="p-4 flex items-center justify-between text-white shrink-0 transition-colors duration-300"
+          className="p-5 flex items-center justify-between text-white shrink-0 transition-colors duration-300 relative"
           style={{
             backgroundColor: 'var(--color-header-bg, #4E0797)',
             color: 'var(--color-header-text, #ffffff)'
           }}
         >
-          <button onClick={onClose}><ArrowLeft size={24} style={{ color: 'var(--color-header-text, #ffffff)' }} /></button>
-          <h2 className="text-lg font-bold uppercase">{product.name}</h2>
-          <div className="w-6" /> {/* Spacer for centering */}
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors"><ArrowLeft size={24} style={{ color: 'var(--color-header-text, #ffffff)' }} /></button>
+          <h2 className="text-xl font-black uppercase tracking-wide absolute left-1/2 -translate-x-1/2 w-3/4 text-center truncate">{product.name}</h2>
+          <div className="w-10" /> {/* Spacer for centering */}
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-gray-50">
+        <div className="flex-1 overflow-y-auto bg-gray-50/50 pb-8">
           {/* Product Info */}
           {/* <div className="bg-white p-4 mb-2">
             <img src={product.image} className="w-full h-48 object-cover rounded-lg mb-3" />
@@ -1378,7 +1378,7 @@ const ProductModal = ({ product, onClose }: { product: Product; onClose: () => v
           </div> */}
 
           {/* Groups */}
-          <div className="p-4 space-y-6">
+          <div className="p-5 space-y-8">
             {productGroups.map(group => {
               const currentTotal = group.options.reduce((sum, opt) => sum + (selectedOptions[opt.id] || 0), 0);
               const filteredOptions = group.options.filter(opt =>
@@ -1387,25 +1387,24 @@ const ProductModal = ({ product, onClose }: { product: Product; onClose: () => v
               );
 
               return (
-                <div key={group.id}>
-                  <div className="text-center mb-4">
-                    <h3 className="text-xl font-bold text-gray-800">{group.title}</h3>
-                    <div className="flex justify-center gap-4 text-sm text-gray-600 mt-1">
-                      <span>Minimo: {group.min}</span>
-                      <span>Máximo: {group.max}</span>
+                <div key={group.id} className="animate-fade-in">
+                  <div className="text-center mb-5">
+                    <h3 className="text-2xl font-black text-gray-800 tracking-tight">{group.title}</h3>
+                    <div className="flex justify-center gap-2 mt-2">
+                      <span className="text-xs font-bold px-3 py-1 bg-gray-100 text-gray-600 rounded-full">Mín: {group.min}</span>
+                      <span className="text-xs font-bold px-3 py-1 bg-gray-100 text-gray-600 rounded-full">Máx: {group.max}</span>
                     </div>
-                    <p className="text-sm text-gray-600">Valor Adicional: R$ 0.00</p>
                   </div>
 
                   {/* Search Bar */}
-                  <div className="relative mb-4">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <div className="relative mb-5 group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-500 transition-colors" size={20} />
                     <input
                       type="text"
-                      placeholder="Digite para pesquisar..."
+                      placeholder="Pesquisar..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none"
+                      className="w-full pl-12 pr-4 py-3.5 bg-gray-100 rounded-xl border-2 border-transparent focus:border-purple-500 focus:bg-white transition-all outline-none font-medium placeholder:text-gray-400"
                     />
                   </div>
 
@@ -1413,33 +1412,40 @@ const ProductModal = ({ product, onClose }: { product: Product; onClose: () => v
                     {filteredOptions.map(opt => {
                       const qty = selectedOptions[opt.id] || 0;
                       return (
-                        <div key={opt.id} className={`bg-white p-4 rounded-lg shadow-sm border ${qty > 0 ? 'border-purple-500 ring-1 ring-purple-500' : 'border-gray-200'} transition-all duration-300 ease-out hover:shadow-md hover:scale-[1.01] hover:bg-gray-50 cursor-pointer`}>
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1 pr-4">
-                              <h4 className="font-bold text-gray-800">{opt.name}</h4>
+                        <div key={opt.id} className={`bg-white p-4 rounded-2xl shadow-sm border-2 ${qty > 0 ? 'border-purple-500 bg-purple-50/30' : 'border-gray-100'} transition-all duration-300 ease-out hover:shadow-md cursor-pointer relative overflow-hidden`}>
+                          <div className="flex justify-between items-center gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h4 className={`font-bold text-base truncate ${qty > 0 ? 'text-purple-900' : 'text-gray-800'}`}>{opt.name}</h4>
                               {opt.description && (
-                                <p className="text-sm text-gray-500 mt-1 leading-tight">{opt.description}</p>
+                                <p className="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">{opt.description}</p>
                               )}
-                              <div className="mt-2 inline-block px-3 py-1 rounded-full border border-gray-300 text-sm font-medium text-gray-700">
-                                + R$ {opt.price ? opt.price.toFixed(2).replace('.', ',') : '0,00'}
+                              <div className={`mt-2 inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold ${opt.price || (group.title.toLowerCase().includes('tamanho') && product.price > 0) ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                {opt.price
+                                  ? (group.title.toLowerCase().includes('tamanho')
+                                    ? `R$ ${(product.price + opt.price).toFixed(2).replace('.', ',')}`
+                                    : `+ R$ ${opt.price.toFixed(2).replace('.', ',')}`)
+                                  : (group.title.toLowerCase().includes('tamanho') && product.price > 0)
+                                    ? `R$ ${product.price.toFixed(2).replace('.', ',')}`
+                                    : 'Grátis'}
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-3 self-center">
+
+                            <div className="flex items-center gap-3 bg-white px-2 py-1.5 rounded-xl border border-gray-100 shadow-sm shrink-0">
                               <button
-                                onClick={() => handleOptionChange(group.id, opt.id, -1, group.max)}
-                                className={`w-8 h-8 rounded flex items-center justify-center transition-all duration-200 ${qty > 0 ? 'text-red-500 hover:bg-red-50 active:scale-90' : 'text-gray-300'}`}
+                                onClick={(e) => { e.stopPropagation(); handleOptionChange(group.id, opt.id, -1, group.max); }}
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${qty > 0 ? 'bg-red-50 text-red-600 hover:bg-red-100 active:scale-95' : 'bg-gray-50 text-gray-300'}`}
                                 disabled={qty === 0}
                               >
-                                <Minus size={20} />
+                                <Minus size={18} strokeWidth={3} />
                               </button>
-                              <span className="font-bold text-lg w-6 text-center">{qty}</span>
+                              <span className="font-black text-base w-5 text-center text-gray-800">{qty}</span>
                               <button
-                                onClick={() => handleOptionChange(group.id, opt.id, 1, group.max)}
-                                className={`w-8 h-8 rounded flex items-center justify-center transition-all duration-200 ${currentTotal < group.max ? 'text-green-600 hover:bg-green-50 active:scale-90' : 'text-gray-300'}`}
+                                onClick={(e) => { e.stopPropagation(); handleOptionChange(group.id, opt.id, 1, group.max); }}
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${currentTotal < group.max ? 'bg-green-50 text-green-600 hover:bg-green-100 active:scale-95' : 'bg-gray-50 text-gray-300'}`}
                                 disabled={currentTotal >= group.max}
                               >
-                                <Plus size={20} />
+                                <Plus size={18} strokeWidth={3} />
                               </button>
                             </div>
                           </div>
@@ -1451,13 +1457,16 @@ const ProductModal = ({ product, onClose }: { product: Product; onClose: () => v
               );
             })}
 
-            <div className="space-y-2 pt-4 border-t border-gray-200">
-              <h3 className="font-bold text-gray-800">Observações</h3>
+            <div className="pt-6">
+              <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <Edit size={18} className="text-gray-400" />
+                Alguma observação?
+              </h3>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Ex: Sem cebola, caprichar no molho..."
-                className="w-full p-3 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+                placeholder="Ex: Sem cebola, caprichar no creme..."
+                className="w-full p-4 bg-gray-100 rounded-xl border-2 border-transparent focus:border-purple-500 focus:bg-white transition-all outline-none text-sm font-medium resize-none"
                 rows={3}
               />
             </div>
@@ -1465,13 +1474,13 @@ const ProductModal = ({ product, onClose }: { product: Product; onClose: () => v
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-white border-t border-gray-200 shadow-[0_-5px_10px_rgba(0,0,0,0.05)]">
+        <div className="p-4 bg-white border-t border-gray-100 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-10 shrink-0">
           <button
             disabled={!isValid}
             onClick={handleConfirm}
-            className="w-full h-12 bg-[#D32F2F] disabled:bg-gray-400 text-white font-bold rounded text-lg hover:bg-[#B71C1C] transition-colors uppercase tracking-wide"
+            className="w-full h-14 bg-[#D32F2F] disabled:bg-gray-300 disabled:text-gray-500 text-white font-black rounded-xl text-lg hover:bg-[#B71C1C] transition-all active:scale-[0.98] uppercase tracking-wider shadow-lg disabled:shadow-none flex items-center justify-center gap-2"
           >
-            CONTINUAR
+            {isValid ? 'ADICIONAR AO CARRINHO' : 'SELECIONE OS OBRIGATÓRIOS'}
           </button>
         </div>
       </div>
