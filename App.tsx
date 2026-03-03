@@ -574,6 +574,22 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   }, [settings.themeColors]);
 
+  // Handle URL coupon parameter
+  useEffect(() => {
+    // Only attempt to apply if coupons are loaded to prevent race conditions
+    if (coupons.length > 0 && !appliedCoupon) {
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlCoupon = searchParams.get('cupom');
+      if (urlCoupon) {
+        // Find if coupon exists and is active (applyCoupon handles this validation too, but we do it to avoid toast errors on load)
+        const validCoupon = coupons.find(c => c.code.toUpperCase() === urlCoupon.toUpperCase() && c.active);
+        if (validCoupon) {
+          setAppliedCoupon(validCoupon);
+        }
+      }
+    }
+  }, [coupons, appliedCoupon]);
+
   // --- Funções de Mutação (CRUD) ---
 
   const addToCart = (item: CartItem) => {
