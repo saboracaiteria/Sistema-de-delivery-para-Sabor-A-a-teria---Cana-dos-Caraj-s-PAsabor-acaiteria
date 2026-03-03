@@ -1311,23 +1311,30 @@ const ProductModal = ({ product, onClose }: { product: Product; onClose: () => v
 
   const calculateTotal = () => {
     let baseTotal = product.price;
-    let sizeOptionsAdded = false;
-
-    // Check if there are options selected from a group named "Tamanho"
-    // If so, the "size" option price replaces or adds to the base product price.
-    // For calculating the UI total, we'll just sum all selected options' prices * quantity
     let optionsTotal = 0;
+    let sizeQuantity = 0;
 
     productGroups.forEach(group => {
+      const isSizeGroup = group.title.toLowerCase().includes('tamanho');
+
       group.options.forEach(opt => {
         const qty = selectedOptions[opt.id] || 0;
-        if (qty > 0 && opt.price) {
-          optionsTotal += opt.price * qty;
+        if (qty > 0) {
+          if (isSizeGroup) {
+            sizeQuantity += qty;
+          }
+          if (opt.price) {
+            optionsTotal += opt.price * qty;
+          }
         }
       });
     });
 
-    return (baseTotal + optionsTotal) * quantity;
+    // If size options were chosen, the base product price applies to each size chosen.
+    // Otherwise, it applies just once.
+    const effectiveBaseTotal = (sizeQuantity > 0 ? sizeQuantity : 1) * baseTotal;
+
+    return (effectiveBaseTotal + optionsTotal) * quantity;
   };
 
   const handleOptionChange = (groupId: string, optionId: string, delta: number, max: number) => {
@@ -1511,8 +1518,8 @@ const ProductModal = ({ product, onClose }: { product: Product; onClose: () => v
                               <span className="font-black text-base w-5 text-center text-gray-800">{qty}</span>
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleOptionChange(group.id, opt.id, 1, group.max); }}
-                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${currentTotal < group.max ? 'bg-green-50 text-green-600 hover:bg-green-100 active:scale-95' : 'bg-gray-50 text-gray-300'}`}
-                                disabled={currentTotal >= group.max}
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${(currentTotal < group.max || group.title.toLowerCase().includes('tamanho')) ? 'bg-green-50 text-green-600 hover:bg-green-100 active:scale-95' : 'bg-gray-50 text-gray-300'}`}
+                                disabled={currentTotal >= group.max && !group.title.toLowerCase().includes('tamanho')}
                               >
                                 <Plus size={18} strokeWidth={3} />
                               </button>
