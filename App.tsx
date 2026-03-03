@@ -1310,26 +1310,36 @@ const ProductModal = ({ product, onClose }: { product: Product; onClose: () => v
   }, [product, groups]);
 
   const calculateTotal = () => {
-    let total = product.price;
+    let baseTotal = product.price;
+    let sizeOptionsAdded = false;
+
+    // Check if there are options selected from a group named "Tamanho"
+    // If so, the "size" option price replaces or adds to the base product price.
+    // For calculating the UI total, we'll just sum all selected options' prices * quantity
+    let optionsTotal = 0;
+
     productGroups.forEach(group => {
       group.options.forEach(opt => {
         const qty = selectedOptions[opt.id] || 0;
         if (qty > 0 && opt.price) {
-          total += opt.price * qty;
+          optionsTotal += opt.price * qty;
         }
       });
     });
-    return total * quantity;
+
+    return (baseTotal + optionsTotal) * quantity;
   };
 
   const handleOptionChange = (groupId: string, optionId: string, delta: number, max: number) => {
     const currentQty = selectedOptions[optionId] || 0;
     const group = groups.find(g => g.id === groupId);
     if (!group) return;
+
+    const isSizeGroup = group.title.toLowerCase().includes('tamanho');
     const currentGroupTotal = group.options.reduce((sum, opt) => sum + (selectedOptions[opt.id] || 0), 0);
 
-    // Check max limit only when adding
-    if (delta > 0 && currentGroupTotal >= group.max) return;
+    // Check max limit only when adding, but ignore max for Size groups to allow multiple choices
+    if (delta > 0 && currentGroupTotal >= group.max && !isSizeGroup) return;
 
     const newQty = Math.max(0, currentQty + delta);
     setSelectedOptions(prev => ({ ...prev, [optionId]: newQty }));
@@ -1342,6 +1352,65 @@ const ProductModal = ({ product, onClose }: { product: Product; onClose: () => v
 
   const handleConfirm = () => {
     if (!isValid) return;
+
+    // Find the Size group if it exists
+    const sizeGroup = productGroups.find(g => g.title.toLowerCase().includes('tamanho'));
+
+    if (sizeGroup) {
+      // Get all selected size options
+      const selectedSizeOptions = sizeGroup.options.filter(opt => (selectedOptions[opt.id] || 0) > 0);
+
+      if (selectedSizeOptions.length > 0) {
+        // If the user selected multiple sizes, create a separate cart item for EACH size combination
+        // Note: this will multiply the standard options across all chosen sizes
+        selectedSizeOptions.forEach((sizeOpt) => {
+          const sizeQty = selectedOptions[sizeOpt.id];
+
+          // Re-calculate price for this specific size
+          let specificItemPrice = product.price;
+          if (sizeOpt.price) specificItemPrice += sizeOpt.price;
+
+          // Add prices of other selected non-size options
+          productGroups.forEach(g => {
+            if (g.id !== sizeGroup.id) {
+              g.options.forEach(opt => {
+                const optQty = selectedOptions[opt.id] || 0;
+                if (optQty > 0 && opt.price) {
+                  specificItemPrice += opt.price * optQty; // In a true split, you might spread these differently, but here we add them to the unit price
+                }
+              });
+            }
+          });
+
+          // Create a specific selection object for this split item
+          const specificSelectedOptions = { ...selectedOptions };
+          // Remove all sizes from this specific selection
+          sizeGroup.options.forEach(opt => {
+            specificSelectedOptions[opt.id] = 0;
+          });
+          // Add back only THIS size with quantity 1 (so we don't multiply size qty incorrectly in cart UI if it expects 1 size per item)
+          // Actually, cart UI handles multiple quantities of the option. Let's send the correct qty.
+          specificSelectedOptions[sizeOpt.id] = 1;
+
+          // Multiply the base quantity chosen in the footer by the quantity chosen for this specific size
+          const totalQtyForThisSize = quantity * sizeQty;
+
+          addToCart({
+            cartId: Date.now().toString() + '-' + Math.random().toString(36).substring(7),
+            product,
+            quantity: totalQtyForThisSize,
+            selectedOptions: specificSelectedOptions,
+            note,
+            totalPrice: specificItemPrice
+          });
+        });
+
+        onClose();
+        return;
+      }
+    }
+
+    // Default behavior if no size group or no size selected
     addToCart({
       cartId: Date.now().toString(),
       product,
@@ -1474,13 +1543,37 @@ const ProductModal = ({ product, onClose }: { product: Product; onClose: () => v
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-white border-t border-gray-100 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-10 shrink-0">
+        <div className="p-4 bg-white border-t border-gray-100 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-10 shrink-0 flex items-center gap-3">
+          <div className="flex items-center bg-gray-100 p-1.5 rounded-xl border border-gray-200 shadow-inner">
+            <button
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              className={`w-11 h-11 rounded-lg flex items-center justify-center transition-all duration-200 ${quantity > 1 ? 'bg-white text-gray-800 shadow-[0_2px_4px_rgba(0,0,0,0.05)] hover:bg-gray-50 active:scale-95' : 'text-gray-400'}`}
+              disabled={quantity <= 1}
+            >
+              <Minus size={20} strokeWidth={3} />
+            </button>
+            <span className="font-black text-lg w-8 text-center text-gray-800">{quantity}</span>
+            <button
+              onClick={() => setQuantity(quantity + 1)}
+              className="w-11 h-11 rounded-lg flex items-center justify-center transition-all duration-200 bg-white text-gray-800 shadow-[0_2px_4px_rgba(0,0,0,0.05)] hover:bg-gray-50 active:scale-95"
+            >
+              <Plus size={20} strokeWidth={3} />
+            </button>
+          </div>
+
           <button
             disabled={!isValid}
             onClick={handleConfirm}
-            className="w-full h-14 bg-[#D32F2F] disabled:bg-gray-300 disabled:text-gray-500 text-white font-black rounded-xl text-lg hover:bg-[#B71C1C] transition-all active:scale-[0.98] uppercase tracking-wider shadow-lg disabled:shadow-none flex items-center justify-center gap-2"
+            className="flex-1 h-14 bg-[#D32F2F] disabled:bg-gray-300 disabled:text-gray-500 text-white font-black rounded-xl text-sm sm:text-lg hover:bg-[#B71C1C] transition-all active:scale-[0.98] uppercase tracking-wide shadow-lg disabled:shadow-none flex items-center justify-center gap-2"
           >
-            {isValid ? 'ADICIONAR AO CARRINHO' : 'SELECIONE OS OBRIGATÓRIOS'}
+            {isValid ? (
+              <span className="flex items-center justify-between w-full px-4">
+                <span>ADICIONAR</span>
+                <span>R$ {calculateTotal().toFixed(2).replace('.', ',')}</span>
+              </span>
+            ) : (
+              'OBRIGATÓRIOS'
+            )}
           </button>
         </div>
       </div>
