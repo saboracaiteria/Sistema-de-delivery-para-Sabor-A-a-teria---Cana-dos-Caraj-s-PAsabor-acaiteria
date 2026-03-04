@@ -9,7 +9,7 @@ import {
   ChevronLeft, ChevronDown, ChevronUp, Edit, FileText,
   Settings, BarChart2, List, Folder, LogOut, CheckCircle,
   Printer, Tag, ToggleLeft, ToggleRight, Upload, Info, ArrowLeft, AlertCircle,
-  Lock as LockIcon, Palette, Package, MessageSquare
+  Lock as LockIcon, Palette, Package, MessageSquare, LayoutTemplate
 } from 'lucide-react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Preferences } from '@capacitor/preferences';
@@ -40,6 +40,7 @@ import {
   mockSettings,
   mockCoupons
 } from './mockData';
+import { ModernHomePage } from './ModernUI';
 
 
 
@@ -161,6 +162,9 @@ interface AppContextType {
   applyCoupon: (code: string) => { success: boolean; message: string };
   removeCoupon: () => void;
 
+  isModernUI: boolean;
+  setIsModernUI: (modern: boolean) => void;
+
   addToCart: (item: CartItem) => void;
   removeFromCart: (cartId: string) => void;
   updateCartQuantity: (cartId: string, quantity: number) => void;
@@ -206,9 +210,10 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [adminRole, setAdminRole, roleLoaded] = usePersistedState<Role>('adminRole', null);
   const [appliedCoupon, setAppliedCoupon, couponLoaded] = usePersistedState<Coupon | null>('appliedCoupon', null);
+  const [isModernUI, setIsModernUI, modernUILoaded] = usePersistedState<boolean>('isModernUI', true);
   const [loading, setLoading] = useState(true);
 
-  const isStorageLoaded = cartLoaded && roleLoaded && couponLoaded;
+  const isStorageLoaded = cartLoaded && roleLoaded && couponLoaded && modernUILoaded;
 
   // Dados do Supabase
   const [products, setProducts] = useState<Product[]>([]);
@@ -959,6 +964,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <AppContext.Provider value={{
       products, categories, groups, cart, settings, coupons, orders, adminRole, isSidebarOpen,
+      isModernUI, setIsModernUI,
       addToCart, removeFromCart, updateCartQuantity, updateCartNote, clearCart,
       addProduct, updateProduct, deleteProduct, reorderProducts,
       addCategory, updateCategory, deleteCategory,
@@ -1306,7 +1312,7 @@ const ProductCarousel: React.FC<{ products: Product[] }> = ({ products }) => {
   );
 };
 
-const ProductModal = ({ product, onClose }: { product: Product; onClose: () => void }) => {
+export const ProductModal = ({ product, onClose }: { product: Product; onClose: () => void }) => {
   const { groups, addToCart } = useApp();
   const [selectedOptions, setSelectedOptions] = useState<Record<string, number>>({});
   const [quantity, setQuantity] = useState(1);
@@ -1660,10 +1666,6 @@ const HomePage = () => {
           })}
         </div>
       </div>
-
-      {/* Floating Cart Button */}
-      <FloatingCartButton />
-      <Footer />
     </div>
   );
 };
@@ -3617,7 +3619,7 @@ const AppContent = () => {
   const {
     categories, addCategory, updateCategory, deleteCategory,
     products, addProduct, updateProduct, deleteProduct, reorderProducts,
-    groups, orders, loading
+    groups, orders, loading, isModernUI, setIsModernUI
   } = useApp();
 
 
@@ -3656,7 +3658,7 @@ const AppContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 md:pb-0">
+    <div className={`min-h-screen ${isModernUI && !isAdminRoute ? 'bg-[#FAFAFA]' : 'bg-gray-50'} md:pb-0`}>
       <ExitModal
         isOpen={showExitModal}
         onClose={() => setShowExitModal(false)}
@@ -3664,12 +3666,27 @@ const AppContent = () => {
       />
       {!isAdminRoute && location.pathname !== '/' && <Header />}
 
+      {/* Theme Switcher Button */}
+      {!isAdminRoute && (
+        <button
+          onClick={() => setIsModernUI(!isModernUI)}
+          className={`fixed top-4 md:bottom-20 md:top-auto right-4 z-[100] flex items-center gap-2 px-3 py-2 rounded-full shadow-lg transition-all text-xs font-bold font-outfit backdrop-blur-md border ${isModernUI ? 'bg-white/90 text-purple-700 border-purple-100 hover:bg-white' : 'bg-gray-900/90 text-white border-gray-700 hover:bg-gray-900'}`}
+        >
+          <LayoutTemplate size={14} />
+          {isModernUI ? 'Usar Versão Antiga' : 'Versão Moderna'}
+        </button>
+      )}
+
       <Routes>
         <Route path="/" element={
-          <>
-            <Hero />
-            <HomePage />
-          </>
+          isModernUI ? (
+            <ModernHomePage />
+          ) : (
+            <>
+              <Hero />
+              <HomePage />
+            </>
+          )
         } />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
@@ -3717,7 +3734,8 @@ const AppContent = () => {
       </Routes>
 
       {!isAdminRoute && <Sidebar />}
-      {!isAdminRoute && <FloatingCartButton />}
+      {!isAdminRoute && (!isModernUI || location.pathname !== '/') && <FloatingCartButton />}
+      {location.pathname === '/' && <Footer />}
     </div>
   );
 };
