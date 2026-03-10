@@ -9,7 +9,7 @@ import {
   ChevronLeft, ChevronDown, ChevronUp, Edit, FileText,
   Settings, BarChart2, List, Folder, LogOut, CheckCircle,
   Printer, Tag, ToggleLeft, ToggleRight, Upload, Info, ArrowLeft, AlertCircle,
-  Lock as LockIcon, Palette, Package, MessageSquare, LayoutTemplate
+  Lock as LockIcon, Palette, Package, MessageSquare, LayoutTemplate, Share2, Check
 } from 'lucide-react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Preferences } from '@capacitor/preferences';
@@ -2287,6 +2287,7 @@ const CouponsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Partial<Coupon>>({});
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; code: string } | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleSave = async () => {
@@ -2320,6 +2321,17 @@ const CouponsPage = () => {
     }
   };
 
+  const handleCopyLink = (code: string, id: string) => {
+    const link = `${window.location.origin}/?cupom=${code}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }).catch(err => {
+      console.error('Falha ao copiar:', err);
+      alert('Erro ao copiar link.');
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="flex items-center justify-between mb-6">
@@ -2338,12 +2350,19 @@ const CouponsPage = () => {
               <p className="text-sm text-gray-500">{c.type === 'percent' ? `${c.value}% OFF` : `R$ ${c.value} OFF`}</p>
               {c.minOrderValue && <p className="text-xs text-gray-400">Pedido mín: R$ {c.minOrderValue.toFixed(2)}</p>}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                onClick={() => handleCopyLink(c.code, c.id)}
+                className={`p-1.5 sm:p-2 rounded-lg transition-colors ${copiedId === c.id ? 'bg-green-100 text-green-600' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
+                title="Copiar Link de Compartilhamento"
+              >
+                {copiedId === c.id ? <Check size={18} /> : <Share2 size={18} />}
+              </button>
               <button onClick={() => updateCoupon({ ...c, active: !c.active })} className={`transition-colors ${c.active ? 'text-green-500' : 'text-gray-300'}`}>
                 <ToggleLeft size={28} className={`transition-transform ${c.active ? 'rotate-180' : ''}`} />
               </button>
-              <button onClick={() => { setEditingCoupon(c); setIsModalOpen(true); }} className="text-gray-400"><Edit size={18} /></button>
-              <button onClick={() => setDeleteConfirmation({ id: c.id, code: c.code })} className="text-red-400"><Trash2 size={18} /></button>
+              <button onClick={() => { setEditingCoupon(c); setIsModalOpen(true); }} className="text-gray-400 p-1.5"><Edit size={18} /></button>
+              <button onClick={() => setDeleteConfirmation({ id: c.id, code: c.code })} className="text-red-400 p-1.5"><Trash2 size={18} /></button>
             </div>
           </div>
         ))}
@@ -3670,7 +3689,7 @@ const AppContent = () => {
       {!isAdminRoute && (
         <button
           onClick={() => setIsModernUI(!isModernUI)}
-          className={`fixed top-4 md:bottom-20 md:top-auto right-4 z-[100] flex items-center gap-2 px-3 py-2 rounded-full shadow-lg transition-all text-xs font-bold font-outfit backdrop-blur-md border ${isModernUI ? 'bg-white/90 text-purple-700 border-purple-100 hover:bg-white' : 'bg-gray-900/90 text-white border-gray-700 hover:bg-gray-900'}`}
+          className={`fixed top-16 md:bottom-20 md:top-auto right-4 z-[100] flex items-center gap-2 px-3 py-2 rounded-full shadow-lg transition-all text-xs font-bold font-outfit backdrop-blur-md border ${isModernUI ? 'bg-white/90 text-purple-700 border-purple-100 hover:bg-white' : 'bg-gray-900/90 text-white border-gray-700 hover:bg-gray-900'}`}
         >
           <LayoutTemplate size={14} />
           {isModernUI ? 'Usar Versão Antiga' : 'Versão Moderna'}

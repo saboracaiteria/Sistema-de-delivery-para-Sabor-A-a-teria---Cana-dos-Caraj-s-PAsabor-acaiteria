@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Search, MapPin, Clock, Menu } from 'lucide-react';
 import { useApp } from './App';
 import { PwaInstallPrompt } from './PwaInstallPrompt';
+import { ShareQRCode } from './ShareQRCode';
 
 export const Hero = () => {
     const { settings, isStoreOpen, setSidebarOpen } = useApp();
@@ -18,6 +19,11 @@ export const Hero = () => {
                 <Menu size={18} className="md:w-6 md:h-6" />
             </button>
             <PwaInstallPrompt />
+
+            {/* Share QR Code - Absolute Top Right */}
+            <div className="absolute top-3 right-3 md:top-4 md:right-4 z-50">
+                <ShareQRCode />
+            </div>
 
             {/* Background Image with Parallax-like scale */}
             <motion.div

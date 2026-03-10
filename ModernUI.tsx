@@ -5,6 +5,7 @@ import { ShoppingCart, Menu, Info, Plus, Settings as SettingsIcon, Search, Chevr
 import { useApp, ProductModal } from './App';
 import { Product, ProductGroup } from './types';
 import { PwaInstallPrompt } from './PwaInstallPrompt';
+import { ShareQRCode } from './ShareQRCode';
 
 
 // Modern Hero Component
@@ -22,7 +23,8 @@ export const ModernHero = () => {
             <PwaInstallPrompt variant="modern" />
 
             {/* Premium Header Button */}
-            <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
+            <div className="absolute top-4 right-4 z-[55] flex items-center gap-2">
+                <ShareQRCode variant="modern" />
                 <button className="p-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-white hover:bg-white/20 transition-all shadow-lg active:scale-95">
                     <Search strokeWidth={2.5} size={22} />
                 </button>
