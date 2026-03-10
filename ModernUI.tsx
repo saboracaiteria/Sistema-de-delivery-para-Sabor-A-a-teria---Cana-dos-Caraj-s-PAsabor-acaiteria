@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Menu, Info, Plus, Settings as SettingsIcon, Search, ChevronLeft, ChevronRight, X, Minus, Sparkles, AlertCircle } from 'lucide-react';
 import { useApp, ProductModal } from './App';
 import { Product, ProductGroup } from './types';
+import { PwaInstallPrompt } from './PwaInstallPrompt';
 
 
 // Modern Hero Component
@@ -18,6 +19,7 @@ export const ModernHero = () => {
             >
                 <Menu strokeWidth={2.5} size={22} />
             </button>
+            <PwaInstallPrompt variant="modern" />
 
             {/* Premium Header Button */}
             <div className="absolute top-4 right-4 z-50 flex items-center gap-2">

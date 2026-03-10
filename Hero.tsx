@@ -3,6 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Search, MapPin, Clock, Menu } from 'lucide-react';
 import { useApp } from './App';
+import { PwaInstallPrompt } from './PwaInstallPrompt';
 
 export const Hero = () => {
     const { settings, isStoreOpen, setSidebarOpen } = useApp();
@@ -16,6 +17,7 @@ export const Hero = () => {
             >
                 <Menu size={18} className="md:w-6 md:h-6" />
             </button>
+            <PwaInstallPrompt />
 
             {/* Background Image with Parallax-like scale */}
             <motion.div
