@@ -21,8 +21,8 @@ export const ShareQRCode = ({ variant = 'default' }: { variant?: 'default' | 'mo
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: 'Sabor Açaíteria',
-                    text: 'Faça seu pedido na Sabor Açaíteria!',
+                    title: 'Menu Digital',
+                    text: 'Faça seu pedido no nosso cardápio digital!',
                     url: shareUrl,
                 });
             } catch (error) {

@@ -16,8 +16,8 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
         manifest: {
-          name: 'Sabor Açaíteria',
-          short_name: 'Sabor Açaíteria',
+          name: 'Canaã Delivery',
+          short_name: 'Canaã Delivery',
           description: 'Delivery de Açaí e Lanches',
           theme_color: '#ffffff',
           icons: [

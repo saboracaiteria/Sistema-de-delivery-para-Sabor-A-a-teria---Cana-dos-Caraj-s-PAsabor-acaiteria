@@ -1,6 +1,14 @@
 
+export interface Store {
+  id: string;
+  slug: string;
+  name: string;
+  ownerId?: string;
+}
+
 export interface ProductOption {
   id: string;
+  storeId?: string;
   name: string;
   price?: number;
   description?: string;
@@ -9,6 +17,7 @@ export interface ProductOption {
 
 export interface ProductGroup {
   id: string;
+  storeId?: string;
   title: string;
   min: number;
   max: number;
@@ -18,6 +27,7 @@ export interface ProductGroup {
 
 export interface Product {
   id: string;
+  storeId?: string;
   name: string;
   description?: string;
   price: number;
@@ -30,6 +40,7 @@ export interface Product {
 
 export interface Category {
   id: string;
+  storeId?: string;
   title: string;
   icon?: string;
   displayOrder?: number;
@@ -55,6 +66,7 @@ export type OrderStatus = 'pending' | 'preparing' | 'delivery' | 'completed' | '
 
 export interface OrderRecord {
   id: string;
+  storeId?: string;
   date: string; // ISO String
   customerName: string;
   whatsapp: string;
@@ -69,6 +81,7 @@ export interface OrderRecord {
 
 export interface Coupon {
   id: string;
+  storeId?: string;
   code: string;
   type: 'percent' | 'fixed';
   value: number;
@@ -121,6 +134,8 @@ export interface ThemeColors {
 }
 
 export interface GlobalSettings {
+  id?: number | string;
+  storeId?: string;
   storeName: string;
   logoUrl?: string; // URL da logo no Storage
   logoShape?: 'circle' | 'rectangle'; // Formato da logo
@@ -158,4 +173,4 @@ export interface VisitorStat {
   count: number;
 }
 
-export type Role = 'admin' | 'employee' | null;
+export type Role = 'admin' | 'employee' | 'superadmin' | null;

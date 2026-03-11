@@ -9,7 +9,7 @@ import {
   ChevronLeft, ChevronDown, ChevronUp, Edit, FileText,
   Settings, BarChart2, List, Folder, LogOut, CheckCircle,
   Printer, Tag, ToggleLeft, ToggleRight, Upload, Info, ArrowLeft, AlertCircle,
-  Lock as LockIcon, Palette, Package, MessageSquare, LayoutTemplate, Share2, Check
+  Lock as LockIcon, Palette, Package, MessageSquare, LayoutTemplate, Share2, Check, Store as StoreIcon
 } from 'lucide-react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Preferences } from '@capacitor/preferences';
@@ -20,7 +20,7 @@ import {
 } from './constants';
 import {
   Category, Product, ProductGroup, CartItem, ProductOption,
-  GlobalSettings, Role, Coupon, OrderRecord, OrderStatus, DeliveryMethod, OpeningHour
+  GlobalSettings, Role, Coupon, OrderRecord, OrderStatus, DeliveryMethod, OpeningHour, Store
 } from './types';
 import { CategoriesPage } from './CategoriesPage';
 import { ProductsPage } from './ProductsPage';
@@ -41,6 +41,9 @@ import {
   mockCoupons
 } from './mockData';
 import { ModernHomePage } from './ModernUI';
+import { LoginPage } from './LoginPage';
+import { PlatformHome } from './PlatformHome';
+import { PlatformAdminPanel } from './PlatformAdminPanel';
 
 
 
@@ -150,6 +153,7 @@ const Footer = () => {
 // --- Context ---
 
 interface AppContextType {
+  store: Store | null;
   products: Product[];
   categories: Category[];
   groups: ProductGroup[];
@@ -204,7 +208,15 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+export const useApp = () => {
+  const context = useContext(AppContext);
+  if (!context) throw new Error('useApp deve ser usado dentro de um AppProvider');
+  return context;
+};
+
 const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [store, setStore] = useState<Store | null>(null);
+
   // Dados locais (apenas carrinho e estado da UI)
   const [cart, setCart, cartLoaded] = usePersistedState<CartItem[]>('cart', []);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -222,12 +234,12 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [settings, setSettings] = useState<GlobalSettings>({
-    storeName: 'Obba Açaí',
-    logoUrl: LOGO_URL,
+    storeName: 'Minha Loja',
+    logoUrl: '',
     logoShape: 'circle',
     bannerUrl: '',
-    whatsappNumber: WHATSAPP_NUMBER,
-    storeStatus: 'auto',
+    whatsappNumber: '',
+    storeStatus: 'open',
     deliveryFee: 5.00,
     deliveryOnly: false,
     openingHours: []
@@ -333,6 +345,20 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   }, [isStorageLoaded]);
 
+  // Listen for UI changes from Landing Page
+  useEffect(() => {
+    const handleUIChange = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail === 'modern') {
+        setIsModernUI(true);
+      } else if (customEvent.detail === 'legacy') {
+        setIsModernUI(false);
+      }
+    };
+    window.addEventListener('changeUIMode', handleUIChange);
+    return () => window.removeEventListener('changeUIMode', handleUIChange);
+  }, [setIsModernUI]);
+
   // Visitor Tracking
   useEffect(() => {
     const trackVisitor = async () => {
@@ -368,10 +394,12 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       Notification.requestPermission();
     }
 
+    if (!store?.id) return;
+
     let previousOrderCount = orders.length;
 
     const handleNewOrder = async () => {
-      await fetchOrders();
+      await fetchOrders(store.id);
 
       // Check if a new order was added (count increased)
       if (orders.length > previousOrderCount && 'Notification' in window && Notification.permission === 'granted') {
@@ -389,19 +417,19 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     };
 
     const channels = [
-      supabase.channel('public:products').on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => fetchProducts()).subscribe(),
-      supabase.channel('public:categories').on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => fetchCategories()).subscribe(),
-      supabase.channel('public:groups').on('postgres_changes', { event: '*', schema: 'public', table: 'product_groups' }, () => fetchGroups()).subscribe(),
-      supabase.channel('public:options').on('postgres_changes', { event: '*', schema: 'public', table: 'product_options' }, () => fetchGroups()).subscribe(), // Recarrega grupos se opções mudarem
-      supabase.channel('public:coupons').on('postgres_changes', { event: '*', schema: 'public', table: 'coupons' }, () => fetchCoupons()).subscribe(),
-      supabase.channel('public:orders').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, handleNewOrder).subscribe(),
-      supabase.channel('public:settings').on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, () => fetchSettings()).subscribe(),
+      supabase.channel('public:products').on('postgres_changes', { event: '*', schema: 'public', table: 'products', filter: `store_id=eq.${store.id}` }, () => fetchProducts(store.id)).subscribe(),
+      supabase.channel('public:categories').on('postgres_changes', { event: '*', schema: 'public', table: 'categories', filter: `store_id=eq.${store.id}` }, () => fetchCategories(store.id)).subscribe(),
+      supabase.channel('public:groups').on('postgres_changes', { event: '*', schema: 'public', table: 'product_groups', filter: `store_id=eq.${store.id}` }, () => fetchGroups(store.id)).subscribe(),
+      supabase.channel('public:options').on('postgres_changes', { event: '*', schema: 'public', table: 'product_options', filter: `store_id=eq.${store.id}` }, () => fetchGroups(store.id)).subscribe(),
+      supabase.channel('public:coupons').on('postgres_changes', { event: '*', schema: 'public', table: 'coupons', filter: `store_id=eq.${store.id}` }, () => fetchCoupons(store.id)).subscribe(),
+      supabase.channel('public:orders').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders', filter: `store_id=eq.${store.id}` }, handleNewOrder).subscribe(),
+      supabase.channel('public:settings').on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `store_id=eq.${store.id}` }, () => fetchSettings(store.id)).subscribe(),
     ];
 
     return () => {
       channels.forEach(channel => supabase.removeChannel(channel));
     };
-  }, [orders.length]);
+  }, [orders.length, store?.id]);
 
   // --- Funções de Fetch ---
 
@@ -409,17 +437,54 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     try {
       if (isConfigured) {
         // Online Mode: Fetch from Supabase
-        await Promise.all([
-          fetchProducts().catch(e => console.error('Erro products:', e)),
-          fetchCategories().catch(e => console.error('Erro categories:', e)),
-          fetchGroups().catch(e => console.error('Erro groups:', e)),
-          fetchCoupons().catch(e => console.error('Erro coupons:', e)),
-          fetchOrders().catch(e => console.error('Erro orders:', e)),
-          fetchSettings().catch(e => console.error('Erro settings:', e))
-        ]);
+        
+        let currentStoreId: string | null = null;
+        const hash = window.location.hash;
+        
+        // 1. Check if logged into Admin Panel
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && session.user && (hash.includes('/panel') || hash.includes('/login'))) {
+          // Admin Mode: Fetch the store they own
+          const { data: storeData } = await supabase.from('stores').select('*').eq('owner_id', session.user.id).single();
+          if (storeData) {
+            setStore(storeData);
+            currentStoreId = storeData.id;
+            // Admin role is set on login, but we can enforce it here
+          }
+        } else {
+          // 2. Client Mode: Fetch store by slug
+          let slug = 'sabor-acaiteria'; // Default fallback
+          const match = hash.match(/^#\/([^\/]+)/);
+          
+          if (match && match[1] && !['login', 'panel', 'cart', 'checkout'].includes(match[1])) {
+            slug = match[1];
+          } else {
+             // Try to find if we already have it in localStorage
+             const savedSlug = localStorage.getItem('currentStoreSlug');
+             if (savedSlug) slug = savedSlug;
+          }
+          
+          const { data: storeData } = await supabase.from('stores').select('*').eq('slug', slug).single();
+          if (storeData) {
+            setStore(storeData);
+            currentStoreId = storeData.id;
+            localStorage.setItem('currentStoreSlug', slug);
+          }
+        }
+
+        if (currentStoreId) {
+          await Promise.all([
+            fetchProducts(currentStoreId).catch(e => console.error('Erro products:', e)),
+            fetchCategories(currentStoreId).catch(e => console.error('Erro categories:', e)),
+            fetchGroups(currentStoreId).catch(e => console.error('Erro groups:', e)),
+            fetchCoupons(currentStoreId).catch(e => console.error('Erro coupons:', e)),
+            fetchOrders(currentStoreId).catch(e => console.error('Erro orders:', e)),
+            fetchSettings(currentStoreId).catch(e => console.error('Erro settings:', e))
+          ]);
+        }
       } else {
         // Offline Mode: Load mock data (Sabor Açaíteria)
-        console.warn("⚠️ MODO OFFLINE: Carregando dados mock da Sabor Açaíteria...");
+        console.warn("⚠️ MODO OFFLINE: Carregando dados mock da Loja de Exemplo...");
         setProducts(mockProducts);
         setCategories(mockCategories);
         setGroups(mockGroups);
@@ -435,11 +500,11 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (storeId: string) => {
     const { data } = await supabase.from('products').select(`
       *,
       product_group_relations (group_id)
-    `).order('display_order', { ascending: true });
+    `).eq('store_id', storeId).order('display_order', { ascending: true });
 
     if (data) {
       // Mapear para o formato interno (adicionar groupIds e displayOrder)
@@ -458,8 +523,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   };
 
-  const fetchCategories = async () => {
-    const { data } = await supabase.from('categories').select('*').order('display_order', { ascending: true });
+  const fetchCategories = async (storeId: string) => {
+    const { data } = await supabase.from('categories').select('*').eq('store_id', storeId).order('display_order', { ascending: true });
     if (data) {
       const mappedCategories: Category[] = data.map(c => ({
         id: c.id,
@@ -472,11 +537,11 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   };
 
-  const fetchGroups = async () => {
+  const fetchGroups = async (storeId: string) => {
     const { data } = await supabase.from('product_groups').select(`
       *,
       options:product_options(*)
-    `);
+    `).eq('store_id', storeId);
 
     if (data) {
       // Mapear opções para garantir ordem ou formato se necessário
@@ -498,8 +563,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   };
 
-  const fetchCoupons = async () => {
-    const { data } = await supabase.from('coupons').select('*');
+  const fetchCoupons = async (storeId: string) => {
+    const { data } = await supabase.from('coupons').select('*').eq('store_id', storeId);
     if (data) {
       const mappedCoupons: Coupon[] = data.map(c => ({
         id: c.id,
@@ -514,8 +579,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   };
 
-  const fetchOrders = async () => {
-    const { data } = await supabase.from('orders').select('*').order('date', { ascending: false });
+  const fetchOrders = async (storeId: string) => {
+    const { data } = await supabase.from('orders').select('*').eq('store_id', storeId).order('date', { ascending: false });
     if (data) {
       // Mapear campos snake_case para camelCase
       const mappedOrders: OrderRecord[] = data.map(o => ({
@@ -535,8 +600,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   };
 
-  const fetchSettings = async () => {
-    const { data } = await supabase.from('settings').select('*').single();
+  const fetchSettings = async (storeId: string) => {
+    const { data } = await supabase.from('settings').select('*').eq('store_id', storeId).single();
     if (data) {
       setSettings({
         storeName: data.store_name,
@@ -633,7 +698,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       description: p.description,
       price: p.price,
       image: p.image,
-      category_id: p.categoryId
+      category_id: p.categoryId,
+      store_id: store?.id
     }]).select().single();
 
     if (error || !productData) {
@@ -707,7 +773,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
     // Wait for ID from DB for insert usually, so manual optimistic update is harder without ID.
     // relying on realtime for add is okay.
-    await supabase.from('categories').insert([{ title: c.title, icon: c.icon }]);
+    await supabase.from('categories').insert([{ title: c.title, icon: c.icon, store_id: store?.id }]);
   };
 
   const updateCategory = async (c: Category) => {
@@ -736,7 +802,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { data: groupData, error } = await supabase.from('product_groups').insert([{
       title: g.title,
       min: g.min,
-      max: g.max
+      max: g.max,
+      store_id: store?.id
     }]).select().single();
 
     if (error || !groupData) return;
@@ -747,7 +814,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         group_id: groupData.id,
         name: o.name,
         price: o.price,
-        description: o.description
+        description: o.description,
+        store_id: store?.id
       }));
       await supabase.from('product_options').insert(options);
     }
@@ -775,7 +843,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         name: o.name,
         price: o.price,
         description: o.description,
-        active: o.active // Persist option active status too
+        active: o.active, // Persist option active status too
+        store_id: store?.id
       }));
       await supabase.from('product_options').insert(options);
     }
@@ -800,7 +869,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       value: c.value,
       active: c.active,
       usage_count: c.usageCount,
-      min_order_value: c.minOrderValue
+      min_order_value: c.minOrderValue,
+      store_id: store?.id
     }]);
 
     if (error) {
@@ -854,7 +924,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     if (s.businessAddress !== undefined) dbSettings.business_address = s.businessAddress;
     if (s.copyrightText !== undefined) dbSettings.copyright_text = s.copyrightText;
 
-    await supabase.from('settings').update(dbSettings).eq('id', 1);
+    await supabase.from('settings').update(dbSettings).eq('store_id', store?.id);
   };
 
   const addOrder = async (o: OrderRecord) => {
@@ -874,7 +944,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       total: o.total,
       items_summary: o.itemsSummary,
       full_details: o.fullDetails,
-      status: o.status
+      status: o.status,
+      store_id: store?.id
     }]);
   };
 
@@ -985,11 +1056,6 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
-export const useApp = () => {
-  const context = useContext(AppContext);
-  if (!context) throw new Error("useApp must be used within AppProvider");
-  return context;
-};
 
 // --- Components ---
 
@@ -2032,8 +2098,22 @@ const CheckoutPage = () => {
 // --- Admin Panel (Full Features) ---
 
 const AdminPanel = () => {
-  const { adminRole, setAdminRole } = useApp();
+  const { adminRole, setAdminRole, store } = useApp();
   const navigate = useNavigate();
+  const [copiedLink, setCopiedLink] = useState<boolean>(false);
+
+  const handleCopyStoreLink = () => {
+    if (store) {
+      const link = `${window.location.origin}/#/${store.slug}`;
+      navigator.clipboard.writeText(link).then(() => {
+        setCopiedLink(true);
+        setTimeout(() => setCopiedLink(false), 2000);
+      }).catch(err => {
+        console.error('Falha ao copiar:', err);
+        alert('Erro ao copiar link da loja.');
+      });
+    }
+  };
 
   useEffect(() => {
     if (!adminRole) navigate('/');
@@ -2056,11 +2136,44 @@ const AdminPanel = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="flex justify-between items-center mb-6">
-        <div></div>
+        <div className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-orange-600 tracking-tight">
+          Painel do Lojista
+        </div>
         <button onClick={() => { setAdminRole(null); navigate('/'); }} className="text-red-600 flex items-center gap-2 font-bold p-2 hover:bg-red-50 rounded-lg transition-colors">
           <LogOut size={20} /> Sair
         </button>
       </div>
+
+      {/* Store Link Card */}
+      {store && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-purple-600 to-purple-800 rounded-2xl p-6 shadow-lg mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-white"
+        >
+          <div>
+            <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
+              <StoreIcon size={20} /> Seu Link de Divulgação
+            </h2>
+            <p className="text-purple-200 text-sm">Compartilhe este link com seus clientes para receber pedidos.</p>
+          </div>
+          <div className="flex items-center gap-2 bg-black/20 p-1.5 rounded-full w-full sm:w-auto">
+            <input 
+              type="text" 
+              readOnly 
+              value={`${window.location.origin}/#/${store.slug}`}
+              className="bg-transparent text-white font-medium text-sm outline-none px-3 w-full sm:w-64"
+            />
+            <button
+              onClick={handleCopyStoreLink}
+              className={`p-2 rounded-full transition-colors flex shrink-0 ${copiedLink ? 'bg-green-500 text-white' : 'bg-white text-purple-700 hover:bg-purple-100'}`}
+              title="Copiar Link"
+            >
+              {copiedLink ? <CheckCircle size={18} /> : <Share2 size={18} />}
+            </button>
+          </div>
+        </motion.div>
+      )}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {menuItems.filter(item => item.role.includes(adminRole || '')).map((item) => (
           <motion.div
@@ -3645,7 +3758,8 @@ const AppContent = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const isAdminRoute = location.pathname.startsWith('/panel');
+  const isAdminRoute = location.pathname.startsWith('/panel') || location.pathname.startsWith('/platform');
+  const isStorefrontRoute = !isAdminRoute && !['/', '/login', '/setup'].includes(location.pathname);
   const [showExitModal, setShowExitModal] = useState(false);
 
   useEffect(() => {
@@ -3671,7 +3785,7 @@ const AppContent = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-brand-purple">
         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white mb-4"></div>
-        <p className="text-white text-lg font-bold animate-pulse">Carregando sabor acaiteria...</p>
+        <p className="text-white text-lg font-bold animate-pulse">Carregando...</p>
       </div>
     );
   }
@@ -3683,10 +3797,10 @@ const AppContent = () => {
         onClose={() => setShowExitModal(false)}
         onConfirm={handleConfirmExit}
       />
-      {!isAdminRoute && location.pathname !== '/' && <Header />}
+      {isStorefrontRoute && <Header />}
 
       {/* Theme Switcher Button */}
-      {!isAdminRoute && (
+      {isStorefrontRoute && (
         <button
           onClick={() => setIsModernUI(!isModernUI)}
           className={`fixed top-16 md:bottom-20 md:top-auto right-4 z-[100] flex items-center gap-2 px-3 py-2 rounded-full shadow-lg transition-all text-xs font-bold font-outfit backdrop-blur-md border ${isModernUI ? 'bg-white/90 text-purple-700 border-purple-100 hover:bg-white' : 'bg-gray-900/90 text-white border-gray-700 hover:bg-gray-900'}`}
@@ -3697,7 +3811,8 @@ const AppContent = () => {
       )}
 
       <Routes>
-        <Route path="/" element={
+        <Route path="/" element={<PlatformHome />} />
+        <Route path="/:storeSlug" element={
           isModernUI ? (
             <ModernHomePage />
           ) : (
@@ -3709,8 +3824,11 @@ const AppContent = () => {
         } />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/login" element={<LoginPage />} />
 
         <Route path="/setup" element={<SetupPage />} />
+
+        <Route path="/platform" element={<PlatformAdminPanel />} />
 
         <Route path="/panel" element={<AdminPanel />} />
         <Route path="/panel/orders" element={<OrdersPage />} />
@@ -3752,17 +3870,18 @@ const AppContent = () => {
         } />
       </Routes>
 
-      {!isAdminRoute && <Sidebar />}
-      {!isAdminRoute && (!isModernUI || location.pathname !== '/') && <FloatingCartButton />}
+      {isStorefrontRoute && <Sidebar />}
+      {isStorefrontRoute && <FloatingCartButton />}
       {location.pathname === '/' && <Footer />}
     </div>
   );
 };
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
+  public state: { hasError: boolean, error: Error | null } = { hasError: false, error: null };
+  
   constructor(props: { children: React.ReactNode }) {
     super(props);
-    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: Error) {
@@ -3792,7 +3911,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
       );
     }
 
-    return this.props.children;
+    return (this as any).props.children;
   }
 }
 
