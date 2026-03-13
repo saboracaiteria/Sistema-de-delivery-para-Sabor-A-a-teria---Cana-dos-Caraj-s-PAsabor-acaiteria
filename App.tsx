@@ -219,6 +219,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   // Dados locais (apenas carrinho e estado da UI)
   const [cart, setCart, cartLoaded] = usePersistedState<CartItem[]>('cart', []);
+  const currentCart = useMemo(() => cart.filter(item => item.product.storeId === store?.id), [cart, store?.id]);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [adminRole, setAdminRole, roleLoaded] = usePersistedState<Role>('adminRole', null);
   const [appliedCoupon, setAppliedCoupon, couponLoaded] = usePersistedState<Coupon | null>('appliedCoupon', null);
@@ -445,10 +446,15 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session && session.user && (hash.includes('/panel') || hash.includes('/login'))) {
           // Admin Mode: Fetch the store they own
-          const { data: storeData } = await supabase.from('stores').select('*').eq('owner_id', session.user.id).single();
-          if (storeData) {
-            setStore(storeData);
-            currentStoreId = storeData.id;
+          const { data: storesData } = await supabase.from('stores').select('*').eq('owner_id', session.user.id);
+          if (storesData && storesData.length > 0) {
+            const savedSlug = localStorage.getItem('currentStoreSlug');
+            let matchedStore = storesData.find(s => s.slug === savedSlug);
+            if (!matchedStore) matchedStore = storesData[0];
+            
+            setStore(matchedStore);
+            currentStoreId = matchedStore.id;
+            localStorage.setItem('currentStoreSlug', matchedStore.slug);
             // Admin role is set on login, but we can enforce it here
           }
         } else {
@@ -481,6 +487,15 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             fetchOrders(currentStoreId).catch(e => console.error('Erro orders:', e)),
             fetchSettings(currentStoreId).catch(e => console.error('Erro settings:', e))
           ]);
+        } else {
+          // Clear state if no store is resolved
+          setStore(null);
+          setProducts([]);
+          setCategories([]);
+          setGroups([]);
+          setCoupons([]);
+          setOrders([]);
+          setSettings(mockSettings);
         }
       } else {
         // Offline Mode: Load mock data (Sabor Açaíteria)
@@ -517,7 +532,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         categoryId: p.category_id,
         groupIds: p.product_group_relations?.map((r: any) => r.group_id) || [],
         displayOrder: p.display_order ?? 0,
-        active: p.active ?? true
+        active: p.active ?? true,
+        storeId: p.store_id || storeId
       }));
       setProducts(mappedProducts);
     }
@@ -681,7 +697,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     setCart(prev => prev.map(item => item.cartId === cartId ? { ...item, note } : item));
   };
 
-  const clearCart = () => setCart([]);
+  const clearCart = () => setCart(prev => prev.filter(item => item.product.storeId !== store?.id));
 
   const addProduct = async (p: Product) => {
     if (!isConfigured) {
@@ -689,6 +705,11 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       const mockId = Date.now().toString();
       const newProduct = { ...p, id: mockId };
       setProducts(prev => [...prev, newProduct]);
+      return;
+    }
+
+    if (!store?.id) {
+      alert("Erro: Loja não identificada. Por favor, recarregue a página.");
       return;
     }
 
@@ -771,6 +792,10 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       setCategories(prev => [...prev, newCat]);
       return;
     }
+    if (!store?.id) {
+      alert("Erro: Loja não identificada.");
+      return;
+    }
     // Wait for ID from DB for insert usually, so manual optimistic update is harder without ID.
     // relying on realtime for add is okay.
     await supabase.from('categories').insert([{ title: c.title, icon: c.icon, store_id: store?.id }]);
@@ -795,6 +820,11 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       console.warn("OFFLINE: Group added locally.");
       const newGroup = { ...g, id: Date.now().toString() };
       setGroups(prev => [...prev, newGroup]);
+      return;
+    }
+
+    if (!store?.id) {
+      alert("Erro: Loja não identificada.");
       return;
     }
 
@@ -860,6 +890,11 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       console.warn("OFFLINE: Coupon added locally.");
       const newCoupon = { ...c, id: Date.now().toString() };
       setCoupons(prev => [...prev, newCoupon]);
+      return;
+    }
+
+    if (!store?.id) {
+      alert("Erro: Loja não identificada.");
       return;
     }
 
@@ -932,6 +967,11 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       console.warn("OFFLINE: Order added locally.");
       setOrders(prev => [o, ...prev]);
       return;
+    }
+
+    if (!store?.id) {
+        console.error("Erro: Loja não identificada ao criar pedido.");
+        return;
     }
 
     await supabase.from('orders').insert([{
@@ -1034,7 +1074,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   return (
     <AppContext.Provider value={{
-      products, categories, groups, cart, settings, coupons, orders, adminRole, isSidebarOpen,
+      products, categories, groups, cart: currentCart, settings, coupons, orders, adminRole, isSidebarOpen,
       isModernUI, setIsModernUI,
       addToCart, removeFromCart, updateCartQuantity, updateCartNote, clearCart,
       addProduct, updateProduct, deleteProduct, reorderProducts,
@@ -1737,7 +1777,7 @@ const HomePage = () => {
 };
 
 const FloatingCartButton = () => {
-  const { cart } = useApp();
+  const { store, cart } = useApp();
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const navigate = useNavigate();
 
@@ -1758,7 +1798,7 @@ const FloatingCartButton = () => {
 
   return (
     <button
-      onClick={() => navigate('/cart')}
+      onClick={() => navigate(`/${store?.slug}/cart`)}
       className={`fixed bottom-6 right-6 w-16 h-16 bg-brand-red text-white rounded-full shadow-lg flex items-center justify-center z-50 hover:opacity-90 transition-all ${animate ? 'scale-125' : 'scale-100'}`}
     >
       <ShoppingCart size={28} />
@@ -1770,7 +1810,7 @@ const FloatingCartButton = () => {
 };
 
 const CartPage = () => {
-  const { cart, updateCartQuantity, removeFromCart, updateCartNote, settings, checkStoreStatus, appliedCoupon, applyCoupon, removeCoupon, groups, isStoreOpen } = useApp();
+  const { store, cart, updateCartQuantity, removeFromCart, updateCartNote, settings, checkStoreStatus, appliedCoupon, applyCoupon, removeCoupon, groups, isStoreOpen } = useApp();
   const navigate = useNavigate();
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
@@ -1962,7 +2002,7 @@ const CartPage = () => {
                 <span className="text-[9px]">Não aceitamos pedidos</span>
               </button>
             ) : (
-              <button onClick={() => navigate('/checkout')} className="flex-1 py-3 bg-red-600 text-white font-bold rounded text-xs uppercase hover:bg-red-700">
+              <button onClick={() => navigate(`/${store?.slug}/checkout`)} className="flex-1 py-3 bg-red-600 text-white font-bold rounded text-xs uppercase hover:bg-red-700">
                 FINALIZAR PEDIDO
               </button>
             )}
@@ -1974,7 +2014,7 @@ const CartPage = () => {
 };
 
 const CheckoutPage = () => {
-  const { cart, settings, clearCart, addOrder, appliedCoupon, removeCoupon, groups, isStoreOpen } = useApp();
+  const { store, cart, settings, clearCart, addOrder, appliedCoupon, removeCoupon, groups, isStoreOpen } = useApp();
   const [customerName, setCustomerName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -2044,14 +2084,14 @@ const CheckoutPage = () => {
     window.open(url, '_blank');
     clearCart();
     removeCoupon();
-    navigate('/');
+    navigate(`/${store?.slug}`);
   };
 
   return (
     <div className="min-h-screen bg-[#333] p-4 text-white">
       <div className="max-w-md mx-auto">
         <div className="flex items-center mb-6">
-          <button onClick={() => navigate('/cart')}><ChevronLeft /></button>
+          <button onClick={() => navigate(`/${store?.slug}/cart`)}><ChevronLeft /></button>
           <h2 className="ml-4 font-bold">PREENCHA OS CAMPOS</h2>
         </div>
 
@@ -3039,7 +3079,7 @@ const AddonsPage = () => {
 };
 
 const SettingsPage = () => {
-  const { settings, updateSettings, isStoreOpen } = useApp();
+  const { store, settings, updateSettings, isStoreOpen } = useApp();
   const navigate = useNavigate();
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -3054,7 +3094,7 @@ const SettingsPage = () => {
     try {
       setIsUploading(true);
       const fileExt = file.name.split('.').pop();
-      const fileName = `store-assets/${Date.now()}.${fileExt}`;
+      const fileName = `store-assets/${store?.id || 'default'}/${crypto.randomUUID()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -3544,8 +3584,8 @@ const SettingsPage = () => {
 
             <div>TESTE DE ENV VARS:</div>
             <div>
-              URL: {import.meta.env.VITE_SUPABASE_URL ? '✅ OK' : '❌ VAZIO'}<br />
-              KEY: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ OK' : '❌ VAZIO'}
+              URL: {(import.meta as any).env.VITE_SUPABASE_URL ? '✅ OK' : '❌ VAZIO'}<br />
+              KEY: {(import.meta as any).env.VITE_SUPABASE_ANON_KEY ? '✅ OK' : '❌ VAZIO'}
             </div>
           </div>
           <p className="mt-2 text-[10px] text-gray-400">
@@ -3749,7 +3789,7 @@ const ExitModal = ({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose: (
 
 const AppContent = () => {
   const {
-    categories, addCategory, updateCategory, deleteCategory,
+    store, categories, addCategory, updateCategory, deleteCategory,
     products, addProduct, updateProduct, deleteProduct, reorderProducts,
     groups, orders, loading, isModernUI, setIsModernUI
   } = useApp();
@@ -3822,8 +3862,8 @@ const AppContent = () => {
             </>
           )
         } />
-        <Route path="/cart" element={<CartPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/:storeSlug/cart" element={<CartPage />} />
+        <Route path="/:storeSlug/checkout" element={<CheckoutPage />} />
         <Route path="/login" element={<LoginPage />} />
 
         <Route path="/setup" element={<SetupPage />} />
@@ -3842,6 +3882,7 @@ const AppContent = () => {
 
         <Route path="/panel/categories" element={
           <CategoriesPage
+            storeName={store?.name}
             categories={categories}
             addCategory={addCategory}
             updateCategory={updateCategory}
@@ -3851,6 +3892,7 @@ const AppContent = () => {
 
         <Route path="/panel/products" element={
           <ProductsPage
+            storeName={store?.name}
             products={products}
             categories={categories}
             groups={groups}

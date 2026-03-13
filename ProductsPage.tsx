@@ -29,6 +29,7 @@ interface ProductGroup {
 }
 
 interface ProductsPageProps {
+    storeName?: string;
     products: Product[];
     categories: Category[];
     groups: ProductGroup[];
@@ -39,6 +40,7 @@ interface ProductsPageProps {
 }
 
 export const ProductsPage: React.FC<ProductsPageProps> = ({
+    storeName,
     products,
     categories,
     groups,
@@ -74,8 +76,9 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
         try {
             setIsUploading(true);
             const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}.${fileExt}`;
-            const filePath = `${fileName}`;
+            const folderName = storeName ? storeName.replace(/\s+/g, '-').toLowerCase() : 'default';
+            const fileName = `${crypto.randomUUID()}.${fileExt}`;
+            const filePath = `${folderName}/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
                 .from('product-images')
@@ -248,7 +251,10 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                     <button onClick={() => navigate('/panel')}><ChevronLeft /></button>
-                    <h1 className="text-xl font-bold">Produtos</h1>
+                    <div>
+                        <h1 className="text-xl font-bold">Produtos</h1>
+                        {storeName && <p className="text-sm text-gray-500 font-medium">Loja: <span className="text-purple-600">{storeName}</span></p>}
+                    </div>
                 </div>
                 <button
                     onClick={() => handleOpenModal()}

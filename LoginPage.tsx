@@ -43,13 +43,12 @@ export const LoginPage = () => {
 
       if (data.user) {
         // Find if this user owns a store
-        const { data: storeData, error: storeError } = await supabase
+        const { data: storesData, error: storeError } = await supabase
           .from('stores')
           .select('*')
-          .eq('owner_id', data.user.id)
-          .single();
+          .eq('owner_id', data.user.id);
           
-        if (storeError && storeError.code !== 'PGRST116') {
+        if (storeError) {
              console.error("Error finding store:", storeError);
         }
 

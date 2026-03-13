@@ -181,7 +181,7 @@ export const ModernProductCard: React.FC<{ product: Product, index: number }> = 
 
 // Modern Floating Cart
 export const ModernFloatingCart = () => {
-    const { cart, settings } = useApp();
+    const { store, cart, settings } = useApp();
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
     const cartTotal = cart.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0);
     const navigate = useNavigate();
@@ -207,7 +207,7 @@ export const ModernFloatingCart = () => {
             className="fixed bottom-4 left-4 right-4 z-50 flex justify-center pointer-events-none"
         >
             <button
-                onClick={() => navigate('/cart')}
+                onClick={() => navigate(`/${store?.slug}/cart`)}
                 className={`pointer-events-auto w-full max-w-md bg-[#4E0797] text-white rounded-2xl shadow-[0_10px_40px_rgba(78,7,151,0.4)] flex items-center justify-between p-4 overflow-hidden relative group transition-transform ${animate ? 'scale-[1.02]' : 'scale-100'}`}
             >
                 {/* Shimmer effect */}
