@@ -109,11 +109,10 @@ CREATE POLICY "Owner manage own orders" ON orders FOR ALL
 -- Garante que o próximo ID gerado não conflite com os existentes
 SELECT setval(pg_get_serial_sequence('settings', 'id'), coalesce(max(id), 0) + 1, false) FROM settings;
 
--- Criar settings faltantes apenas para lojas que realmente não possuem (evita erro de duplicata)
+-- Criar settings faltantes apenas para lojas que realmente não possuem
 INSERT INTO settings (store_id, store_name, store_status)
 SELECT id, name, 'open'
 FROM stores
-WHERE id NOT IN (SELECT store_id FROM settings)
-ON CONFLICT (store_id) DO NOTHING;
+WHERE id NOT IN (SELECT store_id FROM settings);
 
-SELECT 'RLS MASTER FIX V4 + RECOVERY: Sequence synced and stores recovered! ✅' as status;
+SELECT 'RLS MASTER FIX V5 + RECOVERY: Sequence synced and stores recovered! ✅' as status;
