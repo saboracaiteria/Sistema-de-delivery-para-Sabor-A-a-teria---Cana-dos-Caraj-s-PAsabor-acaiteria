@@ -49,8 +49,9 @@ import { PlatformAdminPanel } from './PlatformAdminPanel';
 
 
 // --- Helper Functions ---
+const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  return currencyFormatter.format(value);
 };
 
 const fileToBase64 = (file: File): Promise<string> => {
@@ -432,16 +433,14 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     };
   }, [orders.length, store?.id]);
 
-  // --- Funções de Fetch ---
-
+  // --- Funções de Fetch
   const fetchData = async () => {
     try {
       if (isConfigured) {
         // Online Mode: Fetch from Supabase
-        
         let currentStoreId: string | null = null;
         const hash = window.location.hash;
-        
+
         // 1. Check if logged into Admin Panel
         const { data: { session } } = await supabase.auth.getSession();
         if (session && session.user && (hash.includes('/panel') || hash.includes('/login'))) {
@@ -451,25 +450,24 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             const savedSlug = localStorage.getItem('currentStoreSlug');
             let matchedStore = storesData.find(s => s.slug === savedSlug);
             if (!matchedStore) matchedStore = storesData[0];
-            
+
             setStore(matchedStore);
             currentStoreId = matchedStore.id;
             localStorage.setItem('currentStoreSlug', matchedStore.slug);
-            // Admin role is set on login, but we can enforce it here
           }
         } else {
           // 2. Client Mode: Fetch store by slug
           let slug = 'sabor-acaiteria'; // Default fallback
           const match = hash.match(/^#\/([^\/]+)/);
-          
+
           if (match && match[1] && !['login', 'panel', 'cart', 'checkout'].includes(match[1])) {
             slug = match[1];
           } else {
-             // Try to find if we already have it in localStorage
-             const savedSlug = localStorage.getItem('currentStoreSlug');
-             if (savedSlug) slug = savedSlug;
+            // Try to find if we already have it in localStorage
+            const savedSlug = localStorage.getItem('currentStoreSlug');
+            if (savedSlug) slug = savedSlug;
           }
-          
+
           const { data: storeData } = await supabase.from('stores').select('*').eq('slug', slug).single();
           if (storeData) {
             setStore(storeData);
@@ -480,39 +478,47 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
         if (currentStoreId) {
           await Promise.all([
-            fetchProducts(currentStoreId).catch(e => console.error('Erro products:', e)),
-            fetchCategories(currentStoreId).catch(e => console.error('Erro categories:', e)),
-            fetchGroups(currentStoreId).catch(e => console.error('Erro groups:', e)),
-            fetchCoupons(currentStoreId).catch(e => console.error('Erro coupons:', e)),
-            fetchOrders(currentStoreId).catch(e => console.error('Erro orders:', e)),
-            fetchSettings(currentStoreId).catch(e => console.error('Erro settings:', e))
+            fetchProducts(currentStoreId),
+            fetchCategories(currentStoreId),
+            fetchGroups(currentStoreId),
+            fetchCoupons(currentStoreId),
+            fetchOrders(currentStoreId),
+            fetchSettings(currentStoreId)
           ]);
         } else {
           // Clear state if no store is resolved
-          setStore(null);
-          setProducts([]);
-          setCategories([]);
-          setGroups([]);
-          setCoupons([]);
-          setOrders([]);
-          setSettings(mockSettings);
+          batch(() => {
+            setStore(null);
+            setProducts([]);
+            setCategories([]);
+            setGroups([]);
+            setCoupons([]);
+            setOrders([]);
+            setSettings(mockSettings);
+          });
         }
       } else {
         // Offline Mode: Load mock data (Sabor Açaíteria)
         console.warn("⚠️ MODO OFFLINE: Carregando dados mock da Loja de Exemplo...");
-        setProducts(mockProducts);
-        setCategories(mockCategories);
-        setGroups(mockGroups);
-        setCoupons(mockCoupons);
-        setOrders([]);
-        setSettings(mockSettings);
+        batch(() => {
+          setProducts(mockProducts);
+          setCategories(mockCategories);
+          setGroups(mockGroups);
+          setCoupons(mockCoupons);
+          setOrders([]);
+          setSettings(mockSettings);
+        });
         console.log("✅ Dados mock carregados com sucesso!");
         console.log(`   📦 ${mockProducts.length} produtos | 📂 ${mockCategories.length} categorias | 🎁 ${mockCoupons.length} cupons`);
       }
     } catch (e) {
-      console.error('Erro no Promise.all:', e);
+      console.error('Erro ao carregar dados:', e);
+    } finally {
+      setLoading(false);
     }
   };
+
+  const batch = (fn: () => void) => fn();
 
 
   const fetchProducts = async (storeId: string) => {

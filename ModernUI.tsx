@@ -96,7 +96,7 @@ export const ModernHero = () => {
 };
 
 // Modern Product Card
-export const ModernProductCard: React.FC<{ product: Product, index: number }> = ({ product, index }) => {
+export const ModernProductCard = React.memo(({ product, index }: { product: Product, index: number }) => {
     const { addToCart, isStoreOpen } = useApp();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showClosedToast, setShowClosedToast] = useState(false);
@@ -177,7 +177,7 @@ export const ModernProductCard: React.FC<{ product: Product, index: number }> = 
             </AnimatePresence>
         </>
     );
-};
+});
 
 // Modern Floating Cart
 export const ModernFloatingCart = () => {
