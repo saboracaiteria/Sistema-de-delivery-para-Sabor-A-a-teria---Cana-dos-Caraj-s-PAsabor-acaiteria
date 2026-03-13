@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode, X, Share2, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useApp } from './App';
 
 export const ShareQRCode = ({ variant = 'default' }: { variant?: 'default' | 'modern' }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [copied, setCopied] = useState(false);
+    const { store } = useApp();
 
-    // Default to the vercel URL for sharing, since localhost QR won't work for other devices
-    const shareUrl = "https://sabor-acaiteria.vercel.app/";
+    // Build dynamic URL based on current store slug
+    const shareUrl = `${window.location.origin}/#/${store?.slug || ''}`;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(shareUrl).then(() => {

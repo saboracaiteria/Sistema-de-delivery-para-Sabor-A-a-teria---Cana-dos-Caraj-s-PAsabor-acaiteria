@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
-import { Store, LogOut, ChevronRight, Activity, Copy, CheckCircle, Plus, X, Palette, LayoutTemplate, Loader2 } from 'lucide-react';
+import { Store, LogOut, ChevronRight, Activity, Copy, CheckCircle, Plus, X, Palette, LayoutTemplate, Loader2, Trash2 } from 'lucide-react';
 import { useApp } from './App';
 import type { Store as StoreType } from './types';
 
@@ -49,6 +49,36 @@ export const PlatformAdminPanel = () => {
   const handleStoreCreated = () => {
     setShowCreateModal(false);
     fetchStores();
+  };
+
+  const handleDeleteStore = async (store: StoreType) => {
+    const confirmed = window.confirm(`Tem certeza que deseja EXCLUIR a loja "${store.name}"?\n\nIsso vai apagar TODOS os dados da loja (produtos, categorias, pedidos, etc).\n\nEssa ação NÃO pode ser desfeita!`);
+    if (!confirmed) return;
+
+    try {
+      // Delete related data first (foreign key constraints)
+      await supabase.from('orders').delete().eq('store_id', store.id);
+      await supabase.from('product_group_relations').delete().in('product_id', 
+        (await supabase.from('products').select('id').eq('store_id', store.id)).data?.map(p => p.id) || []
+      );
+      await supabase.from('product_options').delete().eq('store_id', store.id);
+      await supabase.from('product_groups').delete().eq('store_id', store.id);
+      await supabase.from('products').delete().eq('store_id', store.id);
+      await supabase.from('categories').delete().eq('store_id', store.id);
+      await supabase.from('coupons').delete().eq('store_id', store.id);
+      await supabase.from('settings').delete().eq('store_id', store.id);
+      
+      const { error } = await supabase.from('stores').delete().eq('id', store.id);
+      if (error) {
+        alert(`Erro ao excluir loja: ${error.message}`);
+        return;
+      }
+      
+      setStores(prev => prev.filter(s => s.id !== store.id));
+      alert('Loja excluída com sucesso!');
+    } catch (err: any) {
+      alert(`Erro ao excluir: ${err.message}`);
+    }
   };
 
   if (loading) {
@@ -135,8 +165,17 @@ export const PlatformAdminPanel = () => {
               <h3 className="text-xl font-bold text-gray-900 mb-1">{store.name}</h3>
 
               <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
-                <div className="bg-gray-100 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600">
-                  /{store.slug}
+                <div className="flex items-center gap-2">
+                  <div className="bg-gray-100 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600">
+                    /{store.slug}
+                  </div>
+                  <button
+                    onClick={() => handleDeleteStore(store)}
+                    className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                    title="Excluir Loja"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
                 <a
                   href={`/#/${store.slug}`}
