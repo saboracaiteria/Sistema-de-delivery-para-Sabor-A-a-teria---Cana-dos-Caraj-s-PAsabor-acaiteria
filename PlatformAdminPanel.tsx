@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
-import { Store, LogOut, ChevronRight, Activity, Copy, CheckCircle, Plus, X, Palette, LayoutTemplate, Loader2, Trash2 } from 'lucide-react';
+import { Store, LogOut, ChevronRight, Activity, Copy, CheckCircle, Plus, X, Palette, LayoutTemplate, Loader2, Trash2, AlertTriangle, Lock } from 'lucide-react';
 import { useApp } from './App';
 import type { Store as StoreType } from './types';
+import { SUPER_ADMIN_PASSWORD } from './constants';
 
 export const PlatformAdminPanel = () => {
   const { adminRole, setAdminRole } = useApp();
@@ -51,10 +52,9 @@ export const PlatformAdminPanel = () => {
     fetchStores();
   };
 
-  const handleDeleteStore = async (store: StoreType) => {
-    const confirmed = window.confirm(`Tem certeza que deseja EXCLUIR a loja "${store.name}"?\n\nIsso vai apagar TODOS os dados da loja (produtos, categorias, pedidos, etc).\n\nEssa ação NÃO pode ser desfeita!`);
-    if (!confirmed) return;
+  const [deleteTarget, setDeleteTarget] = useState<StoreType | null>(null);
 
+  const handleDeleteStore = async (store: StoreType) => {
     try {
       // Delete related data first (foreign key constraints)
       await supabase.from('orders').delete().eq('store_id', store.id);
@@ -75,6 +75,7 @@ export const PlatformAdminPanel = () => {
       }
       
       setStores(prev => prev.filter(s => s.id !== store.id));
+      setDeleteTarget(null);
       alert('Loja excluída com sucesso!');
     } catch (err: any) {
       alert(`Erro ao excluir: ${err.message}`);
@@ -170,7 +171,7 @@ export const PlatformAdminPanel = () => {
                     /{store.slug}
                   </div>
                   <button
-                    onClick={() => handleDeleteStore(store)}
+                    onClick={() => setDeleteTarget(store)}
                     className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                     title="Excluir Loja"
                   >
@@ -210,6 +211,17 @@ export const PlatformAdminPanel = () => {
           <CreateStoreModal
             onClose={() => setShowCreateModal(false)}
             onCreated={handleStoreCreated}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Delete Store Confirmation Modal */}
+      <AnimatePresence>
+        {deleteTarget && (
+          <DeleteStoreModal
+            store={deleteTarget}
+            onClose={() => setDeleteTarget(null)}
+            onConfirm={() => handleDeleteStore(deleteTarget)}
           />
         )}
       </AnimatePresence>
@@ -504,6 +516,151 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
               </button>
             </>
           )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// --- Delete Store Confirmation Modal ---
+
+interface DeleteStoreModalProps {
+  store: StoreType;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
+const DeleteStoreModal: React.FC<DeleteStoreModalProps> = ({ store, onClose, onConfirm }) => {
+  const [password1, setPassword1] = useState('');
+  const [password2, setPassword2] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setError(null);
+
+    if (!password1 || !password2) {
+      setError('Preencha os dois campos de senha.');
+      return;
+    }
+
+    if (password1 !== password2) {
+      setError('As senhas não coincidem. Digite novamente.');
+      setPassword1('');
+      setPassword2('');
+      return;
+    }
+
+    if (password1 !== SUPER_ADMIN_PASSWORD) {
+      setError('Senha incorreta. Acesso negado.');
+      setPassword1('');
+      setPassword2('');
+      return;
+    }
+
+    setDeleting(true);
+    await onConfirm();
+    setDeleting(false);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-red-600 to-red-800 p-6 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <AlertTriangle size={24} className="text-white" />
+            <h2 className="text-xl font-black text-white">Excluir Loja</h2>
+          </div>
+          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Warning */}
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+            <p className="text-red-800 font-bold text-lg mb-1">"{store.name}"</p>
+            <p className="text-red-600 text-sm font-medium">
+              Todos os produtos, categorias, pedidos, cupons e configurações serão <strong>apagados permanentemente</strong>.
+            </p>
+          </div>
+
+          {error && (
+            <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm font-medium border border-red-100">
+              {error}
+            </div>
+          )}
+
+          {/* Password 1 */}
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1.5">
+              <Lock size={14} className="inline mr-1" />
+              Digite sua senha de Super Admin
+            </label>
+            <input
+              type="password"
+              value={password1}
+              onChange={e => setPassword1(e.target.value)}
+              className="w-full border border-gray-200 p-3 rounded-xl bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none font-medium"
+              placeholder="••••••••"
+              disabled={deleting}
+            />
+          </div>
+
+          {/* Password 2 */}
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1.5">
+              <Lock size={14} className="inline mr-1" />
+              Confirme a senha novamente
+            </label>
+            <input
+              type="password"
+              value={password2}
+              onChange={e => setPassword2(e.target.value)}
+              className="w-full border border-gray-200 p-3 rounded-xl bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none font-medium"
+              placeholder="••••••••"
+              disabled={deleting}
+            />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              disabled={deleting}
+              className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleting || !password1 || !password2}
+              className="flex-1 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" /> Excluindo...
+                </>
+              ) : (
+                <>
+                  <Trash2 size={18} /> Excluir
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </motion.div>
     </motion.div>
