@@ -1784,7 +1784,7 @@ const CartPage = () => {
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#f6f6f6]">
         <ShoppingCart size={64} className="text-gray-300 mb-4" />
         <h2 className="text-xl font-bold text-gray-600">Seu carrinho está vazio</h2>
-        <button onClick={() => navigate('/')} className="mt-6 px-6 py-2 bg-brand-red text-white rounded-lg font-bold">Voltar</button>
+        <button onClick={() => navigate(`/${store?.slug || ''}`)} className="mt-6 px-6 py-2 bg-brand-red text-white rounded-lg font-bold">Voltar</button>
       </div>
     );
   }
@@ -1929,7 +1929,7 @@ const CartPage = () => {
             <span className="bg-black text-white px-4 py-1 rounded font-bold text-sm">TOTAL {formatCurrency(finalTotal)}</span>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => navigate('/')} className="flex-1 py-3 bg-gray-200 text-gray-700 font-bold rounded text-xs uppercase">
+            <button onClick={() => navigate(`/${store?.slug || ''}`)} className="flex-1 py-3 bg-gray-200 text-gray-700 font-bold rounded text-xs uppercase">
               CONTINUAR COMPRANDO
             </button>
             {!isStoreOpen ? (
@@ -1960,7 +1960,7 @@ const CheckoutPage = () => {
 
   useEffect(() => {
     if (!isStoreOpen) {
-      navigate('/');
+      navigate(`/${store?.slug || ''}`);
     }
   }, [isStoreOpen, navigate]);
 
