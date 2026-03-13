@@ -14,6 +14,9 @@ import {
 import { App as CapacitorApp } from '@capacitor/app';
 import { Preferences } from '@capacitor/preferences';
 import { usePrinter } from './PrinterContext';
+import { usePersistedState } from './usePersistedState';
+import { formatCurrency, calculateStoreStatus, fileToBase64 } from './storeUtils';
+import { Footer } from './Footer';
 import {
   CATEGORIES, PRODUCTS, GROUPS, WHATSAPP_NUMBER, LOGO_URL,
   PAYMENT_METHODS, INITIAL_COUPONS, MOCK_ORDERS
@@ -48,108 +51,11 @@ import { PlatformAdminPanel } from './PlatformAdminPanel';
 
 
 
-// --- Helper Functions ---
-const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-const formatCurrency = (value: number) => {
-  return currencyFormatter.format(value);
-};
+// --- Custom Hooks (Modularized to usePersistedState.ts) ---
 
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = error => reject(error);
-  });
-};
+// --- UI Components (Modularized to Footer.tsx) ---
 
-// --- Custom Hooks ---
-
-const usePersistedState = <T,>(key: string, initialValue: T) => {
-  const [state, setState] = useState<T>(initialValue);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  // Load initial state
-  useEffect(() => {
-    const loadState = async () => {
-      try {
-        const { value } = await Preferences.get({ key });
-        if (value) {
-          setState(JSON.parse(value));
-        }
-      } catch (error) {
-        console.error(`Error loading ${key} from Preferences:`, error);
-      } finally {
-        setIsLoaded(true);
-      }
-    };
-    loadState();
-  }, [key]);
-
-  // Save state on change (only after initial load)
-  useEffect(() => {
-    if (!isLoaded) return;
-
-    const saveState = async () => {
-      try {
-        await Preferences.set({ key, value: JSON.stringify(state) });
-      } catch (error) {
-        console.error(`Error saving ${key} to Preferences:`, error);
-        // Basic check for storage issues (though Preferences handles this differently than localStorage)
-      }
-    };
-    saveState();
-  }, [key, state, isLoaded]);
-
-  return [state, setState, isLoaded] as const;
-};
-
-// --- Footer Component ---
-const Footer = () => {
-  const { settings } = useApp();
-
-  return (
-    <div className="bg-gray-800 text-gray-300 py-4 px-4 mt-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Instagram Link */}
-        <div className="flex justify-center mb-3">
-          <a
-            href={settings.instagramUrl || "https://www.instagram.com/obba_acai_/"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white px-4 py-2 rounded-full font-bold hover:opacity-90 transition-opacity shadow-lg text-sm"
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-            </svg>
-            Siga-nos no Instagram
-          </a>
-        </div>
-
-        {/* Location & Year */}
-        <div className="text-center mb-2">
-          <p className="text-xs">{settings.businessAddress || "Canaã dos Carajás - PA"}</p>
-          <p className="text-[10px] text-gray-400 mt-0.5">{settings.copyrightText || "© 2025-2026 Obba Açaí"}</p>
-        </div>
-
-        {/* Developer Credit */}
-        <div className="text-center pt-2 border-t border-gray-700">
-          <p className="text-[10px]">
-            Desenvolvido por{' '}
-            <a
-              href="https://www.instagram.com/_nildoxz/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-purple-400 font-semibold hover:text-purple-300 transition-colors"
-            >
-              @_nildoxz
-            </a>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
+// --- Context ---
 
 // --- Context ---
 
@@ -250,72 +156,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Reactive Store Status
   const [isStoreOpen, setIsStoreOpen] = useState(false);
 
-  // Helper function for store status logic (Pure)
-  const calculateStoreStatus = (currentSettings: GlobalSettings): boolean => {
-    if (!currentSettings || !currentSettings.openingHours || !Array.isArray(currentSettings.openingHours)) {
-      return false;
-    }
-
-    if (currentSettings.storeStatus === 'open') return true;
-    if (currentSettings.storeStatus === 'closed') return false;
-
-    // Auto Mode
-    const now = new Date();
-    const day = now.getDay();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
-
-    // 1. Check Today's Schedule
-    const todayConfig = currentSettings.openingHours.find(h => h.dayOfWeek === day);
-    if (todayConfig && todayConfig.enabled && todayConfig.open && todayConfig.close) {
-      const [oh, om] = todayConfig.open.split(':').map(Number);
-      const [ch, cm] = todayConfig.close.split(':').map(Number);
-
-      if (!isNaN(oh) && !isNaN(om) && !isNaN(ch) && !isNaN(cm)) {
-        const openTime = oh * 60 + om;
-        const closeTime = ch * 60 + cm;
-
-        if (closeTime < openTime) {
-          // Crosses midnight (e.g. 18:00 - 02:00)
-          // Open if we are AFTER open time (evening) OR BEFORE close time (early morning of next day logic handled below? No, "Today" covers 18:00-23:59)
-          // Actually, for "Today" 18:00-02:00, if it's 20:00, it's > 18:00.
-          // If it's 01:00, that is technically "Tomorrow" in day-of-week terms.
-          // So for "Today's" config, we only match if time >= openTime (until midnight).
-          // OR if time <= closeTime? No, 01:00 on "Tuesday" config means Wednesday morning.
-          // But `day` is Tuesday. 01:00 on Tuesday is Tuesday morning.
-          // So if today is Tuesday, and Tuesday config is 18:00-02:00.
-          // 01:00 Tuesday is BEFORE 18:00. It's likely part of Monday's shift.
-          // So for "Today's" config (Tuesday), we are open if time >= 18:00.
-          if (currentTime >= openTime) return true;
-        } else {
-          // Normal day (e.g. 08:00 - 20:00)
-          if (currentTime >= openTime && currentTime <= closeTime) return true;
-        }
-      }
-    }
-
-    // 2. Check Yesterday's Schedule (Early Morning Handling)
-    const yesterdayDay = day === 0 ? 6 : day - 1;
-    const yesterdayConfig = currentSettings.openingHours.find(h => h.dayOfWeek === yesterdayDay);
-    if (yesterdayConfig && yesterdayConfig.enabled && yesterdayConfig.open && yesterdayConfig.close) {
-      const [oh, om] = yesterdayConfig.open.split(':').map(Number);
-      const [ch, cm] = yesterdayConfig.close.split(':').map(Number);
-
-      if (!isNaN(oh) && !isNaN(om) && !isNaN(ch) && !isNaN(cm)) {
-        const openTime = oh * 60 + om;
-        const closeTime = ch * 60 + cm;
-
-        // Only matters if yesterday crossed midnight
-        if (closeTime < openTime) {
-          // We are in the "early morning" part of yesterday's shift
-          // e.g. Yesterday (Mon) 18:00 - 02:00. Today (Tue) 01:00.
-          // We are open if currentTime <= closeTime
-          if (currentTime <= closeTime) return true;
-        }
-      }
-    }
-
-    return false;
-  };
+  // Reactive Store Status (Moved calculation logic to storeUtils.ts)
 
   // Timer Effect
   useEffect(() => {

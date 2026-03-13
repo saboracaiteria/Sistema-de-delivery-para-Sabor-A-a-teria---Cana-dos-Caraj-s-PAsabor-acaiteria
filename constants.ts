@@ -4,7 +4,7 @@ import { Category, Product, ProductGroup, Coupon, OrderRecord, DeliveryMethod } 
 export const WHATSAPP_NUMBER = "5594992816973";
 export const LOGO_URL = "https://webservice.zapermenu.com.br/api/storage/public/logo/deIOsQ57EB9KTMCSw7CLVlBqoRuSRwScbXf4diCO.png";
 export const SUPER_ADMIN_EMAILS = ["nildoxz@gmail.com"];
-export const SUPER_ADMIN_PASSWORD = "12457812";
+export const SUPER_ADMIN_PASSWORD = import.meta.env.VITE_SUPER_ADMIN_PASSWORD || "12457812";
 
 export const CATEGORIES: Category[] = [
   { id: 'batidas', title: 'Batidas', icon: '🍹' },
