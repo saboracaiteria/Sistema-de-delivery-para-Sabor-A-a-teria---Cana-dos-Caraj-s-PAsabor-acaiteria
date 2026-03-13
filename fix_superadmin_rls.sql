@@ -106,8 +106,8 @@ CREATE POLICY "Owner manage own orders" ON orders FOR ALL
   WITH CHECK (store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid()));
 
 -- 9. Sincronizar Sequência de IDs e Recuperação de Lojas
--- Garante que o próximo ID gerado não conflite com os existentes
-SELECT setval(pg_get_serial_sequence('settings', 'id'), coalesce(max(id), 0) + 1, false) FROM settings;
+-- Forçamos a sequência a começar acima de 100 para evitar qualquer conflito com IDs manuais baixos (como o ID 1)
+SELECT setval(pg_get_serial_sequence('settings', 'id'), GREATEST((SELECT MAX(id) FROM settings), 100));
 
 -- Criar settings faltantes apenas para lojas que realmente não possuem
 INSERT INTO settings (store_id, store_name, store_status)
@@ -115,4 +115,4 @@ SELECT id, name, 'open'
 FROM stores
 WHERE id NOT IN (SELECT store_id FROM settings);
 
-SELECT 'RLS MASTER FIX V5 + RECOVERY: Sequence synced and stores recovered! ✅' as status;
+SELECT 'RLS MASTER FIX V6 + RECOVERY: Sequence synced and stores recovered! ✅' as status;
