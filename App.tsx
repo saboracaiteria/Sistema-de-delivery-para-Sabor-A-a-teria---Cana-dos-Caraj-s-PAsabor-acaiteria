@@ -301,7 +301,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           let slug = 'sabor-acaiteria'; // Default fallback
           const match = hash.match(/^#\/([^\/]+)/);
 
-          if (match && match[1] && !['login', 'panel', 'cart', 'checkout'].includes(match[1])) {
+          if (match && match[1] && !['login', 'panel', 'cart', 'checkout', 'platform', 'setup'].includes(match[1])) {
             slug = match[1];
           } else {
             // Try to find if we already have it in localStorage

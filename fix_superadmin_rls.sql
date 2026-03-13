@@ -7,77 +7,113 @@
 -- Here we use a subquery to identify if the current user should have superadmin powers
 -- Or we simply allow updates if the user is the owner.
 
--- 0. STORES: Permitir que Super Admins gerenciem o nome/slug e Donos gerenciem sua loja
-DROP POLICY IF EXISTS "Allow owner update stores" ON stores;
-CREATE POLICY "Allow owner update stores" ON stores FOR UPDATE
-  USING (
-    auth.uid() = owner_id
-    OR
-    (SELECT email FROM auth.users WHERE id = auth.uid()) IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com')
-  );
+-- -- 0. STORES: Super Admins gerenciam TUDO, Donos gerenciem sua própria loja
+DROP POLICY IF EXISTS "Superadmin manage stores" ON stores;
+CREATE POLICY "Superadmin manage stores" ON stores FOR ALL
+  USING ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'))
+  WITH CHECK ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'));
 
--- 1. SETTINGS: Permitir que Super Admins gerenciem TUDO e Donos gerenciem sua loja
-DROP POLICY IF EXISTS "Owner manage settings" ON settings;
-CREATE POLICY "Owner manage settings" ON settings FOR UPDATE
-  USING (
-    -- É o dono da loja
-    store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid())
-    OR
-    -- É um super admin (identificado pelo email no auth.users)
-    (SELECT email FROM auth.users WHERE id = auth.uid()) IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com')
-  );
+DROP POLICY IF EXISTS "Owner update stores" ON stores;
+CREATE POLICY "Owner update stores" ON stores FOR UPDATE
+  USING (auth.uid() = owner_id);
 
--- 2. PRODUCTS: Permitir que Super Admins gerenciem TUDO e Donos gerenciem sua loja
-DROP POLICY IF EXISTS "Owner manage products" ON products;
-CREATE POLICY "Owner manage products" ON products FOR UPDATE
-  USING (
-    store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid())
-    OR
-    (SELECT email FROM auth.users WHERE id = auth.uid()) IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com')
-  );
+-- 1. SETTINGS: Super Admins gerenciem TUDO e Donos gerenciem sua loja
+DROP POLICY IF EXISTS "Superadmin manage settings" ON settings;
+CREATE POLICY "Superadmin manage settings" ON settings FOR ALL
+  USING ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'))
+  WITH CHECK ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'));
 
-DROP POLICY IF EXISTS "Owner insert products" ON products;
-CREATE POLICY "Owner insert products" ON products FOR INSERT
-  WITH CHECK (
-    store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid())
-    OR
-    (SELECT email FROM auth.users WHERE id = auth.uid()) IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com')
-  );
+DROP POLICY IF EXISTS "Owner manage own settings" ON settings;
+CREATE POLICY "Owner manage own settings" ON settings FOR ALL
+  USING (store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid()))
+  WITH CHECK (store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid()));
 
-DROP POLICY IF EXISTS "Owner delete products" ON products;
-CREATE POLICY "Owner delete products" ON products FOR DELETE
-  USING (
-    store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid())
-    OR
-    (SELECT email FROM auth.users WHERE id = auth.uid()) IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com')
-  );
+-- 2. PRODUCTS
+DROP POLICY IF EXISTS "Superadmin manage products" ON products;
+CREATE POLICY "Superadmin manage products" ON products FOR ALL
+  USING ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'))
+  WITH CHECK ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'));
 
--- 3. CATEGORIES: Mesma lógica
-DROP POLICY IF EXISTS "Owner manage categories" ON categories;
-CREATE POLICY "Owner manage categories" ON categories FOR UPDATE
-  USING (
-    store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid())
-    OR
-    (SELECT email FROM auth.users WHERE id = auth.uid()) IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com')
-  );
+DROP POLICY IF EXISTS "Owner manage own products" ON products;
+CREATE POLICY "Owner manage own products" ON products FOR ALL
+  USING (store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid()))
+  WITH CHECK (store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid()));
 
-DROP POLICY IF EXISTS "Owner insert categories" ON categories;
-CREATE POLICY "Owner insert categories" ON categories FOR INSERT
-  WITH CHECK (
-    store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid())
-    OR
-    (SELECT email FROM auth.users WHERE id = auth.uid()) IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com')
-  );
+-- 3. CATEGORIES
+DROP POLICY IF EXISTS "Superadmin manage categories" ON categories;
+CREATE POLICY "Superadmin manage categories" ON categories FOR ALL
+  USING ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'))
+  WITH CHECK ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'));
 
-DROP POLICY IF EXISTS "Owner delete categories" ON categories;
-CREATE POLICY "Owner delete categories" ON categories FOR DELETE
-  USING (
-    store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid())
-    OR
-    (SELECT email FROM auth.users WHERE id = auth.uid()) IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com')
-  );
+DROP POLICY IF EXISTS "Owner manage own categories" ON categories;
+CREATE POLICY "Owner manage own categories" ON categories FOR ALL
+  USING (store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid()))
+  WITH CHECK (store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid()));
 
--- 4. Garantir que a tabela SETTINGS tenha store_id preenchido para a loja padrão se não estiver
-UPDATE settings SET store_id = '00000000-0000-0000-0000-000000000001' WHERE store_id IS NULL;
+-- 4. PRODUCT_GROUPS
+DROP POLICY IF EXISTS "Superadmin manage product_groups" ON product_groups;
+CREATE POLICY "Superadmin manage product_groups" ON product_groups FOR ALL
+  USING ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'))
+  WITH CHECK ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'));
 
-SELECT 'Políticas de Super Admin e Multi-tenant corrigidas! ✅' as status;
+DROP POLICY IF EXISTS "Owner manage own product_groups" ON product_groups;
+CREATE POLICY "Owner manage own product_groups" ON product_groups FOR ALL
+  USING (store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid()))
+  WITH CHECK (store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid()));
+
+-- 5. PRODUCT_OPTIONS
+DROP POLICY IF EXISTS "Superadmin manage product_options" ON product_options;
+CREATE POLICY "Superadmin manage product_options" ON product_options FOR ALL
+  USING ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'))
+  WITH CHECK ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'));
+
+DROP POLICY IF EXISTS "Owner manage own product_options" ON product_options;
+CREATE POLICY "Owner manage own product_options" ON product_options FOR ALL
+  USING (store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid()))
+  WITH CHECK (store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid()));
+
+-- 6. PRODUCT_GROUP_RELATIONS (N:N)
+DROP POLICY IF EXISTS "Superadmin manage relations" ON product_group_relations;
+CREATE POLICY "Superadmin manage relations" ON product_group_relations FOR ALL
+  USING ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'))
+  WITH CHECK ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'));
+
+DROP POLICY IF EXISTS "Owner manage own relations" ON product_group_relations;
+CREATE POLICY "Owner manage own relations" ON product_group_relations FOR ALL
+  USING (EXISTS (SELECT 1 FROM products WHERE id = product_id AND store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid())))
+  WITH CHECK (EXISTS (SELECT 1 FROM products WHERE id = product_id AND store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid())));
+
+-- 7. COUPONS
+DROP POLICY IF EXISTS "Superadmin manage coupons" ON coupons;
+CREATE POLICY "Superadmin manage coupons" ON coupons FOR ALL
+  USING ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'))
+  WITH CHECK ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'));
+
+DROP POLICY IF EXISTS "Owner manage own coupons" ON coupons;
+CREATE POLICY "Owner manage own coupons" ON coupons FOR ALL
+  USING (store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid()))
+  WITH CHECK (store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid()));
+
+-- 8. ORDERS
+DROP POLICY IF EXISTS "Superadmin manage orders" ON orders;
+CREATE POLICY "Superadmin manage orders" ON orders FOR ALL
+  USING ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'))
+  WITH CHECK ((auth.jwt() ->> 'email') IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com', 'nildoxz@gmail.com'));
+
+DROP POLICY IF EXISTS "Owner manage own orders" ON orders;
+CREATE POLICY "Owner manage own orders" ON orders FOR ALL
+  USING (store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid()))
+  WITH CHECK (store_id IN (SELECT id FROM stores WHERE owner_id = auth.uid()));
+
+-- 9. Sincronizar Sequência de IDs e Recuperação de Lojas
+-- Garante que o próximo ID gerado não conflite com os existentes
+SELECT setval(pg_get_serial_sequence('settings', 'id'), coalesce(max(id), 0) + 1, false) FROM settings;
+
+-- Criar settings faltantes apenas para lojas que realmente não possuem (evita erro de duplicata)
+INSERT INTO settings (store_id, store_name, store_status)
+SELECT id, name, 'open'
+FROM stores
+WHERE id NOT IN (SELECT store_id FROM settings)
+ON CONFLICT (store_id) DO NOTHING;
+
+SELECT 'RLS MASTER FIX V4 + RECOVERY: Sequence synced and stores recovered! ✅' as status;
