@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Menu, Info, Plus, Settings as SettingsIcon, Search, ChevronLeft, ChevronRight, X, Minus, Sparkles, AlertCircle } from 'lucide-react';
@@ -243,6 +243,14 @@ export const ModernFloatingCart = () => {
 export const ModernHomePage = () => {
     const { categories, products, settings, isStoreOpen } = useApp();
 
+    // Memoize categorized products to avoid filtering on every render
+    const categorizedProducts = useMemo(() => {
+        return categories.map(cat => ({
+            ...cat,
+            products: products.filter(p => p.categoryId === cat.id && p.active !== false)
+        })).filter(cat => cat.products.length > 0 && cat.active !== false);
+    }, [categories, products]);
+
     return (
         <div className="bg-[#FAFAFA] min-h-screen pb-32 font-outfit selection:bg-purple-200">
             <ModernHero />
@@ -263,25 +271,20 @@ export const ModernHomePage = () => {
 
                 {/* Categories */}
                 <div className="space-y-10">
-                    {categories.filter(cat => cat.active !== false).map((cat, catIdx) => {
-                        const catProducts = products.filter(p => p.categoryId === cat.id && p.active !== false);
-                        if (catProducts.length === 0) return null;
+                    {categorizedProducts.map((cat, catIdx) => (
+                        <div key={cat.id} id={`cat-${cat.id}`}>
+                            <h2 className="text-2xl font-black text-gray-900 mb-5 pl-2 flex items-center gap-3 tracking-tight">
+                                <span className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 text-xl">{cat.icon}</span>
+                                {cat.title}
+                            </h2>
 
-                        return (
-                            <div key={cat.id} id={`cat-${cat.id}`}>
-                                <h2 className="text-2xl font-black text-gray-900 mb-5 pl-2 flex items-center gap-3 tracking-tight">
-                                    <span className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 text-xl">{cat.icon}</span>
-                                    {cat.title}
-                                </h2>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {catProducts.map((product, idx) => (
-                                        <ModernProductCard key={product.id} product={product} index={idx} />
-                                    ))}
-                                </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {cat.products.map((product, idx) => (
+                                    <ModernProductCard key={product.id} product={product} index={idx} />
+                                ))}
                             </div>
-                        );
-                    })}
+                        </div>
+                    ))}
                 </div>
             </div>
 
