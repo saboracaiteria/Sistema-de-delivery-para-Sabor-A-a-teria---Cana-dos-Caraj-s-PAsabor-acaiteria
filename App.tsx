@@ -886,9 +886,23 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         alert(`Erro ao salvar configurações no servidor: ${error.message}`);
         throw error;
       }
+
+      // Sincronizar nome da loja na tabela 'stores' se alterado
+      if (s.storeName !== undefined && store?.id) {
+        const { error: storeError } = await supabase
+          .from('stores')
+          .update({ name: s.storeName })
+          .eq('id', store.id);
+        
+        if (storeError) {
+          console.error("Erro ao sincronizar nome na tabela stores:", storeError);
+        } else {
+          // Atualizar estado local do store para refletir imediatamente no app
+          setStore(prev => prev ? { ...prev, name: s.storeName || '' } : prev);
+        }
+      }
     } catch (err: any) {
       console.error("Exceção ao atualizar configurações:", err);
-      // alert("Falha ao sincronizar configurações com o servidor."); // Already alerted above if it was a Supabase error
       throw err;
     }
   };
