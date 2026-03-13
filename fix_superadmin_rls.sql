@@ -7,6 +7,15 @@
 -- Here we use a subquery to identify if the current user should have superadmin powers
 -- Or we simply allow updates if the user is the owner.
 
+-- 0. STORES: Permitir que Super Admins gerenciem o nome/slug e Donos gerenciem sua loja
+DROP POLICY IF EXISTS "Allow owner update stores" ON stores;
+CREATE POLICY "Allow owner update stores" ON stores FOR UPDATE
+  USING (
+    auth.uid() = owner_id
+    OR
+    (SELECT email FROM auth.users WHERE id = auth.uid()) IN ('parauapebasdeliveryoficial@gmail.com', 'nildopereira60@gmail.com')
+  );
+
 -- 1. SETTINGS: Permitir que Super Admins gerenciem TUDO e Donos gerenciem sua loja
 DROP POLICY IF EXISTS "Owner manage settings" ON settings;
 CREATE POLICY "Owner manage settings" ON settings FOR UPDATE

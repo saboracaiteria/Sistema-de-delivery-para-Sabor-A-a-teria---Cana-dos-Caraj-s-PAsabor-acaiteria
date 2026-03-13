@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
-import { Store, LogOut, ChevronRight, Activity, Copy, CheckCircle, Plus, X, Palette, LayoutTemplate, Loader2, Trash2, AlertTriangle, Lock } from 'lucide-react';
+import { Store, LogOut, ChevronRight, Activity, Copy, CheckCircle, Plus, X, Palette, LayoutTemplate, Loader2, Trash2, AlertTriangle, Lock, Pencil, Save } from 'lucide-react';
 import { useApp } from './App';
 import type { Store as StoreType } from './types';
 import { SUPER_ADMIN_PASSWORD } from './constants';
@@ -14,6 +14,8 @@ export const PlatformAdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingStoreId, setEditingStoreId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
 
   const fetchStores = async () => {
     try {
@@ -79,6 +81,26 @@ export const PlatformAdminPanel = () => {
       alert('Loja excluída com sucesso!');
     } catch (err: any) {
       alert(`Erro ao excluir: ${err.message}`);
+    }
+  };
+
+  const handleUpdateStoreName = async (id: string) => {
+    if (!editingName.trim()) {
+      setEditingStoreId(null);
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from('stores')
+        .update({ name: editingName.trim() })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setStores(prev => prev.map(s => s.id === id ? { ...s, name: editingName.trim() } : s));
+      setEditingStoreId(null);
+    } catch (err: any) {
+      alert(`Erro ao atualizar nome: ${err.message}`);
     }
   };
 
@@ -163,7 +185,51 @@ export const PlatformAdminPanel = () => {
                 </button>
               </div>
 
-              <h3 className="text-xl font-bold text-gray-900 mb-1">{store.name}</h3>
+              <div className="flex-1 mb-1">
+                {editingStoreId === store.id ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleUpdateStoreName(store.id);
+                        if (e.key === 'Escape') setEditingStoreId(null);
+                      }}
+                      className="flex-1 border-b-2 border-purple-500 bg-transparent outline-none font-bold text-gray-900 text-xl py-0.5"
+                      autoFocus
+                    />
+                    <button 
+                      onClick={() => handleUpdateStoreName(store.id)} 
+                      className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
+                      title="Salvar"
+                    >
+                      <Save size={20} />
+                    </button>
+                    <button 
+                      onClick={() => setEditingStoreId(null)} 
+                      className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                      title="Cancelar"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 group/title">
+                    <h3 className="text-xl font-bold text-gray-900">{store.name}</h3>
+                    <button
+                      onClick={() => {
+                        setEditingStoreId(store.id);
+                        setEditingName(store.name);
+                      }}
+                      className="p-1.5 rounded-lg text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-purple-50 hover:text-purple-600"
+                      title="Editar Nome"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                  </div>
+                )}
+              </div>
 
               <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
