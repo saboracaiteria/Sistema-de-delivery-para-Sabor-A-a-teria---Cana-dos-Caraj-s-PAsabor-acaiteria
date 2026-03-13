@@ -725,6 +725,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
     if (error || !productData) {
       console.error('Erro ao adicionar produto:', error);
+      alert(`Erro ao adicionar produto: ${error?.message || 'Falha desconhecida no banco'}`);
       return;
     }
 
@@ -736,6 +737,21 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       }));
       await supabase.from('product_group_relations').insert(relations);
     }
+
+    // 3. Atualizar estado local imediatamente
+    const newProduct: Product = {
+      id: productData.id,
+      name: productData.name,
+      description: productData.description,
+      price: productData.price,
+      image: productData.image,
+      categoryId: productData.category_id,
+      groupIds: p.groupIds || [],
+      active: productData.active ?? true,
+      storeId: productData.store_id,
+      displayOrder: productData.display_order
+    };
+    setProducts(prev => [...prev, newProduct]);
   };
 
   const updateProduct = async (p: Product) => {
@@ -743,7 +759,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     setProducts(prev => prev.map(prod => prod.id === p.id ? p : prod));
 
     // 1. Atualizar produto
-    await supabase.from('products').update({
+    const { error } = await supabase.from('products').update({
       name: p.name,
       description: p.description,
       price: p.price,
@@ -752,8 +768,12 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       active: p.active // Include active status
     }).eq('id', p.id);
 
+    if (error) {
+      alert(`Erro ao atualizar produto: ${error.message}`);
+      return;
+    }
+
     // 2. Atualizar relações (remover todas e adicionar novas)
-    // Nota: Em produção idealmente faria diff, mas delete+insert é mais simples
     await supabase.from('product_group_relations').delete().eq('product_id', p.id);
 
     if (p.groupIds && p.groupIds.length > 0) {
@@ -767,7 +787,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const deleteProduct = async (id: string) => {
     setProducts(prev => prev.filter(p => p.id !== id)); // Optimistic delete
-    await supabase.from('products').delete().eq('id', id);
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) alert(`Erro ao deletar produto: ${error.message}`);
   };
 
   const reorderProducts = async (categoryId: string, reorderedProducts: Product[]) => {
@@ -796,23 +817,30 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       alert("Erro: Loja não identificada.");
       return;
     }
-    // Wait for ID from DB for insert usually, so manual optimistic update is harder without ID.
-    // relying on realtime for add is okay.
-    await supabase.from('categories').insert([{ title: c.title, icon: c.icon, store_id: store?.id }]);
+    // Inserir e obter o ID gerado pelo banco
+    const { data: catData, error } = await supabase.from('categories').insert([{ title: c.title, icon: c.icon, store_id: store?.id }]).select().single();
+    if (error || !catData) {
+      alert(`Erro ao criar categoria: ${error?.message || 'Erro desconhecido'}`);
+      return;
+    }
+    // Atualizar estado local imediatamente
+    setCategories(prev => [...prev, { id: catData.id, title: catData.title, icon: catData.icon, active: catData.active ?? true, displayOrder: catData.display_order }]);
   };
 
   const updateCategory = async (c: Category) => {
     setCategories(prev => prev.map(cat => cat.id === c.id ? c : cat)); // Optimistic
-    await supabase.from('categories').update({
+    const { error } = await supabase.from('categories').update({
       title: c.title,
       icon: c.icon,
       active: c.active // Include active status
     }).eq('id', c.id);
+    if (error) alert(`Erro ao atualizar categoria: ${error.message}`);
   };
 
   const deleteCategory = async (id: string) => {
     setCategories(prev => prev.filter(c => c.id !== id)); // Optimistic
-    await supabase.from('categories').delete().eq('id', id);
+    const { error } = await supabase.from('categories').delete().eq('id', id);
+    if (error) alert(`Erro ao deletar categoria: ${error.message}`);
   };
 
   const addGroup = async (g: ProductGroup) => {
@@ -836,9 +864,13 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       store_id: store?.id
     }]).select().single();
 
-    if (error || !groupData) return;
+    if (error || !groupData) {
+      alert(`Erro ao criar grupo de opcionais: ${error?.message}`);
+      return;
+    }
 
     // 2. Inserir opções
+    let insertedOptions: any[] = [];
     if (g.options && g.options.length > 0) {
       const options = g.options.map(o => ({
         group_id: groupData.id,
@@ -847,8 +879,20 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         description: o.description,
         store_id: store?.id
       }));
-      await supabase.from('product_options').insert(options);
+      const { data: optData } = await supabase.from('product_options').insert(options).select();
+      insertedOptions = optData || [];
     }
+
+    // 3. Atualizar estado local imediatamente
+    const newGroup: ProductGroup = {
+      id: groupData.id,
+      title: groupData.title,
+      min: groupData.min,
+      max: groupData.max,
+      active: groupData.active ?? true,
+      options: insertedOptions.map(o => ({ id: o.id, name: o.name, price: o.price, description: o.description, active: o.active ?? true }))
+    };
+    setGroups(prev => [...prev, newGroup]);
   };
 
   const updateGroup = async (g: ProductGroup) => {
@@ -898,7 +942,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       return;
     }
 
-    const { data, error } = await supabase.from('coupons').insert([{
+    const { data: couponData, error } = await supabase.from('coupons').insert([{
       code: c.code,
       type: c.type,
       value: c.value,
@@ -906,13 +950,23 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       usage_count: c.usageCount,
       min_order_value: c.minOrderValue,
       store_id: store?.id
-    }]);
+    }]).select().single();
 
-    if (error) {
+    if (error || !couponData) {
       console.error('Erro ao adicionar cupom:', error);
-      throw error;
+      alert(`Erro ao criar cupom: ${error?.message || 'Erro desconhecido'}`);
+      return;
     }
-    // Realtime subscription will call fetchCoupons() automatically
+    // Atualizar estado local imediatamente
+    setCoupons(prev => [...prev, {
+      id: couponData.id,
+      code: couponData.code,
+      type: couponData.type,
+      value: couponData.value,
+      active: couponData.active,
+      usageCount: couponData.usage_count,
+      minOrderValue: couponData.min_order_value
+    }]);
   };
 
   const updateCoupon = async (c: Coupon) => {
