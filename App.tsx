@@ -616,7 +616,10 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }).eq('id', p.id);
 
     if (error) {
+      console.error('Erro ao atualizar produto:', error);
       alert(`Erro ao atualizar produto: ${error.message}`);
+      // Revert optimistic update (optional, but good for UX)
+      // fetchProducts(); 
       return;
     }
 
@@ -646,10 +649,17 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     });
 
     // Update each product's display_order in Supabase
-    for (const product of reorderedProducts) {
-      await supabase.from('products').update({
-        display_order: product.displayOrder
-      }).eq('id', product.id);
+    try {
+      for (const product of reorderedProducts) {
+        const { error } = await supabase.from('products').update({
+          display_order: product.displayOrder
+        }).eq('id', product.id);
+        
+        if (error) throw error;
+      }
+    } catch (err: any) {
+      console.error("Erro ao reordenar produtos:", err);
+      alert(`Erro ao salvar nova ordem dos produtos: ${err.message}`);
     }
   };
 
@@ -756,7 +766,11 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     // 2. Atualizar opções (estratégia simples: delete all + insert all)
     // CUIDADO: Isso muda os IDs das opções. Se pedidos referenciarem opções por ID, isso quebraria histórico.
     // Como pedidos salvam snapshot (fullDetails), não deve ser problema crítico agora.
-    await supabase.from('product_options').delete().eq('group_id', g.id);
+    const { error: delError } = await supabase.from('product_options').delete().eq('group_id', g.id);
+    if (delError) {
+      alert(`Erro ao atualizar opções do grupo: ${delError.message}`);
+      return;
+    }
 
     if (g.options && g.options.length > 0) {
       const options = g.options.map(o => ({
@@ -764,16 +778,18 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         name: o.name,
         price: o.price,
         description: o.description,
-        active: o.active, // Persist option active status too
+        active: o.active,
         store_id: store?.id
       }));
-      await supabase.from('product_options').insert(options);
+      const { error: insError } = await supabase.from('product_options').insert(options);
+      if (insError) alert(`Erro ao inserir novas opções: ${insError.message}`);
     }
   };
 
   const deleteGroup = async (id: string) => {
     setGroups(prev => prev.filter(g => g.id !== id)); // Optimistic
-    await supabase.from('product_groups').delete().eq('id', id);
+    const { error } = await supabase.from('product_groups').delete().eq('id', id);
+    if (error) alert(`Erro ao deletar grupo: ${error.message}`);
   };
 
   const addCoupon = async (c: Coupon) => {
@@ -817,7 +833,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   const updateCoupon = async (c: Coupon) => {
-    await supabase.from('coupons').update({
+    const { error } = await supabase.from('coupons').update({
       code: c.code,
       type: c.type,
       value: c.value,
@@ -825,11 +841,14 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       usage_count: c.usageCount,
       min_order_value: c.minOrderValue
     }).eq('id', c.id);
+    
+    if (error) alert(`Erro ao atualizar cupom: ${error.message}`);
     // Realtime subscription will call fetchCoupons() automatically
   };
 
   const deleteCoupon = async (id: string) => {
-    await supabase.from('coupons').delete().eq('id', id);
+    const { error } = await supabase.from('coupons').delete().eq('id', id);
+    if (error) alert(`Erro ao deletar cupom: ${error.message}`);
     // Realtime subscription will call fetchCoupons() automatically
   };
 
@@ -860,7 +879,18 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     if (s.businessAddress !== undefined) dbSettings.business_address = s.businessAddress;
     if (s.copyrightText !== undefined) dbSettings.copyright_text = s.copyrightText;
 
-    await supabase.from('settings').update(dbSettings).eq('store_id', store?.id);
+    try {
+      const { error } = await supabase.from('settings').update(dbSettings).eq('store_id', store?.id);
+      if (error) {
+        console.error("Erro ao atualizar configurações no Supabase:", error);
+        alert(`Erro ao salvar configurações no servidor: ${error.message}`);
+        throw error;
+      }
+    } catch (err: any) {
+      console.error("Exceção ao atualizar configurações:", err);
+      // alert("Falha ao sincronizar configurações com o servidor."); // Already alerted above if it was a Supabase error
+      throw err;
+    }
   };
 
   const addOrder = async (o: OrderRecord) => {
@@ -875,7 +905,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         return;
     }
 
-    await supabase.from('orders').insert([{
+    const { error } = await supabase.from('orders').insert([{
       date: o.date,
       customer_name: o.customerName,
       whatsapp: o.whatsapp,
@@ -888,6 +918,11 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       status: o.status,
       store_id: store?.id
     }]);
+
+    if (error) {
+      console.error("Erro ao salvar pedido:", error);
+      alert(`Erro ao enviar pedido para o sistema: ${error.message}`);
+    }
   };
 
   const updateOrderStatus = async (id: string, status: OrderStatus) => {
@@ -2989,9 +3024,15 @@ const SettingsPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [cropModalData, setCropModalData] = useState<{ imageUrl: string; field: 'logoUrl' | 'bannerUrl'; aspectRatio: number } | null>(null);
 
-  const handleSave = () => {
-    setShowSaveConfirm(true);
-    setTimeout(() => setShowSaveConfirm(false), 2000);
+  const handleSave = async () => {
+    try {
+      // Forçamos um update com o estado atual para garantir que tudo foi enviado
+      await updateSettings({}); 
+      setShowSaveConfirm(true);
+      setTimeout(() => setShowSaveConfirm(false), 3000);
+    } catch (err) {
+      // Erro já tratado no updateSettings com alert
+    }
   };
 
   const uploadImageToSupabase = async (file: File): Promise<string | null> => {
@@ -3030,6 +3071,8 @@ const SettingsPage = () => {
       const aspectRatio = field === 'logoUrl' ? 1 : 16 / 9;
       setCropModalData({ imageUrl, field, aspectRatio });
     }
+    // Limpar o input para permitir selecionar a mesma imagem se necessário
+    e.target.value = '';
   };
 
   const handleCropComplete = async (croppedFile: File) => {
@@ -3037,7 +3080,14 @@ const SettingsPage = () => {
 
     const publicUrl = await uploadImageToSupabase(croppedFile);
     if (publicUrl) {
-      updateSettings({ [cropModalData.field]: publicUrl });
+      try {
+        await updateSettings({ [cropModalData.field]: publicUrl });
+        // Feedback visual imediato após o await do updateSettings
+        setShowSaveConfirm(true);
+        setTimeout(() => setShowSaveConfirm(false), 3000);
+      } catch (err) {
+        console.error("Erro ao salvar imagem recortada:", err);
+      }
     }
     setCropModalData(null);
   };
