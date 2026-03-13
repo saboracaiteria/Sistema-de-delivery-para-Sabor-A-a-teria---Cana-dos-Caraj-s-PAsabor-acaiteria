@@ -10,7 +10,23 @@ export const ShareQRCode = ({ variant = 'default' }: { variant?: 'default' | 'mo
     const { store } = useApp();
 
     // Build dynamic URL based on current store slug
-    const shareUrl = `${window.location.origin}/#/${store?.slug || ''}`;
+    const getShareUrl = () => {
+        const origin = window.location.origin;
+        // Priority 1: Current store from context
+        if (store?.slug) return `${origin}/#/${store.slug}`;
+        
+        // Priority 2: Current URL hash (if we are already on a store page)
+        const hash = window.location.hash;
+        const match = hash.match(/^#\/([^\/]+)/);
+        if (match && match[1] && !['login', 'panel', 'cart', 'checkout'].includes(match[1])) {
+            return `${origin}/#/${match[1]}`;
+        }
+
+        // Fallback: Just the origin (though ideally we should have a slug)
+        return origin;
+    };
+
+    const shareUrl = getShareUrl();
 
     const handleCopy = () => {
         navigator.clipboard.writeText(shareUrl).then(() => {

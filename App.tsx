@@ -975,7 +975,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   return (
     <AppContext.Provider value={{
-      products, categories, groups, cart: currentCart, settings, coupons, orders, adminRole, isSidebarOpen,
+      store, products, categories, groups, cart: currentCart, settings, coupons, orders, adminRole, isSidebarOpen,
       isModernUI, setIsModernUI,
       addToCart, removeFromCart, updateCartQuantity, updateCartNote, clearCart,
       addProduct, updateProduct, deleteProduct, reorderProducts,
