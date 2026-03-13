@@ -1001,7 +1001,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 // --- Components ---
 
 const Sidebar = () => {
-  const { isSidebarOpen, setSidebarOpen, categories, setAdminRole } = useApp();
+  const { isSidebarOpen, setSidebarOpen, store, categories, setAdminRole } = useApp();
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
@@ -1065,7 +1065,7 @@ const Sidebar = () => {
             {/* Content */}
             <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
               <button
-                onClick={() => { navigate('/'); setSidebarOpen(false); }}
+                onClick={() => { navigate(`/${store?.slug || ''}`); setSidebarOpen(false); }}
                 className="w-full text-left px-4 py-3.5 hover:bg-purple-50 text-gray-700 font-medium rounded-xl transition-all flex items-center gap-3"
               >
                 <span className="w-8 h-8 flex items-center justify-center bg-purple-100 text-purple-600 rounded-lg">
@@ -1084,7 +1084,7 @@ const Sidebar = () => {
                 <button
                   key={cat.id}
                   onClick={() => {
-                    navigate('/');
+                    navigate(`/${store?.slug || ''}`);
                     setTimeout(() => document.getElementById(`cat-${cat.id}`)?.scrollIntoView({ behavior: 'smooth' }), 100);
                     setSidebarOpen(false);
                   }}
