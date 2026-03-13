@@ -3704,6 +3704,7 @@ const AppContent = () => {
   const navigate = useNavigate();
   const isAdminRoute = location.pathname.startsWith('/panel') || location.pathname.startsWith('/platform');
   const isStorefrontRoute = !isAdminRoute && !['/', '/login', '/setup'].includes(location.pathname);
+  const isStoreHome = isStorefrontRoute && !location.pathname.includes('/cart') && !location.pathname.includes('/checkout');
   const [showExitModal, setShowExitModal] = useState(false);
 
   useEffect(() => {
@@ -3741,7 +3742,7 @@ const AppContent = () => {
         onClose={() => setShowExitModal(false)}
         onConfirm={handleConfirmExit}
       />
-      {isStorefrontRoute && <Header />}
+      {/* Global Header removed to avoid redundancy with Modern/Classic Hero sections and search bars */}
 
       {/* Theme Switcher Button */}
       {isStorefrontRoute && (
@@ -3818,7 +3819,7 @@ const AppContent = () => {
 
       {isStorefrontRoute && <Sidebar />}
       {isStorefrontRoute && <FloatingCartButton />}
-      {location.pathname === '/' && <Footer />}
+      {(location.pathname === '/' || isStoreHome) && <Footer />}
     </div>
   );
 };
