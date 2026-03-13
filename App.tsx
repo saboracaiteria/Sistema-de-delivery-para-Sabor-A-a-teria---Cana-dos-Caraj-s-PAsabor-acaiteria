@@ -2210,7 +2210,7 @@ const AdminPanel = () => {
   };
 
   useEffect(() => {
-    if (!adminRole) navigate('/');
+    if (!adminRole) navigate(`/${store?.slug || ''}`);
   }, [adminRole, navigate]);
 
   const menuItems = [
@@ -2233,7 +2233,7 @@ const AdminPanel = () => {
         <div className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-orange-600 tracking-tight">
           Painel do Lojista
         </div>
-        <button onClick={() => { setAdminRole(null); navigate('/'); }} className="text-red-600 flex items-center gap-2 font-bold p-2 hover:bg-red-50 rounded-lg transition-colors">
+        <button onClick={() => { setAdminRole(null); navigate(`/${store?.slug || ''}`); }} className="text-red-600 flex items-center gap-2 font-bold p-2 hover:bg-red-50 rounded-lg transition-colors">
           <LogOut size={20} /> Sair
         </button>
       </div>
