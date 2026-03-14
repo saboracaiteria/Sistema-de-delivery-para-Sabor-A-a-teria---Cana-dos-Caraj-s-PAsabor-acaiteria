@@ -8,8 +8,8 @@ import {
   MapPin, Phone, CreditCard, Banknote, Clock, Search,
   ChevronLeft, ChevronDown, ChevronUp, Edit, FileText,
   Settings, BarChart2, List, Folder, LogOut, CheckCircle,
-  Printer, Tag, ToggleLeft, ToggleRight, Upload, Info, ArrowLeft, AlertCircle,
-  Lock as LockIcon, Palette, Package, MessageSquare, LayoutTemplate, Share2, Check, Store as StoreIcon
+  Printer, Tag, ToggleLeft, ToggleRight, Upload, Info, ArrowLeft, AlertCircle, Camera,
+  Link as LinkIcon, Lock as LockIcon, Palette, Package, MessageSquare, LayoutTemplate, Share2, Check, Store as StoreIcon
 } from 'lucide-react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Preferences } from '@capacitor/preferences';
@@ -141,6 +141,9 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [groups, setGroups] = useState<ProductGroup[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showLinkInput, setShowLinkInput] = useState<{ field: 'logoUrl' | 'bannerUrl', visible: boolean }>({ field: 'logoUrl', visible: false });
+  const [tempImageUrl, setTempImageUrl] = useState('');
   const [settings, setSettings] = useState<GlobalSettings>({
     storeName: 'Minha Loja',
     logoUrl: '',
@@ -3512,11 +3515,54 @@ const SettingsPage = () => {
                 <Trash2 size={12} />
               </button>
             </div>
-            <label className={`flex-1 cursor-pointer bg-gray-50 hover:bg-gray-100 p-3 rounded border border-dashed flex items-center justify-center gap-2 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            <label
+              htmlFor="logo-file"
+              className={`flex-1 cursor-pointer bg-gray-50 hover:bg-gray-100 p-3 rounded border border-dashed flex items-center justify-center gap-2 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
               <Upload size={18} /> <span className="text-sm">{isUploading ? 'Enviando...' : 'Alterar Logo'}</span>
-              <input type="file" accept="image/*" hidden onChange={e => handleImage(e, 'logoUrl')} disabled={isUploading} />
+              <input type="file" id="logo-file" accept="image/*" hidden onChange={e => handleImage(e, 'logoUrl')} disabled={isUploading} />
             </label>
+            <label
+              htmlFor="logo-camera"
+              className={`p-3 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded border border-dashed flex items-center justify-center ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title="Tirar Foto"
+            >
+              <Camera size={18} />
+              <input type="file" id="logo-camera" accept="image/*" capture="environment" hidden onChange={e => handleImage(e, 'logoUrl')} disabled={isUploading} />
+            </label>
+            <button
+              onClick={() => {
+                setShowLinkInput({ field: 'logoUrl', visible: !showLinkInput.visible || showLinkInput.field !== 'logoUrl' });
+                setTempImageUrl('');
+              }}
+              className="p-3 bg-gray-50 hover:bg-gray-100 rounded border border-dashed text-gray-600"
+              title="Usar Link"
+            >
+              <LinkIcon size={18} />
+            </button>
           </div>
+
+          {showLinkInput.visible && showLinkInput.field === 'logoUrl' && (
+            <div className="mt-3 flex gap-2">
+              <input
+                className="flex-1 border p-2 rounded text-sm"
+                placeholder="Cole o link da logo aqui..."
+                value={tempImageUrl}
+                onChange={e => setTempImageUrl(e.target.value)}
+              />
+              <button
+                onClick={() => {
+                  if (tempImageUrl) {
+                    updateSettings({ logoUrl: tempImageUrl });
+                    setShowLinkInput({ field: 'logoUrl', visible: false });
+                  }
+                }}
+                className="bg-purple-600 text-white px-3 py-1 rounded text-xs font-bold"
+              >
+                OK
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Cover Photo Upload */}
@@ -3539,10 +3585,55 @@ const SettingsPage = () => {
                 </button>
               </div>
             )}
-            <label className={`w-full cursor-pointer bg-gray-50 hover:bg-gray-100 p-3 rounded border border-dashed flex items-center justify-center gap-2 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
-              <Upload size={18} /> <span className="text-sm">{isUploading ? 'Enviando...' : 'Alterar Foto de Capa'}</span>
-              <input type="file" accept="image/*" hidden onChange={e => handleImage(e, 'bannerUrl')} disabled={isUploading} />
-            </label>
+            <div className="flex gap-2">
+              <label
+                htmlFor="banner-file"
+                className={`flex-1 cursor-pointer bg-gray-50 hover:bg-gray-100 p-3 rounded border border-dashed flex items-center justify-center gap-2 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Upload size={18} /> <span className="text-sm">{isUploading ? 'Enviando...' : 'Alterar Foto de Capa'}</span>
+                <input type="file" id="banner-file" accept="image/*" hidden onChange={e => handleImage(e, 'bannerUrl')} disabled={isUploading} />
+              </label>
+              <label
+                htmlFor="banner-camera"
+                className={`p-3 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded border border-dashed flex items-center justify-center ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                title="Tirar Foto"
+              >
+                <Camera size={18} />
+                <input type="file" id="banner-camera" accept="image/*" capture="environment" hidden onChange={e => handleImage(e, 'bannerUrl')} disabled={isUploading} />
+              </label>
+              <button
+                onClick={() => {
+                  setShowLinkInput({ field: 'bannerUrl', visible: !showLinkInput.visible || showLinkInput.field !== 'bannerUrl' });
+                  setTempImageUrl('');
+                }}
+                className="p-3 bg-gray-50 hover:bg-gray-100 rounded border border-dashed text-gray-600"
+                title="Usar Link"
+              >
+                <LinkIcon size={18} />
+              </button>
+            </div>
+
+            {showLinkInput.visible && showLinkInput.field === 'bannerUrl' && (
+              <div className="mt-3 flex gap-2">
+                <input
+                  className="flex-1 border p-2 rounded text-sm"
+                  placeholder="Cole o link da capa aqui..."
+                  value={tempImageUrl}
+                  onChange={e => setTempImageUrl(e.target.value)}
+                />
+                <button
+                  onClick={() => {
+                    if (tempImageUrl) {
+                      updateSettings({ bannerUrl: tempImageUrl });
+                      setShowLinkInput({ field: 'bannerUrl', visible: false });
+                    }
+                  }}
+                  className="bg-purple-600 text-white px-3 py-1 rounded text-xs font-bold"
+                >
+                  OK
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

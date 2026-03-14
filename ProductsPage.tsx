@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus, Edit, Trash2, Upload, Loader2, Save, X, GripVertical, ToggleLeft, ToggleRight } from 'lucide-react';
+import { ChevronLeft, Plus, Edit, Trash2, Upload, Loader2, Save, X, GripVertical, ToggleLeft, ToggleRight, Camera, Link as LinkIcon } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import { ConfirmModal } from './ConfirmModal';
 
@@ -59,6 +59,8 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
     const [draggedProduct, setDraggedProduct] = useState<Product | null>(null);
     const [dragOverProduct, setDragOverProduct] = useState<string | null>(null);
     const [activeConfirmation, setActiveConfirmation] = useState<{ product: Product, newActive: boolean } | null>(null);
+    const [showLinkInput, setShowLinkInput] = useState(false);
+    const [tempImageUrl, setTempImageUrl] = useState('');
     const navigate = useNavigate();
 
     const handleOpenModal = (product?: Product) => {
@@ -69,6 +71,8 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
             setEditingProduct({ categoryId: categories[0]?.id || '' });
             setSelectedGroups([]);
         }
+        setShowLinkInput(false);
+        setTempImageUrl('');
         setIsModalOpen(true);
     };
 
@@ -424,14 +428,73 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
                                 <span className="text-sm">
                                     {isUploading ? 'Enviando...' : (editingProduct.image ? 'Alterar Imagem' : 'Adicionar Imagem')}
                                 </span>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    hidden
-                                    onChange={handleImageUpload}
-                                    disabled={isUploading}
-                                />
-                            </label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        hidden
+                                        onChange={handleImageUpload}
+                                        disabled={isUploading}
+                                        id="file-upload"
+                                    />
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        hidden
+                                        onChange={handleImageUpload}
+                                        disabled={isUploading}
+                                        id="camera-upload"
+                                    />
+                                </label>
+
+                            <div className="grid grid-cols-3 gap-2 mt-3">
+                                <label
+                                    htmlFor="file-upload"
+                                    className="flex flex-col items-center gap-1 p-2 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                                >
+                                    <Upload size={20} className="text-blue-500" />
+                                    <span className="text-[10px] font-bold">Arquivos</span>
+                                </label>
+                                <label
+                                    htmlFor="camera-upload"
+                                    className="flex flex-col items-center gap-1 p-2 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                                >
+                                    <Camera size={20} className="text-purple-500" />
+                                    <span className="text-[10px] font-bold">Câmera</span>
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowLinkInput(!showLinkInput)}
+                                    className={`flex flex-col items-center gap-1 p-2 border rounded-lg hover:bg-gray-50 ${showLinkInput ? 'bg-purple-50 border-purple-200' : ''}`}
+                                >
+                                    <LinkIcon size={20} className="text-green-500" />
+                                    <span className="text-[10px] font-bold">Link</span>
+                                </button>
+                            </div>
+
+                            {showLinkInput && (
+                                <div className="mt-3 flex gap-2">
+                                    <input
+                                        className="flex-1 border p-2 rounded text-sm"
+                                        placeholder="Cole o link da imagem aqui..."
+                                        value={tempImageUrl}
+                                        onChange={e => setTempImageUrl(e.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (tempImageUrl) {
+                                                setEditingProduct({ ...editingProduct, image: tempImageUrl });
+                                                setShowLinkInput(false);
+                                                setTempImageUrl('');
+                                            }
+                                        }}
+                                        className="bg-purple-600 text-white px-3 py-1 rounded text-xs font-bold"
+                                    >
+                                        OK
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         <input
