@@ -2165,16 +2165,16 @@ const AdminPanel = () => {
   }, [adminRole, navigate]);
 
   const menuItems = [
-    { title: 'Pedidos', icon: <FileText size={32} />, path: '/panel/orders', role: ['admin', 'employee'] },
-    { title: 'Configurações', icon: <Settings size={32} />, path: '/panel/settings', role: ['admin'] },
-    { title: 'Relatório', icon: <BarChart2 size={32} />, path: '/panel/reports', role: ['admin'] },
-    { title: 'Categorias', icon: <List size={32} />, path: '/panel/categories', role: ['admin'] },
-    { title: 'Produtos', icon: <Folder size={32} />, path: '/panel/products', role: ['admin'] },
-    { title: 'Adicionais', icon: <ToggleLeft size={32} />, path: '/panel/addons', role: ['admin'] },
-    { title: 'Cupons', icon: <Tag size={32} />, path: '/panel/coupons', role: ['admin'] },
-    { title: 'Cores do Site', icon: <Palette size={32} />, path: '/panel/theme', role: ['admin'] },
-    { title: 'Estoque', icon: <Package size={32} />, path: '/panel/inventory', role: ['admin'] },
-    { title: 'Impressora', icon: <Printer size={32} />, path: '/panel/printer', role: ['admin', 'employee'] },
+    { title: 'Pedidos', icon: <FileText size={32} />, path: `/${store?.slug}/panel/orders`, role: ['admin', 'employee'] },
+    { title: 'Configurações', icon: <Settings size={32} />, path: `/${store?.slug}/panel/settings`, role: ['admin'] },
+    { title: 'Relatório', icon: <BarChart2 size={32} />, path: `/${store?.slug}/panel/reports`, role: ['admin'] },
+    { title: 'Categorias', icon: <List size={32} />, path: `/${store?.slug}/panel/categories`, role: ['admin'] },
+    { title: 'Produtos', icon: <Folder size={32} />, path: `/${store?.slug}/panel/products`, role: ['admin'] },
+    { title: 'Adicionais', icon: <ToggleLeft size={32} />, path: `/${store?.slug}/panel/addons`, role: ['admin'] },
+    { title: 'Cupons', icon: <Tag size={32} />, path: `/${store?.slug}/panel/coupons`, role: ['admin'] },
+    { title: 'Cores do Site', icon: <Palette size={32} />, path: `/${store?.slug}/panel/theme`, role: ['admin'] },
+    { title: 'Estoque', icon: <Package size={32} />, path: `/${store?.slug}/panel/inventory`, role: ['admin'] },
+    { title: 'Impressora', icon: <Printer size={32} />, path: `/${store?.slug}/panel/printer`, role: ['admin', 'employee'] },
   ];
 
 
@@ -2308,7 +2308,7 @@ const OrdersPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate('/panel')}><ChevronLeft /></button>
+        <button onClick={() => navigate(`/${useApp().store?.slug}/panel`)}><ChevronLeft /></button>
         <h1 className="text-xl font-bold">Pedidos</h1>
       </div>
       <div className="space-y-4">
@@ -2493,7 +2493,7 @@ const CouponsPage = () => {
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/panel')}><ChevronLeft /></button>
+          <button onClick={() => navigate(`/${useApp().store?.slug}/panel`)}><ChevronLeft /></button>
           <h1 className="text-xl font-bold">Cupons</h1>
         </div>
         <button onClick={() => { setEditingCoupon({ type: 'percent' }); setIsModalOpen(true); }} className="bg-purple-600 text-white p-2 rounded-full"><Plus /></button>
@@ -2733,7 +2733,7 @@ const AddonsPage = () => {
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/panel')}><ChevronLeft /></button>
+          <button onClick={() => navigate(`/${useApp().store?.slug}/panel`)}><ChevronLeft /></button>
           <h1 className="text-xl font-bold">Adicionais / Combos</h1>
         </div>
         <button
@@ -3173,7 +3173,7 @@ const SettingsPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-4 pb-20">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate('/panel')}><ChevronLeft /></button>
+        <button onClick={() => navigate(`/${useApp().store?.slug}/panel`)}><ChevronLeft /></button>
         <h1 className="text-xl font-bold">Configurações</h1>
       </div>
 
@@ -3768,7 +3768,7 @@ const ThemeSettingsPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-4 pb-20">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate('/panel')}><ChevronLeft /></button>
+        <button onClick={() => navigate(`/${useApp().store?.slug}/panel`)}><ChevronLeft /></button>
         <h1 className="text-xl font-bold">Cores do Site</h1>
       </div>
 
@@ -3907,7 +3907,8 @@ const AppContent = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const isAdminRoute = location.pathname.startsWith('/panel') || location.pathname.startsWith('/platform');
+  // Determine if it's an admin route
+  const isAdminRoute = location.pathname.includes('/panel') || location.pathname.startsWith('/platform');
   const isStorefrontRoute = !isAdminRoute && !['/', '/login', '/setup'].includes(location.pathname);
   const isStoreHome = isStorefrontRoute && !location.pathname.includes('/cart') && !location.pathname.includes('/checkout');
   const [showExitModal, setShowExitModal] = useState(false);
@@ -3980,17 +3981,17 @@ const AppContent = () => {
 
         <Route path="/platform" element={<PlatformAdminPanel />} />
 
-        <Route path="/panel" element={<AdminPanel />} />
-        <Route path="/panel/orders" element={<OrdersPage />} />
-        <Route path="/panel/coupons" element={<CouponsPage />} />
-        <Route path="/panel/addons" element={<AddonsPage />} />
-        <Route path="/panel/settings" element={<SettingsPage />} />
-        <Route path="/panel/theme" element={<ThemeSettingsPage />} />
-        <Route path="/panel/inventory" element={<InventoryPage products={products} />} />
-        <Route path="/panel/printer" element={<PrinterSettingsPage />} />
-        <Route path="/panel/theme" element={<ThemeSettingsPage />} />
-
-        <Route path="/panel/categories" element={
+        {/* Admin Panel Routes with Slug Prefix */}
+        <Route path="/:storeSlug/panel" element={<AdminPanel />} />
+        <Route path="/:storeSlug/panel/orders" element={<OrdersPage />} />
+        <Route path="/:storeSlug/panel/coupons" element={<CouponsPage />} />
+        <Route path="/:storeSlug/panel/addons" element={<AddonsPage />} />
+        <Route path="/:storeSlug/panel/settings" element={<SettingsPage />} />
+        <Route path="/:storeSlug/panel/theme" element={<ThemeSettingsPage />} />
+        <Route path="/:storeSlug/panel/inventory" element={<InventoryPage products={products} />} />
+        <Route path="/:storeSlug/panel/printer" element={<PrinterSettingsPage />} />
+        
+        <Route path="/:storeSlug/panel/categories" element={
           <CategoriesPage
             storeName={store?.name}
             categories={categories}
@@ -4000,7 +4001,7 @@ const AppContent = () => {
           />
         } />
 
-        <Route path="/panel/products" element={
+        <Route path="/:storeSlug/panel/products" element={
           <ProductsPage
             storeName={store?.name}
             products={products}
@@ -4013,12 +4014,8 @@ const AppContent = () => {
           />
         } />
 
-        <Route path="/panel/reports" element={
+        <Route path="/:storeSlug/panel/reports" element={
           <ReportsPage orders={orders} />
-        } />
-
-        <Route path="/panel/inventory" element={
-          <InventoryPage products={products} />
         } />
       </Routes>
 

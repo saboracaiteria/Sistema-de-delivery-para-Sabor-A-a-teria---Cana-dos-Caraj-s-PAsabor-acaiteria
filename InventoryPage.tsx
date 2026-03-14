@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Package, Users, ShoppingCart, Plus, Trash2, Edit, Save, X } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import { Product, Supplier, StockItem, PurchaseRecord } from './types';
+import { useApp } from './App';
 import { ConfirmModal } from './ConfirmModal';
 import { format } from 'date-fns';
 
@@ -185,7 +186,7 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ products }) => {
         <div className="min-h-screen bg-gray-100 p-4 pb-20">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate('/panel')}><ChevronLeft /></button>
+                    <button onClick={() => navigate(`/${useApp().store?.slug}/panel`)}><ChevronLeft /></button>
                     <h1 className="text-xl font-bold">Controle de Estoque</h1>
                 </div>
             </div>

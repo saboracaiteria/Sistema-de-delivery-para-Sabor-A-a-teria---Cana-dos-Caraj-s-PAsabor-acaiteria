@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, BarChart2, DollarSign, FileText, Printer, Calendar, Search, Filter, Users as UsersIcon } from 'lucide-react';
+import { ChevronLeft, BarChart2, TrendingUp, ShoppingBag, Users, Calendar, Download, RefreshCw, DollarSign, FileText, Users as UsersIcon } from 'lucide-react';
+import { useApp } from './App';
 import { usePrinter } from './PrinterContext';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -260,7 +261,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ orders }) => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate('/panel')}><ChevronLeft /></button>
+                    <button onClick={() => navigate(`/${useApp().store?.slug}/panel`)}><ChevronLeft /></button>
                     <h1 className="text-xl font-bold text-gray-800">Relatórios Financeiros</h1>
                 </div>
                 <div className="flex gap-2">

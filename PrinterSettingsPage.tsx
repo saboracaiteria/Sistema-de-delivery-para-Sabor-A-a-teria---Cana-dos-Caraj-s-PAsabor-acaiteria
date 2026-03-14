@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Printer, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
+import { ChevronLeft, Printer, AlertCircle, Save, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { useApp } from './App';
+
 import { usePrinter } from './PrinterContext';
 
 export const PrinterSettingsPage = () => {
@@ -28,7 +30,7 @@ export const PrinterSettingsPage = () => {
     return (
         <div className="min-h-screen bg-gray-100 p-4">
             <div className="flex items-center gap-3 mb-6">
-                <button onClick={() => navigate('/panel')}><ChevronLeft /></button>
+                <button onClick={() => navigate(`/${useApp().store?.slug}/panel`)}><ChevronLeft /></button>
                 <h1 className="text-xl font-bold">Configuração de Impressora</h1>
             </div>
 

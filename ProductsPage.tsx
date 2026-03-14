@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, Edit, Trash2, Upload, Loader2, Save, X, GripVertical, ToggleLeft, ToggleRight, Camera, Link as LinkIcon } from 'lucide-react';
 import { supabase } from './supabaseClient';
+import { useApp } from './App';
 import { ConfirmModal } from './ConfirmModal';
 
 interface Product {
@@ -254,7 +255,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
         <div className="min-h-screen bg-gray-100 p-4 pb-20">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate('/panel')}><ChevronLeft /></button>
+                    <button onClick={() => navigate(`/${useApp().store?.slug}/panel`)}><ChevronLeft /></button>
                     <div>
                         <h1 className="text-xl font-bold">Produtos</h1>
                         {storeName && <p className="text-sm text-gray-500 font-medium">Loja: <span className="text-purple-600">{storeName}</span></p>}

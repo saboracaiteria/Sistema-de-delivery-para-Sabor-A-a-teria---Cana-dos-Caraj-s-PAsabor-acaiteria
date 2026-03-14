@@ -53,7 +53,8 @@ export const LoginPage = () => {
         }
 
         setAdminRole('admin');
-        navigate('/panel');
+        const lastSlug = localStorage.getItem('currentStoreSlug') || 'sabor-acaiteria';
+        navigate(`/${lastSlug}/panel`);
       }
     } catch (err: any) {
       console.error('Login error:', err);
