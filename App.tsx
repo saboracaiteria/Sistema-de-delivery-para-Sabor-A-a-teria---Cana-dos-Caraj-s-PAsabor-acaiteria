@@ -141,9 +141,6 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [groups, setGroups] = useState<ProductGroup[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [showLinkInput, setShowLinkInput] = useState<{ field: 'logoUrl' | 'bannerUrl', visible: boolean }>({ field: 'logoUrl', visible: false });
-  const [tempImageUrl, setTempImageUrl] = useState('');
   const [settings, setSettings] = useState<GlobalSettings>({
     storeName: 'Minha Loja',
     logoUrl: '',
@@ -861,9 +858,15 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   const deleteCoupon = async (id: string) => {
+    // Optimistic Update
+    setCoupons(prev => prev.filter(c => c.id !== id));
+    
     const { error } = await supabase.from('coupons').delete().eq('id', id);
-    if (error) alert(`Erro ao deletar cupom: ${error.message}`);
-    // Realtime subscription will call fetchCoupons() automatically
+    if (error) {
+      alert(`Erro ao deletar cupom: ${error.message}`);
+      // Re-fetch if error to restore state
+      if (store?.id) fetchCoupons(store.id);
+    }
   };
 
   const updateSettings = async (s: Partial<GlobalSettings>) => {
@@ -2460,8 +2463,8 @@ const CouponsPage = () => {
         await addCoupon({ ...newCoupon, active: true, usageCount: 0 } as Coupon);
       }
       setIsModalOpen(false);
-      // Force reload to show new coupon
-      window.location.reload();
+      // No reload needed, state is updated in addCoupon/updateCoupon
+      // and confirmed by realtime subscription if configured.
     } catch (error) {
       console.error('Erro ao salvar cupom:', error);
       alert('Erro ao salvar cupom. Verifique se o código já existe.');
@@ -2472,7 +2475,6 @@ const CouponsPage = () => {
     if (deleteConfirmation) {
       await deleteCoupon(deleteConfirmation.id);
       setDeleteConfirmation(null);
-      window.location.reload();
     }
   };
 
@@ -3085,6 +3087,8 @@ const SettingsPage = () => {
   const navigate = useNavigate();
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [showLinkInput, setShowLinkInput] = useState<{ field: 'logoUrl' | 'bannerUrl', visible: boolean }>({ field: 'logoUrl', visible: false });
+  const [tempImageUrl, setTempImageUrl] = useState('');
   const [cropModalData, setCropModalData] = useState<{ imageUrl: string; field: 'logoUrl' | 'bannerUrl'; aspectRatio: number } | null>(null);
 
   const handleSave = async () => {
