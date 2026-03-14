@@ -19,7 +19,7 @@ import { formatCurrency, calculateStoreStatus, fileToBase64 } from './storeUtils
 import { Footer } from './Footer';
 import {
   CATEGORIES, PRODUCTS, GROUPS, WHATSAPP_NUMBER, LOGO_URL,
-  PAYMENT_METHODS, INITIAL_COUPONS, MOCK_ORDERS
+  PAYMENT_METHODS, INITIAL_COUPONS, MOCK_ORDERS, SUPER_ADMIN_EMAILS
 } from './constants';
 import {
   Category, Product, ProductGroup, CartItem, ProductOption,
@@ -487,8 +487,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         storeStatus: data.store_status,
         deliveryFee: data.delivery_fee,
         deliveryOnly: data.delivery_only,
-        openingHours: data.opening_hours,
-        themeColors: data.theme_colors,
+        openingHours: data.opening_hours || [],
+        themeColors: data.theme_colors || {},
         closedMessage: data.closed_message || '🔴 Loja Fechada',
         openMessage: data.open_message || '🟢 Aberto até às 23:00',
         deliveryTime: data.delivery_time || '40min à 1h',
@@ -3413,7 +3413,7 @@ const SettingsPage = () => {
           </h3>
           <p className="text-xs text-gray-500 mb-4">Configure os horários automáticos de abertura e fechamento</p>
           <div className="space-y-3">
-            {settings.openingHours.map((hour) => (
+            {(settings.openingHours || []).map((hour) => (
               <div key={hour.dayOfWeek} className="border border-gray-200 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-gray-800">{dayNames[hour.dayOfWeek]}</span>
