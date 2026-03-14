@@ -285,8 +285,17 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         // 1. Check if logged into Admin Panel
         const { data: { session } } = await supabase.auth.getSession();
         if (session && session.user && (hash.includes('/panel') || hash.includes('/login'))) {
-          // Admin Mode: Fetch the store they own
-          const { data: storesData } = await supabase.from('stores').select('*').eq('owner_id', session.user.id);
+          // Check if Super Admin
+          const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(session.user.email?.toLowerCase() || '');
+          
+          // Admin Mode: Fetch the store they own (or all if superadmin)
+          let query = supabase.from('stores').select('*');
+          if (!isSuperAdmin) {
+            query = query.eq('owner_id', session.user.id);
+          }
+          
+          const { data: storesData } = await query;
+          
           if (storesData && storesData.length > 0) {
             const savedSlug = localStorage.getItem('currentStoreSlug');
             let matchedStore = storesData.find(s => s.slug === savedSlug);
@@ -295,6 +304,9 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             setStore(matchedStore);
             currentStoreId = matchedStore.id;
             localStorage.setItem('currentStoreSlug', matchedStore.slug);
+            console.log('Store resolved for admin:', matchedStore.slug, isSuperAdmin ? '(Super Admin)' : '(Owner)');
+          } else {
+            console.warn('No stores found for user:', session.user.email);
           }
         } else {
           // 2. Client Mode: Fetch store by slug
@@ -843,7 +855,6 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }).eq('id', c.id);
     
     if (error) alert(`Erro ao atualizar cupom: ${error.message}`);
-    // Realtime subscription will call fetchCoupons() automatically
   };
 
   const deleteCoupon = async (id: string) => {
@@ -853,13 +864,18 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   const updateSettings = async (s: Partial<GlobalSettings>) => {
-    // Optimistic Update: Update local state immediately
+    // Optimistic Update
     setSettings(prev => ({ ...prev, ...s }));
 
     if (!isConfigured) return;
 
+    if (!store?.id) {
+      console.error("Erro: store.id ausente ao tentar salvar configurações");
+      return;
+    }
+
     // Mapear camelCase para snake_case
-    const dbSettings: any = {};
+    const dbSettings: any = { store_id: store.id };
     if (s.storeName !== undefined) dbSettings.store_name = s.storeName;
     if (s.logoUrl !== undefined) dbSettings.logo_url = s.logoUrl;
     if (s.logoShape !== undefined) dbSettings.logo_shape = s.logoShape;
@@ -879,8 +895,39 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     if (s.businessAddress !== undefined) dbSettings.business_address = s.businessAddress;
     if (s.copyrightText !== undefined) dbSettings.copyright_text = s.copyrightText;
 
+    // Se dbSettings tiver apenas store_id e nenhum outro campo para atualizar, e s não for vazio, algo está errado
+    // Mas se s estiver vazio (ex: Save button), queremos salvar o estado ATUAL.
+    // Para simplificar, se dbSettings tiver apenas store_id, enviamos o settings completo (mapeado)
+    if (Object.keys(dbSettings).length === 1) {
+      Object.assign(dbSettings, {
+        store_name: settings.storeName,
+        logo_url: settings.logoUrl,
+        logo_shape: settings.logoShape,
+        banner_url: settings.bannerUrl,
+        whatsapp_number: settings.whatsappNumber,
+        store_status: settings.storeStatus,
+        delivery_fee: settings.deliveryFee,
+        delivery_only: settings.deliveryOnly,
+        opening_hours: settings.openingHours,
+        theme_colors: settings.themeColors,
+        closed_message: settings.closedMessage,
+        open_message: settings.openMessage,
+        delivery_time: settings.deliveryTime,
+        pickup_time: settings.pickupTime,
+        delivery_close_time: settings.deliveryCloseTime,
+        instagram_url: settings.instagramUrl,
+        business_address: settings.businessAddress,
+        copyright_text: settings.copyrightText
+      });
+    }
+
     try {
-      const { error } = await supabase.from('settings').update(dbSettings).eq('store_id', store?.id);
+      console.log('Salvando configurações para store_id:', store.id, dbSettings);
+      
+      const { error } = await supabase
+        .from('settings')
+        .upsert(dbSettings, { onConflict: 'store_id' });
+
       if (error) {
         console.error("Erro ao atualizar configurações no Supabase:", error);
         alert(`Erro ao salvar configurações no servidor: ${error.message}`);
@@ -888,7 +935,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       }
 
       // Sincronizar nome da loja na tabela 'stores' se alterado
-      if (s.storeName !== undefined && store?.id) {
+      if (s.storeName !== undefined) {
         const { error: storeError } = await supabase
           .from('stores')
           .update({ name: s.storeName })
@@ -897,7 +944,6 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         if (storeError) {
           console.error("Erro ao sincronizar nome na tabela stores:", storeError);
         } else {
-          // Atualizar estado local do store para refletir imediatamente no app
           setStore(prev => prev ? { ...prev, name: s.storeName || '' } : prev);
         }
       }
@@ -3040,8 +3086,8 @@ const SettingsPage = () => {
 
   const handleSave = async () => {
     try {
-      // Forçamos um update com o estado atual para garantir que tudo foi enviado
-      await updateSettings({}); 
+      // Enviamos o estado completo para garantir a persistência
+      await updateSettings(settings); 
       setShowSaveConfirm(true);
       setTimeout(() => setShowSaveConfirm(false), 3000);
     } catch (err) {
