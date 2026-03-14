@@ -1110,13 +1110,13 @@ const Sidebar = () => {
   const handleAdminAccess = () => {
     if (password === '1245') {
       setAdminRole('admin');
-      navigate('/panel');
+      navigate(`/${store?.slug}/panel`);
       setShowPassword(false);
       setSidebarOpen(false);
       setPassword('');
     } else if (password === '777') {
       setAdminRole('employee');
-      navigate('/panel');
+      navigate(`/${store?.slug}/panel`);
       setShowPassword(false);
       setSidebarOpen(false);
       setPassword('');
