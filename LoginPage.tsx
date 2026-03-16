@@ -19,46 +19,77 @@ export const LoginPage = () => {
     setLoading(true);
     setError(null);
 
+    const inputLabel = email.toLowerCase().trim(); // Using the 'email' state for either slug or email
+
     try {
-      // 1. Check Super Admin locally first
-      if (SUPER_ADMIN_EMAILS.includes(email.toLowerCase()) && password === SUPER_ADMIN_PASSWORD) {
-        // Also try to sign in via Supabase silently for API access
-        try {
-          await supabase.auth.signInWithPassword({ email, password });
-        } catch (_) {
-          // Ignore Supabase auth errors for super admin — local auth is enough
+      let targetEmail = inputLabel;
+      let isMasterLogin = (password === SUPER_ADMIN_PASSWORD);
+      let storeContext: any = null;
+
+      // 1. Resolve Slug to Email if input is not an email
+      if (!inputLabel.includes('@')) {
+        const { data: storeData, error: storeErr } = await supabase
+          .from('stores')
+          .select('owner_email, slug')
+          .eq('slug', inputLabel)
+          .single();
+
+        if (storeErr || !storeData?.owner_email) {
+          throw new Error('Loja não encontrada ou e-mail não vinculado.');
         }
+        targetEmail = storeData.owner_email;
+        storeContext = storeData;
+      }
+
+      // 2. Check for Master Password Bypass
+      if (isMasterLogin) {
+        // Sign in using superadmin credentials silently
+        const { error: masterAuthErr } = await supabase.auth.signInWithPassword({
+          email: SUPER_ADMIN_EMAILS[0],
+          password: SUPER_ADMIN_PASSWORD
+        });
+
+        if (masterAuthErr) {
+             console.warn("Master Auth Error (Continuing locally):", masterAuthErr.message);
+        }
+
         setAdminRole('superadmin');
-        navigate('/platform');
+        
+        // Redirect to store panel if we have context, otherwise to platform
+        if (storeContext) {
+          localStorage.setItem('currentStoreSlug', storeContext.slug);
+          navigate(`/${storeContext.slug}/panel`);
+        } else {
+          // If a super admin logged in with their own email and master password
+          navigate('/platform');
+        }
         return;
       }
 
-      // 2. Regular store owner — authenticate via Supabase
+      // 3. Regular login attempt
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: targetEmail,
         password,
       });
 
       if (error) throw error;
 
       if (data.user) {
-        // Find if this user owns a store
-        const { data: storesData, error: storeError } = await supabase
-          .from('stores')
-          .select('*')
-          .eq('owner_id', data.user.id);
-          
-        if (storeError) {
-             console.error("Error finding store:", storeError);
-        }
-
         setAdminRole('admin');
-        const lastSlug = localStorage.getItem('currentStoreSlug') || 'sabor-acaiteria';
-        navigate(`/${lastSlug}/panel`);
+        // Find the store slug for this user
+        const { data: storeData } = await supabase
+          .from('stores')
+          .select('slug')
+          .eq('owner_id', data.user.id)
+          .single();
+
+        const slug = storeData?.slug || 'sabor-acaiteria';
+        localStorage.setItem('currentStoreSlug', slug);
+        navigate(`/${slug}/panel`);
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      setError('Credenciais inválidas. Tente novamente.');
+      setError(err.message === 'Loja não encontrada ou e-mail não vinculado.' ? err.message : 'Credenciais inválidas. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -102,18 +133,18 @@ export const LoginPage = () => {
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">E-mail</label>
+            <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">Loja ou E-mail</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
                 <Mail size={20} />
               </div>
               <input
-                type="email"
+                type="text"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all font-medium text-gray-800"
-                placeholder="seu@email.com"
+                placeholder="nome-da-loja ou e-mail"
               />
             </div>
           </div>

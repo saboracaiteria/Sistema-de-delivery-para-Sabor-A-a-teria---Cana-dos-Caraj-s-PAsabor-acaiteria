@@ -332,8 +332,8 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
   const slug = generateSlug(storeName);
 
   const handleCreate = async () => {
-    if (!storeName.trim() || !ownerEmail.trim() || !ownerPassword.trim()) {
-      setError('Preencha todos os campos.');
+    if (!storeName.trim() || !ownerPassword.trim()) {
+      setError('Preencha o nome da loja e a senha.');
       return;
     }
     if (ownerPassword.length < 6) {
@@ -344,10 +344,13 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
     setSaving(true);
     setError(null);
 
+    // Auto-generate internal email
+    const generatedEmail = `${slug.toLowerCase()}@internal.com`;
+
     try {
       // 1. Create the auth user for the store owner
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: ownerEmail,
+        email: generatedEmail,
         password: ownerPassword,
       });
 
@@ -370,6 +373,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
           name: storeName.trim(),
           slug: slug,
           owner_id: userId || null,
+          owner_email: generatedEmail,
         })
         .select()
         .single();
@@ -465,7 +469,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
 
               <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-sm text-yellow-700 mb-4">
                 <strong>Login do Lojista:</strong><br/>
-                E-mail: <strong>{ownerEmail}</strong><br/>
+                Loja: <strong>{slug}</strong><br/>
                 Senha: <strong>{ownerPassword}</strong>
               </div>
 
@@ -502,28 +506,20 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
                 )}
               </div>
 
-              {/* Owner Email */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1.5">E-mail do Lojista</label>
-                <input
-                  type="email"
-                  value={ownerEmail}
-                  onChange={e => setOwnerEmail(e.target.value)}
-                  className="w-full border border-gray-200 p-3 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500 outline-none font-medium"
-                  placeholder="lojista@email.com"
-                />
-              </div>
-
               {/* Owner Password */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1.5">Senha do Lojista</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">Senha do Lojista</label>
                 <input
                   type="text"
+                  required
                   value={ownerPassword}
                   onChange={e => setOwnerPassword(e.target.value)}
-                  className="w-full border border-gray-200 p-3 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500 outline-none font-medium"
+                  className="w-full border border-gray-200 p-3 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500 outline-none font-medium text-gray-800"
                   placeholder="Mínimo 6 caracteres"
                 />
+                <p className="mt-1.5 text-xs text-gray-400 font-medium leading-relaxed">
+                  O lojista usará esta senha para acessar o próprio painel.
+                </p>
               </div>
 
               {/* UI Mode Selector */}
@@ -571,7 +567,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
               {/* Submit Button */}
               <button
                 onClick={handleCreate}
-                disabled={saving || !storeName.trim() || !ownerEmail.trim() || !ownerPassword.trim()}
+                disabled={saving || !storeName.trim() || !ownerPassword.trim()}
                 className="w-full bg-gradient-to-r from-purple-600 to-purple-800 text-white py-3.5 rounded-xl font-bold text-lg shadow-lg shadow-purple-200 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? (
