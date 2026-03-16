@@ -3091,14 +3091,21 @@ const SettingsPage = () => {
   const [tempImageUrl, setTempImageUrl] = useState('');
   const [cropModalData, setCropModalData] = useState<{ imageUrl: string; field: 'logoUrl' | 'bannerUrl'; aspectRatio: number } | null>(null);
 
+  // Local state for all settings to avoid redundant DB calls on every keystroke
+  const [localSettings, setLocalSettings] = useState<GlobalSettings>(settings);
+
+  // Sync local state when global settings change (e.g. on load or real-time update)
+  useEffect(() => {
+    setLocalSettings(settings);
+  }, [settings]);
+
   const handleSave = async () => {
     try {
-      // Enviamos o estado completo para garantir a persistência
-      await updateSettings(settings); 
+      await updateSettings(localSettings); 
       setShowSaveConfirm(true);
       setTimeout(() => setShowSaveConfirm(false), 3000);
     } catch (err) {
-      // Erro já tratado no updateSettings com alert
+      // Error handled in updateSettings
     }
   };
 
@@ -3160,12 +3167,12 @@ const SettingsPage = () => {
   };
 
   const handleHourChange = (dayOfWeek: number, field: 'open' | 'close' | 'enabled', value: string | boolean) => {
-    const updatedHours = settings.openingHours.map(h =>
+    const updatedHours = localSettings.openingHours.map(h =>
       h.dayOfWeek === dayOfWeek
         ? { ...h, [field]: value }
         : h
     );
-    updateSettings({ openingHours: updatedHours });
+    setLocalSettings(prev => ({ ...prev, openingHours: updatedHours }));
   };
 
   const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -3186,28 +3193,28 @@ const SettingsPage = () => {
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-2">
               <button
-                onClick={() => updateSettings({ storeStatus: 'open' })}
-                className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${settings.storeStatus === 'open' ? 'bg-green-50 border-green-500 text-green-700 ring-1 ring-green-500' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                onClick={() => setLocalSettings(prev => ({ ...prev, storeStatus: 'open' }))}
+                className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${localSettings.storeStatus === 'open' ? 'bg-green-50 border-green-500 text-green-700 ring-1 ring-green-500' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
               >
-                <div className={`w-3 h-3 rounded-full ${settings.storeStatus === 'open' ? 'bg-green-500' : 'bg-gray-300'}`} />
+                <div className={`w-3 h-3 rounded-full ${localSettings.storeStatus === 'open' ? 'bg-green-500' : 'bg-gray-300'}`} />
                 <span className="text-xs font-bold">ABERTO</span>
                 <span className="text-[10px] opacity-75">(Forçar)</span>
               </button>
 
               <button
-                onClick={() => updateSettings({ storeStatus: 'closed' })}
-                className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${settings.storeStatus === 'closed' ? 'bg-red-50 border-red-500 text-red-700 ring-1 ring-red-500' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                onClick={() => setLocalSettings(prev => ({ ...prev, storeStatus: 'closed' }))}
+                className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${localSettings.storeStatus === 'closed' ? 'bg-red-50 border-red-500 text-red-700 ring-1 ring-red-500' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
               >
-                <div className={`w-3 h-3 rounded-full ${settings.storeStatus === 'closed' ? 'bg-red-500' : 'bg-gray-300'}`} />
+                <div className={`w-3 h-3 rounded-full ${localSettings.storeStatus === 'closed' ? 'bg-red-500' : 'bg-gray-300'}`} />
                 <span className="text-xs font-bold">FECHADO</span>
                 <span className="text-[10px] opacity-75">(Forçar)</span>
               </button>
 
               <button
-                onClick={() => updateSettings({ storeStatus: 'auto' })}
-                className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${settings.storeStatus === 'auto' || !settings.storeStatus ? 'bg-blue-50 border-blue-500 text-blue-700 ring-1 ring-blue-500' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                onClick={() => setLocalSettings(prev => ({ ...prev, storeStatus: 'auto' }))}
+                className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${localSettings.storeStatus === 'auto' || !localSettings.storeStatus ? 'bg-blue-50 border-blue-500 text-blue-700 ring-1 ring-blue-500' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
               >
-                <div className={`w-3 h-3 rounded-full ${settings.storeStatus === 'auto' || !settings.storeStatus ? 'bg-blue-500' : 'bg-gray-300'}`} />
+                <div className={`w-3 h-3 rounded-full ${localSettings.storeStatus === 'auto' || !localSettings.storeStatus ? 'bg-blue-500' : 'bg-gray-300'}`} />
                 <span className="text-xs font-bold">AUTO</span>
                 <span className="text-[10px] opacity-75">(Horários)</span>
               </button>
@@ -3236,8 +3243,8 @@ const SettingsPage = () => {
               </label>
               <input
                 type="text"
-                value={settings.openMessage || ''}
-                onChange={(e) => updateSettings({ openMessage: e.target.value })}
+                value={localSettings.openMessage || ''}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, openMessage: e.target.value }))}
                 placeholder="Ex: 🟢 Aberto até às 23:00"
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
@@ -3250,8 +3257,8 @@ const SettingsPage = () => {
               </label>
               <input
                 type="text"
-                value={settings.closedMessage || ''}
-                onChange={(e) => updateSettings({ closedMessage: e.target.value })}
+                value={localSettings.closedMessage || ''}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, closedMessage: e.target.value }))}
                 placeholder="Ex: 🔴 Loja Fechada"
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
@@ -3280,8 +3287,8 @@ const SettingsPage = () => {
               </label>
               <input
                 type="text"
-                value={settings.deliveryTime || ''}
-                onChange={(e) => updateSettings({ deliveryTime: e.target.value })}
+                value={localSettings.deliveryTime || ''}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, deliveryTime: e.target.value }))}
                 placeholder="Ex: 40min à 1h"
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
@@ -3293,8 +3300,8 @@ const SettingsPage = () => {
               </label>
               <input
                 type="text"
-                value={settings.pickupTime || ''}
-                onChange={(e) => updateSettings({ pickupTime: e.target.value })}
+                value={localSettings.pickupTime || ''}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, pickupTime: e.target.value }))}
                 placeholder="Ex: 20min à 45min"
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
@@ -3306,8 +3313,8 @@ const SettingsPage = () => {
               </label>
               <input
                 type="text"
-                value={settings.deliveryCloseTime || ''}
-                onChange={(e) => updateSettings({ deliveryCloseTime: e.target.value })}
+                value={localSettings.deliveryCloseTime || ''}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, deliveryCloseTime: e.target.value }))}
                 placeholder="Ex: 21:00"
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
@@ -3335,8 +3342,8 @@ const SettingsPage = () => {
               </label>
               <input
                 type="text"
-                value={settings.instagramUrl || ''}
-                onChange={(e) => updateSettings({ instagramUrl: e.target.value })}
+                value={localSettings.instagramUrl || ''}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, instagramUrl: e.target.value }))}
                 placeholder="https://www.instagram.com/seu_perfil"
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
@@ -3348,8 +3355,8 @@ const SettingsPage = () => {
               </label>
               <input
                 type="text"
-                value={settings.businessAddress || ''}
-                onChange={(e) => updateSettings({ businessAddress: e.target.value })}
+                value={localSettings.businessAddress || ''}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, businessAddress: e.target.value }))}
                 placeholder="Ex: Canaã dos Carajás - PA"
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
@@ -3361,8 +3368,8 @@ const SettingsPage = () => {
               </label>
               <input
                 type="text"
-                value={settings.copyrightText || ''}
-                onChange={(e) => updateSettings({ copyrightText: e.target.value })}
+                value={localSettings.copyrightText || ''}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, copyrightText: e.target.value }))}
                 placeholder="Ex: © 2025-2026 Obba Açaí"
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
@@ -3389,12 +3396,12 @@ const SettingsPage = () => {
                 <p className="text-xs text-gray-500">Desativar entregas (somente pickup)</p>
               </div>
               <button
-                onClick={() => updateSettings({ deliveryOnly: !settings.deliveryOnly })}
-                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${settings.deliveryOnly ? 'bg-orange-500' : 'bg-gray-300'
+                onClick={() => setLocalSettings(prev => ({ ...prev, deliveryOnly: !prev.deliveryOnly }))}
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${localSettings.deliveryOnly ? 'bg-orange-500' : 'bg-gray-300'
                   }`}
               >
                 <span
-                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${settings.deliveryOnly ? 'translate-x-7' : 'translate-x-1'
+                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${localSettings.deliveryOnly ? 'translate-x-7' : 'translate-x-1'
                     }`}
                 />
               </button>
@@ -3420,7 +3427,7 @@ const SettingsPage = () => {
           </h3>
           <p className="text-xs text-gray-500 mb-4">Configure os horários automáticos de abertura e fechamento</p>
           <div className="space-y-3">
-            {(settings.openingHours || []).map((hour) => (
+            {(localSettings.openingHours || []).map((hour) => (
               <div key={hour.dayOfWeek} className="border border-gray-200 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-gray-800">{dayNames[hour.dayOfWeek]}</span>
@@ -3480,24 +3487,24 @@ const SettingsPage = () => {
             <label className="block text-xs font-medium text-gray-600 mb-2">Formato do Logo</label>
             <div className="grid grid-cols-2 gap-2">
               <button
-                onClick={() => updateSettings({ logoShape: 'circle' })}
-                className={`p-3 rounded-lg border-2 flex flex-col items-center gap-2 transition-all ${settings.logoShape === 'circle'
+                onClick={() => setLocalSettings(prev => ({ ...prev, logoShape: 'circle' }))}
+                className={`p-3 rounded-lg border-2 flex flex-col items-center gap-2 transition-all ${localSettings.logoShape === 'circle'
                   ? 'bg-purple-50 border-purple-500 text-purple-700'
                   : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                   }`}
               >
-                <div className={`w-12 h-12 rounded-full border-2 ${settings.logoShape === 'circle' ? 'border-purple-500' : 'border-gray-300'
+                <div className={`w-12 h-12 rounded-full border-2 ${localSettings.logoShape === 'circle' ? 'border-purple-500' : 'border-gray-300'
                   }`} />
                 <span className="text-xs font-bold">Círculo</span>
               </button>
               <button
-                onClick={() => updateSettings({ logoShape: 'rectangle' })}
-                className={`p-3 rounded-lg border-2 flex flex-col items-center gap-2 transition-all ${settings.logoShape === 'rectangle'
+                onClick={() => setLocalSettings(prev => ({ ...prev, logoShape: 'rectangle' }))}
+                className={`p-3 rounded-lg border-2 flex flex-col items-center gap-2 transition-all ${localSettings.logoShape === 'rectangle'
                   ? 'bg-purple-50 border-purple-500 text-purple-700'
                   : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                   }`}
               >
-                <div className={`w-12 h-12 rounded-lg border-2 ${settings.logoShape === 'rectangle' ? 'border-purple-500' : 'border-gray-300'
+                <div className={`w-12 h-12 rounded-lg border-2 ${localSettings.logoShape === 'rectangle' ? 'border-purple-500' : 'border-gray-300'
                   }`} />
                 <span className="text-xs font-bold">Retângulo</span>
               </button>
@@ -3506,11 +3513,11 @@ const SettingsPage = () => {
 
           <div className="flex items-center gap-4">
             <div className="relative">
-              <img src={settings.logoUrl} className={`w-20 h-20 object-cover border ${settings.logoShape === 'circle' ? 'rounded-full' : 'rounded-lg'}`} alt="Logo" />
+              <img src={localSettings.logoUrl} className={`w-20 h-20 object-cover border ${localSettings.logoShape === 'circle' ? 'rounded-full' : 'rounded-lg'}`} alt="Logo" />
               <button
                 onClick={() => {
                   if (confirm('Remover logo da loja?')) {
-                    updateSettings({ logoUrl: '' });
+                    setLocalSettings(prev => ({ ...prev, logoUrl: '' }));
                   }
                 }}
                 className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-colors"
@@ -3557,7 +3564,7 @@ const SettingsPage = () => {
               <button
                 onClick={() => {
                   if (tempImageUrl) {
-                    updateSettings({ logoUrl: tempImageUrl });
+                    setLocalSettings(prev => ({ ...prev, logoUrl: tempImageUrl }));
                     setShowLinkInput({ field: 'logoUrl', visible: false });
                   }
                 }}
@@ -3573,13 +3580,13 @@ const SettingsPage = () => {
         <div className="bg-white p-4 rounded-lg shadow-sm">
           <label className="block text-sm font-bold text-gray-700 mb-2">Foto de Capa / Banner</label>
           <div className="space-y-3">
-            {settings.bannerUrl && (
+            {localSettings.bannerUrl && (
               <div className="relative">
-                <img src={settings.bannerUrl} className="w-full h-32 rounded object-cover border" alt="Banner" />
+                <img src={localSettings.bannerUrl} className="w-full h-32 rounded object-cover border" alt="Banner" />
                 <button
                   onClick={() => {
                     if (confirm('Remover foto de capa?')) {
-                      updateSettings({ bannerUrl: '' });
+                      setLocalSettings(prev => ({ ...prev, bannerUrl: '' }));
                     }
                   }}
                   className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg transition-colors"
@@ -3628,7 +3635,7 @@ const SettingsPage = () => {
                 <button
                   onClick={() => {
                     if (tempImageUrl) {
-                      updateSettings({ bannerUrl: tempImageUrl });
+                      setLocalSettings(prev => ({ ...prev, bannerUrl: tempImageUrl }));
                       setShowLinkInput({ field: 'bannerUrl', visible: false });
                     }
                   }}
@@ -3646,8 +3653,8 @@ const SettingsPage = () => {
           <label className="block text-sm font-bold text-gray-700 mb-2">Nome da Loja</label>
           <input
             className="w-full border p-2 rounded"
-            value={settings.storeName}
-            onChange={e => updateSettings({ storeName: e.target.value })}
+            value={localSettings.storeName}
+            onChange={e => setLocalSettings(prev => ({ ...prev, storeName: e.target.value }))}
           />
         </div>
 
@@ -3657,8 +3664,8 @@ const SettingsPage = () => {
           <input
             className="w-full border p-2 rounded"
             placeholder="5594999999999"
-            value={settings.whatsappNumber}
-            onChange={e => updateSettings({ whatsappNumber: e.target.value })}
+            value={localSettings.whatsappNumber}
+            onChange={e => setLocalSettings(prev => ({ ...prev, whatsappNumber: e.target.value }))}
           />
           <p className="text-xs text-gray-500 mt-1">Exemplo: 5594992816973</p>
         </div>
@@ -3670,8 +3677,8 @@ const SettingsPage = () => {
             type="number"
             step="0.01"
             className="w-full border p-2 rounded"
-            value={settings.deliveryFee}
-            onChange={e => updateSettings({ deliveryFee: parseFloat(e.target.value) })}
+            value={localSettings.deliveryFee}
+            onChange={e => setLocalSettings(prev => ({ ...prev, deliveryFee: parseFloat(e.target.value) }))}
           />
         </div>
 
