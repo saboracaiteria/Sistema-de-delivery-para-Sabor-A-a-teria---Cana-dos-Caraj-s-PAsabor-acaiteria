@@ -490,7 +490,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         storeStatus: data.store_status,
         deliveryFee: data.delivery_fee,
         deliveryOnly: data.delivery_only,
-        openingHours: data.opening_hours || [],
+        openingHours: typeof data.opening_hours === 'string' ? JSON.parse(data.opening_hours) : (data.opening_hours || []),
         themeColors: data.theme_colors || {},
         closedMessage: data.closed_message || '🔴 Loja Fechada',
         openMessage: data.open_message || '🟢 Aberto até às 23:00',

@@ -396,7 +396,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
           store_status: 'open',
           delivery_fee: 5.00,
           delivery_only: false,
-          opening_hours: JSON.stringify([
+          opening_hours: [
             { dayOfWeek: 0, open: '08:00', close: '22:00', enabled: true },
             { dayOfWeek: 1, open: '08:00', close: '22:00', enabled: true },
             { dayOfWeek: 2, open: '08:00', close: '22:00', enabled: true },
@@ -404,7 +404,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
             { dayOfWeek: 4, open: '08:00', close: '22:00', enabled: true },
             { dayOfWeek: 5, open: '08:00', close: '22:00', enabled: true },
             { dayOfWeek: 6, open: '08:00', close: '22:00', enabled: true },
-          ]),
+          ],
         });
       }
 
