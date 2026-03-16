@@ -12,6 +12,7 @@ interface InventoryPageProps {
 }
 
 export const InventoryPage: React.FC<InventoryPageProps> = ({ products }) => {
+    const { store } = useApp();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'stock' | 'suppliers' | 'purchases'>('stock');
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -34,14 +35,15 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ products }) => {
     }, []);
 
     const fetchInventoryData = async () => {
+        if (!store?.id) return;
         setLoading(true);
         try {
-            const { data: suppliersData } = await supabase.from('suppliers').select('*');
+            const { data: suppliersData } = await supabase.from('suppliers').select('*').eq('store_id', store.id);
             if (suppliersData) setSuppliers(suppliersData);
 
-            const { data: stockData } = await supabase.from('stock_items').select('*');
+            // stock_items are linked to products which are store_id'd, but we should also check store_id if it exists there
+            const { data: stockData } = await supabase.from('stock_items').select('*').eq('store_id', store.id);
             if (stockData) {
-                // Mapear snake_case do DB para camelCase
                 const mappedStock: StockItem[] = stockData.map((item: any) => ({
                     id: item.id,
                     productId: item.product_id,
@@ -54,12 +56,12 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ products }) => {
             const { data: purchasesData } = await supabase.from('purchases').select(`
                 *,
                 supplier:suppliers(name)
-            `).order('date', { ascending: false });
+            `).eq('store_id', store.id).order('date', { ascending: false });
 
             if (purchasesData) {
                 setPurchases(purchasesData.map((p: any) => ({
                     ...p,
-                    supplierName: p.supplier?.name // Helper property for display
+                    supplierName: p.supplier?.name
                 })));
             }
         } catch (error) {
@@ -71,11 +73,12 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ products }) => {
 
     const handleSaveSupplier = async () => {
         if (!editingSupplier.name) return alert('Nome é obrigatório');
+        if (!store?.id) return;
 
         if (editingSupplier.id) {
             await supabase.from('suppliers').update(editingSupplier).eq('id', editingSupplier.id);
         } else {
-            await supabase.from('suppliers').insert([editingSupplier]);
+            await supabase.from('suppliers').insert([{ ...editingSupplier, store_id: store.id }]);
         }
         setIsSupplierModalOpen(false);
         setEditingSupplier({});
@@ -85,6 +88,7 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ products }) => {
     const handleSavePurchase = async () => {
         if (!newPurchase.supplierId) return alert('Selecione um fornecedor');
         if (purchaseItems.length === 0) return alert('Adicione pelo menos um item');
+        if (!store?.id) return;
 
         const total = purchaseItems.reduce((acc, item) => acc + (item.cost * item.quantity), 0);
 
@@ -93,7 +97,8 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ products }) => {
             date: new Date().toISOString(),
             total: total,
             items: purchaseItems,
-            notes: newPurchase.notes
+            notes: newPurchase.notes,
+            store_id: store.id
         };
 
         const { error } = await supabase.from('purchases').insert([purchaseData]);
@@ -115,7 +120,8 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ products }) => {
                 await supabase.from('stock_items').insert([{
                     product_id: item.productId,
                     quantity: newQuantity,
-                    min_quantity: 5 // Default
+                    min_quantity: 5,
+                    store_id: store.id
                 }]);
             }
         }
@@ -155,7 +161,8 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ products }) => {
             const { error } = await supabase.from('stock_items').insert([{
                 product_id: productId,
                 quantity: quantity,
-                min_quantity: minQuantity
+                min_quantity: minQuantity,
+                store_id: store.id
             }]);
 
             if (error) {

@@ -205,17 +205,21 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Visitor Tracking
   useEffect(() => {
     const trackVisitor = async () => {
-      // Check if already visited this session
-      if (sessionStorage.getItem('visited_today')) return;
+      // Don't track if no store is loaded yet
+      if (!store?.id) return;
+      
+      // Check if already visited this specific store this session
+      const trackKey = `visited_${store.slug}`;
+      if (sessionStorage.getItem(trackKey)) return;
 
       try {
         if (!isConfigured) return; // Don't track if offline/mock
 
-        const { error } = await supabase.rpc('increment_visitor_count');
+        const { error } = await supabase.rpc('increment_visitor_count', { p_store_id: store.id });
 
         if (!error) {
-          sessionStorage.setItem('visited_today', 'true');
-          console.log("Visitor tracked");
+          sessionStorage.setItem(trackKey, 'true');
+          console.log(`Visitor tracked for store: ${store.slug}`);
         } else {
           console.error("Error tracking visitor:", error);
         }
@@ -224,9 +228,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       }
     };
 
-    // Only track if configured and not already tracked
     trackVisitor();
-  }, []); // Run once on mount
+  }, [store?.id]); // Run when store is identified
 
 
 

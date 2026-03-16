@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, BarChart2, TrendingUp, ShoppingBag, Users, Calendar, Download, RefreshCw, DollarSign, FileText, Users as UsersIcon } from 'lucide-react';
+import { ChevronLeft, BarChart2, TrendingUp, ShoppingBag, Users, Calendar, Download, RefreshCw, DollarSign, FileText, Users as UsersIcon, Printer } from 'lucide-react';
 import { useApp } from './App';
 import { usePrinter } from './PrinterContext';
 import {
@@ -47,21 +47,23 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ orders }) => {
         year: 0
     });
 
+    const { store } = useApp();
+
     useEffect(() => {
         const fetchVisitors = async () => {
+            if (!store?.id) return;
+
             const today = new Date();
             const startYearDate = startOfYear(today);
             const date30DaysAgo = subDays(today, 30);
 
             // Ensure we have enough data for both "This Year" AND "Last 30 Days"
-            // If we are in Jan, 30 days ago is in Dec (prev year).
-            // If we are in June, 30 days ago is May (this year), but StartOfYear is Jan.
-            // So we take the earliest of the two.
             const fetchStartDate = date30DaysAgo < startYearDate ? date30DaysAgo : startYearDate;
 
             const { data, error } = await supabase
                 .from('daily_visitors')
                 .select('date, count')
+                .eq('store_id', store.id)
                 .gte('date', format(fetchStartDate, 'yyyy-MM-dd'));
 
             if (data) {

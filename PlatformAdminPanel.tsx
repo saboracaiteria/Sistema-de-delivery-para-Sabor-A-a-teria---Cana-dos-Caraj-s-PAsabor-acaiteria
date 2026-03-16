@@ -68,6 +68,10 @@ export const PlatformAdminPanel = () => {
       await supabase.from('products').delete().eq('store_id', store.id);
       await supabase.from('categories').delete().eq('store_id', store.id);
       await supabase.from('coupons').delete().eq('store_id', store.id);
+      await supabase.from('daily_visitors').delete().eq('store_id', store.id);
+      await supabase.from('suppliers').delete().eq('store_id', store.id);
+      await supabase.from('purchases').delete().eq('store_id', store.id);
+      await supabase.from('stock_items').delete().eq('store_id', store.id);
       await supabase.from('settings').delete().eq('store_id', store.id);
       
       const { error } = await supabase.from('stores').delete().eq('id', store.id);
