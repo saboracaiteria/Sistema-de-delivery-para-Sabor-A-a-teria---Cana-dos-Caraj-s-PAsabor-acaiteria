@@ -110,167 +110,219 @@ export const PlatformAdminPanel = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-purple-600"></div>
+      <div className="min-h-screen bg-[#0a0118] flex flex-col items-center justify-center gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-900 flex items-center justify-center shadow-2xl shadow-purple-900/50">
+          <Store size={32} className="text-white" />
+        </div>
+        <div className="flex gap-1.5">
+          {[0,1,2].map(i => (
+            <motion.div key={i} className="w-2 h-2 bg-purple-400 rounded-full"
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 0.8, delay: i * 0.15, repeat: Infinity }}
+            />
+          ))}
+        </div>
+        <p className="text-purple-300 text-sm font-medium">Carregando plataforma...</p>
       </div>
     );
   }
 
+  // Color palette per store index
+  const cardAccents = [
+    { from: 'from-purple-500', to: 'to-violet-700', icon: 'bg-purple-500', badge: 'bg-purple-100 text-purple-700' },
+    { from: 'from-blue-500', to: 'to-indigo-700', icon: 'bg-blue-500', badge: 'bg-blue-100 text-blue-700' },
+    { from: 'from-emerald-500', to: 'to-teal-700', icon: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-700' },
+    { from: 'from-orange-500', to: 'to-rose-600', icon: 'bg-orange-500', badge: 'bg-orange-100 text-orange-700' },
+    { from: 'from-pink-500', to: 'to-fuchsia-700', icon: 'bg-pink-500', badge: 'bg-pink-100 text-pink-700' },
+    { from: 'from-cyan-500', to: 'to-sky-700', icon: 'bg-cyan-500', badge: 'bg-cyan-100 text-cyan-700' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-              <Store className="text-purple-600" size={32} />
-              Canaã Delivery OS
-            </h1>
-            <p className="text-gray-500 font-medium">Lojas Registradas na Plataforma</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-purple-200 hover:shadow-purple-300 transition-all active:scale-95"
-            >
-              <Plus size={20} /> Nova Loja
-            </button>
-            <button
-              onClick={() => { setAdminRole(null); navigate('/'); }}
-              className="flex items-center gap-2 bg-white text-red-600 font-bold px-4 py-2.5 rounded-xl border border-red-100 shadow-sm hover:bg-red-50 transition-colors"
-            >
-              <LogOut size={20} /> Sair
-            </button>
-          </div>
-        </div>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #0a0118 0%, #130a2e 50%, #1a0a3e 100%)' }}>
+      {/* Hero Header */}
+      <div className="relative overflow-hidden">
+        {/* Background glow effects */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-700/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-10 right-1/4 w-64 h-64 bg-violet-600/15 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Stats Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-            <div className="bg-purple-100 p-4 rounded-full text-purple-600">
-              <Activity size={24} />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-gray-500">Lojas Ativas</p>
-              <p className="text-2xl font-black text-gray-900">{stores.length}</p>
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-            <div className="bg-green-100 p-4 rounded-full text-green-600">
-              <CheckCircle size={24} />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-gray-500">Limite do Plano</p>
-              <p className="text-2xl font-black text-gray-900">{stores.length}/20</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Stores Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {stores.map((store) => (
-            <motion.div
-              key={store.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white border border-gray-200 rounded-3xl p-6 shadow-sm hover:shadow-lg hover:border-purple-200 transition-all group"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 bg-gradient-to-tr from-purple-100 to-orange-50 rounded-xl flex items-center justify-center text-purple-600">
-                  <Store size={24} />
-                </div>
-                <button
-                  onClick={() => handleCopyLink(store.slug)}
-                  className={`p-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-bold ${copiedSlug === store.slug ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600 hover:bg-purple-100 hover:text-purple-700'}`}
-                  title="Copiar Link da Loja"
-                >
-                  {copiedSlug === store.slug ? <CheckCircle size={16} /> : <Copy size={16} />}
-                  {copiedSlug === store.slug ? 'Copiado!' : 'Copiar Link'}
-                </button>
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-8 pt-8 pb-10">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-800 flex items-center justify-center shadow-2xl shadow-purple-900/50">
+                <Store size={28} className="text-white" />
               </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Canaã Delivery OS</h1>
+                <p className="text-purple-300 font-medium text-sm">Painel de Controle da Plataforma</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-violet-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-purple-900/40 hover:from-purple-400 hover:to-violet-500 transition-all"
+              >
+                <Plus size={20} /> Nova Loja
+              </motion.button>
+              <button
+                onClick={() => { setAdminRole(null); navigate('/'); }}
+                className="flex items-center gap-2 bg-white/5 backdrop-blur text-white/70 hover:text-white font-bold px-4 py-2.5 rounded-xl border border-white/10 hover:bg-white/10 transition-all"
+              >
+                <LogOut size={18} /> Sair
+              </button>
+            </div>
+          </div>
 
-              <div className="flex-1 mb-1">
-                {editingStoreId === store.id ? (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={editingName}
-                      onChange={(e) => setEditingName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleUpdateStoreName(store.id);
-                        if (e.key === 'Escape') setEditingStoreId(null);
-                      }}
-                      className="flex-1 border-b-2 border-purple-500 bg-transparent outline-none font-bold text-gray-900 text-xl py-0.5"
-                      autoFocus
-                    />
-                    <button 
-                      onClick={() => handleUpdateStoreName(store.id)} 
-                      className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
-                      title="Salvar"
-                    >
-                      <Save size={20} />
-                    </button>
-                    <button 
-                      onClick={() => setEditingStoreId(null)} 
-                      className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-                      title="Cancelar"
-                    >
-                      <X size={20} />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 group/title">
-                    <h3 className="text-xl font-bold text-gray-900">{store.name}</h3>
+          {/* Stats Strip */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
+            <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-4 flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-purple-300">
+                <Activity size={16} />
+                <span className="text-xs font-bold uppercase tracking-wider">Lojas Ativas</span>
+              </div>
+              <p className="text-3xl font-black text-white">{stores.length}</p>
+            </div>
+            <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-4 flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-emerald-300">
+                <CheckCircle size={16} />
+                <span className="text-xs font-bold uppercase tracking-wider">Plano</span>
+              </div>
+              <div className="flex items-end gap-1">
+                <p className="text-3xl font-black text-white">{stores.length}</p>
+                <p className="text-white/40 font-bold text-sm mb-1">/20</p>
+              </div>
+              {/* Plan usage bar */}
+              <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(stores.length / 20) * 100}%` }}
+                  transition={{ duration: 1, ease: 'easeOut' }}
+                />
+              </div>
+            </div>
+            <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-4 col-span-2 flex flex-col gap-1 justify-center">
+              <p className="text-xs font-bold text-white/40 uppercase tracking-wider">Sistema</p>
+              <p className="text-white font-bold text-sm flex items-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                Online · Todos os sistemas operacionais
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stores Grid */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 pb-12">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-white/60 text-sm font-bold uppercase tracking-widest">Lojas Registradas</h2>
+          <span className="text-white/30 text-xs">{stores.length} loja{stores.length !== 1 ? 's' : ''}</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {stores.map((store, idx) => {
+            const accent = cardAccents[idx % cardAccents.length];
+            return (
+              <motion.div
+                key={store.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.06 }}
+                className="relative bg-white/[0.04] backdrop-blur-md border border-white/10 rounded-3xl overflow-hidden hover:bg-white/[0.07] hover:border-white/20 transition-all group"
+              >
+                {/* Top colored accent bar */}
+                <div className={`h-1 w-full bg-gradient-to-r ${accent.from} ${accent.to}`} />
+
+                <div className="p-5">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className={`w-11 h-11 rounded-xl ${accent.icon} bg-opacity-20 flex items-center justify-center`}>
+                      <Store size={22} className="text-white" />
+                    </div>
                     <button
-                      onClick={() => {
-                        setEditingStoreId(store.id);
-                        setEditingName(store.name);
-                      }}
-                      className="p-1.5 rounded-lg text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-purple-50 hover:text-purple-600"
-                      title="Editar Nome"
+                      onClick={() => handleCopyLink(store.slug)}
+                      className={`p-1.5 px-3 rounded-lg transition-all flex items-center gap-1.5 text-xs font-bold ${
+                        copiedSlug === store.slug
+                          ? 'bg-emerald-500/20 text-emerald-300'
+                          : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'
+                      }`}
                     >
-                      <Pencil size={14} />
+                      {copiedSlug === store.slug ? <CheckCircle size={13} /> : <Copy size={13} />}
+                      {copiedSlug === store.slug ? 'Copiado!' : 'Copiar Link'}
                     </button>
                   </div>
-                )}
-              </div>
 
-              <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="bg-gray-100 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600">
-                    /{store.slug}
+                  {editingStoreId === store.id ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleUpdateStoreName(store.id);
+                          if (e.key === 'Escape') setEditingStoreId(null);
+                        }}
+                        className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 outline-none font-bold text-white text-base focus:border-purple-400 transition-colors"
+                        autoFocus
+                      />
+                      <button onClick={() => handleUpdateStoreName(store.id)} className="p-1.5 rounded-lg text-emerald-400 hover:bg-emerald-500/20 transition-colors" title="Salvar">
+                        <Save size={18} />
+                      </button>
+                      <button onClick={() => setEditingStoreId(null)} className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/20 transition-colors" title="Cancelar">
+                        <X size={18} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 group/title">
+                      <h3 className="text-lg font-bold text-white tracking-tight">{store.name}</h3>
+                      <button
+                        onClick={() => { setEditingStoreId(store.id); setEditingName(store.name); }}
+                        className="p-1 rounded text-white/30 opacity-0 group-hover:opacity-100 hover:text-white transition-all"
+                        title="Editar Nome"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="mt-1 mb-4">
+                    <span className="text-xs text-white/30 font-mono">/{store.slug}</span>
                   </div>
-                  <button
-                    onClick={() => setDeleteTarget(store)}
-                    className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                    title="Excluir Loja"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-white/[0.07]">
+                    <button
+                      onClick={() => setDeleteTarget(store)}
+                      className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                      title="Excluir Loja"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+
+                    <a
+                      href={`/#/${store.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`flex items-center gap-2 px-4 py-1.5 rounded-xl bg-gradient-to-r ${accent.from} ${accent.to} text-white text-xs font-bold shadow-lg opacity-80 hover:opacity-100 transition-all active:scale-95`}
+                    >
+                      Abrir Loja <ChevronRight size={14} />
+                    </a>
+                  </div>
                 </div>
-                <a
-                  href={`/#/${store.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors"
-                >
-                  <ChevronRight size={20} />
-                </a>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
 
           {/* Add Store Card */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: stores.length * 0.06 }}
             onClick={() => setShowCreateModal(true)}
-            className="border-2 border-dashed border-gray-300 rounded-3xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer min-h-[200px] hover:border-purple-400 hover:bg-purple-50/50 transition-all group"
+            className="border-2 border-dashed border-white/10 rounded-3xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer min-h-[200px] hover:border-purple-500/50 hover:bg-purple-500/5 transition-all group"
           >
-            <div className="w-14 h-14 bg-gray-100 group-hover:bg-purple-100 rounded-full flex items-center justify-center text-gray-400 group-hover:text-purple-600 transition-colors">
+            <div className="w-14 h-14 bg-white/5 group-hover:bg-purple-500/20 rounded-full flex items-center justify-center text-white/30 group-hover:text-purple-300 transition-all">
               <Plus size={28} />
             </div>
-            <p className="font-bold text-gray-400 group-hover:text-purple-600 transition-colors">Criar Nova Loja</p>
+            <p className="font-bold text-white/30 group-hover:text-purple-300 transition-colors text-sm">Criar Nova Loja</p>
           </motion.div>
         </div>
       </div>
