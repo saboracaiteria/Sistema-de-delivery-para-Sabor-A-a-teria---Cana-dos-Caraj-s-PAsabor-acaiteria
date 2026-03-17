@@ -161,12 +161,54 @@ export const PlatformHome = () => {
           </div>
         </motion.div>
 
+        {/* Quem Somos */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.45 }}
+          className="mt-20 w-full max-w-3xl relative group"
+        >
+          {/* 3D glow behind */}
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-violet-600/10 rounded-3xl translate-y-2 blur-lg opacity-60 group-hover:opacity-80 transition-opacity" />
+
+          <div className="relative bg-white/[0.04] backdrop-blur-md border border-white/10 rounded-3xl p-8 text-left overflow-hidden hover:border-white/20 transition-all">
+            {/* Left accent */}
+            <div className="absolute left-0 top-8 bottom-8 w-[3px] bg-gradient-to-b from-purple-500 to-violet-700 rounded-full" />
+
+            <div className="pl-5">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-purple-300 text-xs font-bold uppercase tracking-wider mb-4">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
+                Quem Somos
+              </div>
+
+              <h2 className="text-xl md:text-2xl font-black text-white leading-snug mb-4 tracking-tight">
+                Uma empresa de{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-violet-300">
+                  Canaã dos Carajás
+                </span>{' '}
+                focada em simplificar o delivery.
+              </h2>
+
+              <p className="text-white/50 leading-relaxed font-medium text-base">
+                Somos uma empresa local, criada com o compromisso de empoderar pequenos negócios de alimentação. 
+                Nossa missão é oferecer soluções de delivery <strong className="text-white/70">intuitivas, minimalistas e diretas ao ponto</strong> — 
+                para que cada empreendedor possa vender mais, com menos esforço e sem complicação.
+              </p>
+
+              <div className="mt-5 flex items-center gap-2 text-white/30 text-xs font-bold">
+                <span>📍</span>
+                <span>Canaã dos Carajás, Pará — Brasil</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Section header */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="mt-24 mb-6 flex flex-col items-center gap-2"
+          className="mt-20 mb-6 flex flex-col items-center gap-2"
         >
           <p className="text-white/40 text-xs font-bold uppercase tracking-widest">Recursos &amp; Exemplos</p>
           <div className="h-px w-16 bg-white/10" />
