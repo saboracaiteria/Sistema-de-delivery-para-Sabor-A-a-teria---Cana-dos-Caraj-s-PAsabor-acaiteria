@@ -51,7 +51,7 @@ export const Hero = () => {
                         className="relative"
                     >
                         <img
-                            src={settings.logoUrl || "https://img.logoipsum.com/296.svg"}
+                            src={settings.logoUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%234E0797'/%3E%3Ctext x='50' y='67' font-size='50' text-anchor='middle' fill='white' font-family='sans-serif'%3E🏪%3C/text%3E%3C/svg%3E"}
                             className={`w-16 h-16 md:w-28 md:h-28 object-cover border-2 md:border-4 border-white/20 shadow-xl ${settings.logoShape === 'circle' ? 'rounded-full' : 'rounded-2xl'}`}
                             alt="Logo"
                         />
