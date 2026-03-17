@@ -13,94 +13,114 @@ export const ModernHero = () => {
     const { settings, isStoreOpen, setSidebarOpen } = useApp();
 
     return (
-        <div className="relative w-full h-[260px] md:h-[480px] overflow-hidden rounded-b-[2.5rem] md:rounded-b-[4rem] bg-gray-50 mb-6 md:mb-10 group">
-            {/* Top Navigation Bar */}
-            <div className="absolute top-0 left-0 right-0 z-[55] p-4 flex items-center justify-between pointer-events-none">
-                <button
-                    onClick={() => setSidebarOpen(true)}
-                    className="pointer-events-auto p-2.5 bg-white/80 backdrop-blur-lg border border-white/50 rounded-2xl text-slate-800 hover:bg-white transition-all shadow-sm active:scale-95 flex items-center justify-center"
-                >
-                    <Menu strokeWidth={2.5} size={22} />
-                </button>
-
-                <div className="flex items-center gap-2 pointer-events-auto">
-                    <ShareQRCode variant="modern" />
-                    <button className="p-2.5 bg-white/80 backdrop-blur-lg border border-white/50 rounded-2xl text-slate-800 hover:bg-white transition-all shadow-sm active:scale-95">
-                        <Search strokeWidth={2.5} size={22} />
+        <div className="w-full bg-white md:bg-gray-50 mb-6 md:mb-10 font-outfit">
+            <div className="relative w-full h-[180px] md:h-[480px] overflow-hidden md:rounded-b-[4rem] group">
+                {/* Top Navigation Bar */}
+                <div className="absolute top-0 left-0 right-0 z-[55] p-3 md:p-4 flex items-center justify-between pointer-events-none">
+                    <button
+                        onClick={() => setSidebarOpen(true)}
+                        className="pointer-events-auto p-2.5 bg-white/80 backdrop-blur-lg border border-white/50 rounded-2xl text-slate-800 hover:bg-white transition-all shadow-sm active:scale-95 flex items-center justify-center"
+                    >
+                        <Menu strokeWidth={2.5} size={20} md:size={22} />
                     </button>
+
+                    <div className="flex items-center gap-2 pointer-events-auto">
+                        <ShareQRCode variant="modern" />
+                        <button className="p-2.5 bg-white/80 backdrop-blur-lg border border-white/50 rounded-2xl text-slate-800 hover:bg-white transition-all shadow-sm active:scale-95">
+                            <Search strokeWidth={2.5} size={20} md:size={22} />
+                        </button>
+                    </div>
+                </div>
+
+                <PwaInstallPrompt variant="modern" />
+
+                {/* Banner Image with subtle zoom and light treatment */}
+                <motion.div
+                    initial={{ scale: 1.1 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 20, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+                    className="absolute inset-0 z-0"
+                >
+                    <img
+                        src={settings.bannerUrl || "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=2670&auto=format&fit=crop"}
+                        className="w-full h-full object-cover"
+                        alt="Banner"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/20 md:to-gray-50/90 z-10" />
+                </motion.div>
+
+                {/* Desktop Floating Glass Card (Hidden on Mobile) */}
+                <div className="hidden md:block absolute bottom-6 left-10 right-10 z-20">
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white/70 backdrop-blur-2xl border border-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2.5rem] p-8 flex items-end gap-8 overflow-hidden relative"
+                    >
+                        <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-200/40 rounded-full blur-3xl pointer-events-none" />
+                        <div className="relative shrink-0">
+                            <img
+                                src={settings.logoUrl}
+                                className={`w-32 h-32 object-cover bg-white p-1 shadow-lg relative z-10 ${settings.logoShape === 'circle' ? 'rounded-full' : 'rounded-[2rem]'}`}
+                                alt="Logo"
+                            />
+                            <motion.div
+                                className={`absolute -bottom-1 -right-1 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest border-2 border-white shadow-lg flex items-center gap-1.5 z-20 ${isStoreOpen ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}
+                                animate={isStoreOpen ? { scale: [1, 1.05, 1] } : {}}
+                                transition={isStoreOpen ? { duration: 2, repeat: Infinity } : {}}
+                            >
+                                <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                                {isStoreOpen ? 'LOJA ABERTA' : 'LOJA FECHADA'}
+                            </motion.div>
+                        </div>
+                        <div className="flex-1 pb-1">
+                            <span className="text-purple-600 font-bold text-xs tracking-[0.2em] uppercase mb-1 block">Seja Bem-vindo</span>
+                            <h1 className="text-5xl font-black text-slate-900 tracking-tight leading-none">{settings.storeName}</h1>
+                            <div className="flex items-center gap-4 mt-4">
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full text-xs font-bold text-slate-600">
+                                    <Clock size={14} className="text-purple-500" /> {settings.deliveryTime || '30-45 min'}
+                                </div>
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full text-xs font-bold text-slate-600">
+                                    <Info size={14} className="text-purple-500" /> Mais Informações
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
                 </div>
             </div>
 
-            <PwaInstallPrompt variant="modern" />
-
-            {/* Banner Image with subtle zoom and light treatment */}
-            <motion.div
-                initial={{ scale: 1.1 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 20, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
-                className="absolute inset-0 z-0"
-            >
-                <img
-                    src={settings.bannerUrl || "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=2670&auto=format&fit=crop"}
-                    className="w-full h-full object-cover"
-                    alt="Banner"
-                />
-                {/* Light gradient overlay to ensure text legibility and smooth transition */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-gray-50/90 z-10" />
-            </motion.div>
-
-            {/* Floating Glass Card for Store Info */}
-            <div className="absolute bottom-2 md:bottom-6 left-3 right-3 md:left-10 md:right-10 z-20">
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="bg-white/70 backdrop-blur-2xl border border-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2rem] md:rounded-[2.5rem] p-3.5 md:p-8 flex flex-col md:flex-row items-center md:items-end gap-3 md:gap-8 overflow-hidden relative"
-                >
-                    {/* Decorative subtle glow */}
-                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-200/40 rounded-full blur-3xl pointer-events-none" />
-                    
-                    {/* Logo with clean border */}
-                    <div className="relative shrink-0">
-                        <div className="absolute inset-0 bg-purple-500/10 blur-xl rounded-full scale-110" />
+            {/* Mobile Info Area (Hidden on Desktop) */}
+            <div className="md:hidden relative px-4 pt-10 pb-2">
+                {/* Mobile Logo Overlapping Banner */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-white/20 blur-xl rounded-full scale-125" />
                         <img
                             src={settings.logoUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%234E0797'/%3E%3Ctext x='50' y='67' font-size='50' text-anchor='middle' fill='white' font-family='sans-serif'%3E🏪%3C/text%3E%3C/svg%3E"}
-                            className={`w-20 h-20 md:w-32 md:h-32 object-cover bg-white p-1 shadow-lg relative z-10 ${settings.logoShape === 'circle' ? 'rounded-full' : 'rounded-2xl md:rounded-[2rem]'}`}
+                            className={`w-28 h-28 object-cover bg-white p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.15)] relative z-10 ${settings.logoShape === 'circle' ? 'rounded-full' : 'rounded-3xl'}`}
                             alt="Logo"
                         />
-                        
-                        {/* Status Badge - Refined */}
-                        <motion.div
-                            className={`absolute -bottom-1 -right-1 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest border-2 border-white shadow-lg flex items-center gap-1.5 z-20 ${isStoreOpen ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}
-                            animate={isStoreOpen ? { scale: [1, 1.05, 1] } : {}}
-                            transition={isStoreOpen ? { duration: 2, repeat: Infinity } : {}}
-                        >
-                            <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                            {isStoreOpen ? 'LOJA ABERTA' : 'LOJA FECHADA'}
-                        </motion.div>
+                        <div className={`absolute -bottom-1 right-1 px-2.5 py-1 rounded-full text-[9px] font-black tracking-tighter border-2 border-white shadow-md z-20 ${isStoreOpen ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                            {isStoreOpen ? 'ABERTO' : 'FECHADO'}
+                        </div>
                     </div>
+                </div>
 
-                    {/* Store Name & Details */}
-                    <div className="flex-1 text-center md:text-left">
-                        <div className="flex flex-col gap-0.5 md:gap-0">
-                            <span className="hidden md:block text-purple-600 font-bold text-xs tracking-[0.2em] uppercase md:mb-1">Seja Bem-vindo</span>
-                            <h1 className="text-2xl md:text-5xl font-black text-slate-900 tracking-tight leading-none">
-                                {settings.storeName}
-                            </h1>
+                <div className="text-center pt-2">
+                    <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-tight mb-2">
+                        {settings.storeName}
+                    </h1>
+                    
+                    <div className="flex items-center justify-center gap-3">
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 text-slate-500 rounded-full text-[11px] font-bold border border-gray-100">
+                            <Clock size={12} className="text-purple-500" />
+                            {settings.deliveryTime || '30-45 min'}
                         </div>
-                        
-                        <div className="flex items-center justify-center md:justify-start gap-4 mt-3 md:mt-4">
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full text-xs font-bold text-slate-600">
-                                <Clock size={14} className="text-purple-500" />
-                                {settings.deliveryTime || '30-45 min'}
-                            </div>
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full text-xs font-bold text-slate-600">
-                                <Info size={14} className="text-purple-500" />
-                                Mais Informações
-                            </div>
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 text-slate-500 rounded-full text-[11px] font-bold border border-gray-100">
+                            <Info size={12} className="text-purple-500" />
+                            Ver Info
                         </div>
                     </div>
-                </motion.div>
+                </div>
             </div>
         </div>
     );
