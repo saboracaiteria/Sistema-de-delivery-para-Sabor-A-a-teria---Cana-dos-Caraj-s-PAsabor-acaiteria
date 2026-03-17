@@ -31,6 +31,7 @@ interface ProductGroup {
 
 interface ProductsPageProps {
     storeName?: string;
+    storeId?: string;
     products: Product[];
     categories: Category[];
     groups: ProductGroup[];
@@ -42,6 +43,7 @@ interface ProductsPageProps {
 
 export const ProductsPage: React.FC<ProductsPageProps> = ({
     storeName,
+    storeId,
     products,
     categories,
     groups,
@@ -80,14 +82,18 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
     const uploadImageToSupabase = async (file: File): Promise<string | null> => {
         try {
             setIsUploading(true);
-            const fileExt = file.name.split('.').pop();
-            const folderName = storeName ? storeName.replace(/\s+/g, '-').toLowerCase() : 'default';
+            const fileExt = file.name.split('.').pop() || 'jpg';
+            // Usar storeId (UUID) em vez de storeName para evitar problemas com acentos/caracteres especiais
+            const folderName = storeId || 'default';
             const fileName = `${crypto.randomUUID()}.${fileExt}`;
-            const filePath = `${folderName}/${fileName}`;
+            const filePath = `products/${folderName}/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
                 .from('product-images')
-                .upload(filePath, file);
+                .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
 
             if (uploadError) {
                 throw uploadError;

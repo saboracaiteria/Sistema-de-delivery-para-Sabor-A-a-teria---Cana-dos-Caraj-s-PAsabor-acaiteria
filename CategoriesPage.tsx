@@ -15,6 +15,7 @@ interface Category {
 
 interface CategoriesPageProps {
     storeName?: string;
+    storeId?: string;
     categories: Category[];
     addCategory: (category: Category) => void;
     updateCategory: (category: Category) => void;
@@ -23,6 +24,7 @@ interface CategoriesPageProps {
 
 export const CategoriesPage: React.FC<CategoriesPageProps> = ({
     storeName,
+    storeId,
     categories,
     addCategory,
     updateCategory,

@@ -4029,6 +4029,7 @@ const AppContent = () => {
         <Route path="/:storeSlug/panel/categories" element={
           <CategoriesPage
             storeName={store?.name}
+            storeId={store?.id}
             categories={categories}
             addCategory={addCategory}
             updateCategory={updateCategory}
@@ -4039,6 +4040,7 @@ const AppContent = () => {
         <Route path="/:storeSlug/panel/products" element={
           <ProductsPage
             storeName={store?.name}
+            storeId={store?.id}
             products={products}
             categories={categories}
             groups={groups}
