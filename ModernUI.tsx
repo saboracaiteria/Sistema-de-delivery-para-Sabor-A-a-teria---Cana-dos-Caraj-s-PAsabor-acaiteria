@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Menu, Info, Plus, Settings as SettingsIcon, Search, ChevronLeft, ChevronRight, X, Minus, Sparkles, AlertCircle } from 'lucide-react';
+import { ShoppingCart, Menu, Info, Plus, Settings as SettingsIcon, Search, ChevronLeft, ChevronRight, X, Minus, Sparkles, AlertCircle, Clock } from 'lucide-react';
 import { useApp, ProductModal } from './App';
 import { Product, ProductGroup } from './types';
 import { PwaInstallPrompt } from './PwaInstallPrompt';
@@ -13,81 +13,92 @@ export const ModernHero = () => {
     const { settings, isStoreOpen, setSidebarOpen } = useApp();
 
     return (
-        <div className="relative w-full h-[280px] md:h-[450px] overflow-hidden rounded-b-[2.5rem] md:rounded-b-[4rem] shadow-[0_20px_40px_-15px_rgba(78,7,151,0.3)] mb-6 md:mb-10 group">
-            <button
-                onClick={() => setSidebarOpen(true)}
-                className="absolute top-4 left-4 z-50 p-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-white hover:bg-white/20 transition-all shadow-lg active:scale-95 flex items-center justify-center"
-            >
-                <Menu strokeWidth={2.5} size={22} />
-            </button>
-            <PwaInstallPrompt variant="modern" />
-
-            {/* Premium Header Button */}
-            <div className="absolute top-4 right-4 z-[55] flex items-center gap-2">
-                <ShareQRCode variant="modern" />
-                <button className="p-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-white hover:bg-white/20 transition-all shadow-lg active:scale-95">
-                    <Search strokeWidth={2.5} size={22} />
+        <div className="relative w-full h-[320px] md:h-[480px] overflow-hidden rounded-b-[2.5rem] md:rounded-b-[4rem] bg-gray-50 mb-6 md:mb-10 group">
+            {/* Top Navigation Bar */}
+            <div className="absolute top-0 left-0 right-0 z-[55] p-4 flex items-center justify-between pointer-events-none">
+                <button
+                    onClick={() => setSidebarOpen(true)}
+                    className="pointer-events-auto p-2.5 bg-white/80 backdrop-blur-lg border border-white/50 rounded-2xl text-slate-800 hover:bg-white transition-all shadow-sm active:scale-95 flex items-center justify-center"
+                >
+                    <Menu strokeWidth={2.5} size={22} />
                 </button>
+
+                <div className="flex items-center gap-2 pointer-events-auto">
+                    <ShareQRCode variant="modern" />
+                    <button className="p-2.5 bg-white/80 backdrop-blur-lg border border-white/50 rounded-2xl text-slate-800 hover:bg-white transition-all shadow-sm active:scale-95">
+                        <Search strokeWidth={2.5} size={22} />
+                    </button>
+                </div>
             </div>
 
-            {/* Image with subtle zoom effect */}
+            <PwaInstallPrompt variant="modern" />
+
+            {/* Banner Image with subtle zoom and light treatment */}
             <motion.div
-                initial={{ scale: 1.15 }}
+                initial={{ scale: 1.1 }}
                 animate={{ scale: 1 }}
-                transition={{ duration: 15, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
-                className="absolute inset-0 z-0 bg-[#4E0797]"
+                transition={{ duration: 20, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+                className="absolute inset-0 z-0"
             >
                 <img
                     src={settings.bannerUrl || "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=2670&auto=format&fit=crop"}
-                    className="w-full h-full object-cover mix-blend-overlay opacity-80"
+                    className="w-full h-full object-cover"
                     alt="Banner"
                 />
+                {/* Light gradient overlay to ensure text legibility and smooth transition */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-gray-50/90 z-10" />
             </motion.div>
 
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#110122]/90 via-[#4E0797]/40 to-transparent z-10" />
-
-            <div className="relative z-20 h-full flex flex-col items-center justify-end text-white px-4 md:px-6 text-center pb-8">
+            {/* Floating Glass Card for Store Info */}
+            <div className="absolute bottom-6 left-4 right-4 md:left-10 md:right-10 z-20">
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                    className="relative mb-4 group cursor-pointer"
-                >
-                    <div className="absolute inset-0 bg-white/30 blur-2xl rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <img
-                        src={settings.logoUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%234E0797'/%3E%3Ctext x='50' y='67' font-size='50' text-anchor='middle' fill='white' font-family='sans-serif'%3E🏪%3C/text%3E%3C/svg%3E"}
-                        className={`w-24 h-24 md:w-32 md:h-32 object-cover border-4 border-white shadow-2xl relative z-10 ${settings.logoShape === 'circle' ? 'rounded-full' : 'rounded-[2rem]'}`}
-                        alt="Logo"
-                    />
-
-                    {/* Highly visible Status Badge */}
-                    <motion.div
-                        className={`absolute -bottom-2 -right-2 px-3 py-1.5 rounded-full text-xs font-black tracking-wider border-[3px] border-[#110122] shadow-xl flex items-center gap-1.5 z-20 ${isStoreOpen ? 'bg-[#00E676] text-[#004D40]' : 'bg-[#FF1744] text-white'}`}
-                        animate={isStoreOpen ? { scale: [1, 1.05, 1], boxShadow: ["0 0 0px rgba(0,230,118,0)", "0 0 15px rgba(0,230,118,0.5)", "0 0 0px rgba(0,230,118,0)"] } : {}}
-                        transition={isStoreOpen ? { duration: 2, repeat: Infinity } : {}}
-                    >
-                        {isStoreOpen ? 'ABERTO' : 'FECHADO'}
-                    </motion.div>
-                </motion.div>
-
-                <motion.h1
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-3xl md:text-5xl font-black mb-2 tracking-tight drop-shadow-md text-transparent bg-clip-text bg-gradient-to-r from-white to-purple-100"
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="bg-white/70 backdrop-blur-2xl border border-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2.5rem] p-5 md:p-8 flex flex-col md:flex-row items-center md:items-end gap-5 md:gap-8 overflow-hidden relative"
                 >
-                    {settings.storeName}
-                </motion.h1>
+                    {/* Decorative subtle glow */}
+                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-200/40 rounded-full blur-3xl pointer-events-none" />
+                    
+                    {/* Logo with clean border */}
+                    <div className="relative shrink-0">
+                        <div className="absolute inset-0 bg-purple-500/10 blur-xl rounded-full scale-110" />
+                        <img
+                            src={settings.logoUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%234E0797'/%3E%3Ctext x='50' y='67' font-size='50' text-anchor='middle' fill='white' font-family='sans-serif'%3E🏪%3C/text%3E%3C/svg%3E"}
+                            className={`w-24 h-24 md:w-32 md:h-32 object-cover bg-white p-1 shadow-lg relative z-10 ${settings.logoShape === 'circle' ? 'rounded-full' : 'rounded-[2rem]'}`}
+                            alt="Logo"
+                        />
+                        
+                        {/* Status Badge - Refined */}
+                        <motion.div
+                            className={`absolute -bottom-1 -right-1 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest border-2 border-white shadow-lg flex items-center gap-1.5 z-20 ${isStoreOpen ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}
+                            animate={isStoreOpen ? { scale: [1, 1.05, 1] } : {}}
+                            transition={isStoreOpen ? { duration: 2, repeat: Infinity } : {}}
+                        >
+                            <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                            {isStoreOpen ? 'LOJA ABERTA' : 'LOJA FECHADA'}
+                        </motion.div>
+                    </div>
 
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="flex items-center justify-center gap-3 text-sm font-medium text-white/90"
-                >
-                    <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
-                        {settings.deliveryTime || '30-45 min'}
+                    {/* Store Name & Details */}
+                    <div className="flex-1 text-center md:text-left pb-1">
+                        <div className="flex flex-col gap-1 md:gap-0">
+                            <span className="text-purple-600 font-bold text-xs tracking-[0.2em] uppercase md:mb-1">Seja Bem-vindo</span>
+                            <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-none">
+                                {settings.storeName}
+                            </h1>
+                        </div>
+                        
+                        <div className="flex items-center justify-center md:justify-start gap-4 mt-4">
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full text-xs font-bold text-slate-600">
+                                <Clock size={14} className="text-purple-500" />
+                                {settings.deliveryTime || '30-45 min'}
+                            </div>
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full text-xs font-bold text-slate-600">
+                                <Info size={14} className="text-purple-500" />
+                                Mais Informações
+                            </div>
+                        </div>
                     </div>
                 </motion.div>
             </div>
