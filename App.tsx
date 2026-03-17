@@ -23,8 +23,9 @@ import {
 } from './constants';
 import {
   Category, Product, ProductGroup, CartItem, ProductOption,
-  GlobalSettings, Role, Coupon, OrderRecord, OrderStatus, DeliveryMethod, OpeningHour, Store
+  GlobalSettings, Role, Coupon, OrderRecord, OrderStatus, DeliveryMethod, OpeningHour
 } from './types';
+import type { Store as StoreType } from './types';
 import { CategoriesPage } from './CategoriesPage';
 import { ProductsPage } from './ProductsPage';
 import { ReportsPage } from './ReportsPage';
@@ -60,7 +61,7 @@ import { PlatformAdminPanel } from './PlatformAdminPanel';
 // --- Context ---
 
 interface AppContextType {
-  store: Store | null;
+  store: StoreType | null;
   products: Product[];
   categories: Category[];
   groups: ProductGroup[];
@@ -122,7 +123,7 @@ export const useApp = () => {
 };
 
 const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [store, setStore] = useState<Store | null>(null);
+  const [store, setStore] = useState<StoreType | null>(null);
 
   // Dados locais (apenas carrinho e estado da UI)
   const [cart, setCart, cartLoaded] = usePersistedState<CartItem[]>('cart', []);
