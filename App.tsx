@@ -3944,9 +3944,33 @@ const AppContent = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-brand-purple">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white mb-4"></div>
-        <p className="text-white text-lg font-bold animate-pulse">Carregando...</p>
+      <div 
+        className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden font-outfit z-[99999]"
+        style={{ background: 'linear-gradient(135deg, #0a0118 0%, #130a2e 50%, #1a0a3e 100%)' }}
+      >
+        {/* Ambient glow orbs */}
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-700/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-violet-600/10 rounded-full blur-[120px] pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col items-center">
+          {/* 3D App Icon */}
+          <div className="relative w-20 h-20 mb-6">
+            <div className="absolute inset-0 bg-purple-500/50 rounded-2xl blur-xl animate-pulse" />
+            <div className="relative w-full h-full bg-gradient-to-br from-purple-500 to-violet-700 rounded-2xl flex items-center justify-center shadow-xl border border-white/20">
+              <Store size={40} className="text-white drop-shadow-md animate-bounce" style={{ animationDuration: '2s' }} />
+            </div>
+          </div>
+          
+          {/* Loading Dots */}
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+            <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+            <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+          </div>
+          <p className="text-white/50 font-medium mt-4 text-xs font-bold tracking-[0.2em] uppercase">
+            Iniciando
+          </p>
+        </div>
       </div>
     );
   }
