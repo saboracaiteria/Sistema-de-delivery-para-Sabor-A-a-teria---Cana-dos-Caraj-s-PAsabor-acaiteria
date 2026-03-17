@@ -91,7 +91,7 @@ export const PlatformHome = () => {
             </div>
           </div>
           <span className="text-xl font-black text-white tracking-tight">
-            Canaã{' '}
+            Plataforma{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-violet-400">
               Delivery
             </span>
@@ -184,7 +184,7 @@ export const PlatformHome = () => {
               <h2 className="text-xl md:text-2xl font-black text-white leading-snug mb-4 tracking-tight">
                 Uma empresa de{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-violet-300">
-                  Canaã dos Carajás
+                  Delivery Inteligente
                 </span>{' '}
                 focada em simplificar o delivery.
               </h2>
@@ -279,7 +279,7 @@ export const PlatformHome = () => {
 
       {/* Footer */}
       <footer className="border-t border-white/5 py-8 text-center text-white/25 text-sm font-medium relative z-10">
-        <p>© 2026 Canaã Delivery Plataforma · Desenvolvido por @_nildoxz</p>
+        <p>© 2026 Plataforma de Delivery · Desenvolvido por @_nildoxz</p>
       </footer>
     </div>
   );

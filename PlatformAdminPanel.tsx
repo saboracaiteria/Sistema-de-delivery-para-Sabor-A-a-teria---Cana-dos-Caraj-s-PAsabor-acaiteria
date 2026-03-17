@@ -153,7 +153,7 @@ export const PlatformAdminPanel = () => {
                 <Store size={28} className="text-white" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Canaã Delivery OS</h1>
+                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Gerenciamento OS</h1>
                 <p className="text-purple-300 font-medium text-sm">Painel de Controle da Plataforma</p>
               </div>
             </div>

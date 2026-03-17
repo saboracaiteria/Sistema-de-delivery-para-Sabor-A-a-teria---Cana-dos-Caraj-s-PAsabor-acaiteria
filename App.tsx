@@ -159,6 +159,44 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   // Reactive Store Status (Moved calculation logic to storeUtils.ts)
 
+  // Dynamic Document Title and PWA Manifest
+  useEffect(() => {
+    if (settings && settings.storeName) {
+      document.title = settings.storeName;
+
+      const manifestNode = document.querySelector('link[rel="manifest"]');
+      if (manifestNode) {
+        const manifestObj = {
+          name: settings.storeName,
+          short_name: settings.storeName.length > 12 ? settings.storeName.substring(0, 12).trim() : settings.storeName,
+          description: `Delivery Oficial - ${settings.storeName}`,
+          theme_color: settings.themeColors?.primary || '#8b5cf6',
+          background_color: '#f9fafb',
+          display: 'standalone',
+          icons: [
+            {
+              src: settings.logoUrl || '/pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any maskable'
+            },
+            {
+              src: settings.logoUrl || '/pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any maskable'
+            }
+          ]
+        };
+
+        const manifestString = JSON.stringify(manifestObj);
+        const blob = new Blob([manifestString], { type: 'application/json' });
+        const manifestURL = URL.createObjectURL(blob);
+        manifestNode.setAttribute('href', manifestURL);
+      }
+    }
+  }, [settings?.storeName, settings?.logoUrl, settings?.themeColors]);
+
   // Timer Effect
   useEffect(() => {
     const updateStatus = () => {

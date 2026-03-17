@@ -140,7 +140,7 @@ export const LoginPage = () => {
             </div>
             
             <h1 className="text-3xl font-black text-white text-center tracking-tight leading-tight">
-              Portal <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-violet-400">Canaã</span>
+              Portal <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-violet-400">Admin</span>
             </h1>
             <p className="text-white/40 text-center mt-2 font-medium text-sm">
               Acesso para Lojistas e Administração
