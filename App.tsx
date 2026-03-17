@@ -2168,7 +2168,7 @@ const CheckoutPage = () => {
             <div className="space-y-2">
               <select className="w-full border p-2 rounded bg-white text-gray-500">
                 <option>Selecione o Município</option>
-                <option>Canaã dos Carajás</option>
+                <option>Sua Cidade</option>
               </select>
               <input className="w-full border p-2 rounded bg-white" placeholder="Bairro" />
               <input className="w-full border p-2 rounded bg-white" placeholder="Rua / Logradouro" value={address} onChange={e => setAddress(e.target.value)} />
@@ -3415,7 +3415,7 @@ const SettingsPage = () => {
                 type="text"
                 value={localSettings.businessAddress || ''}
                 onChange={(e) => setLocalSettings(prev => ({ ...prev, businessAddress: e.target.value }))}
-                placeholder="Ex: Canaã dos Carajás - PA"
+                placeholder="Ex: Sua Cidade - UF"
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
             </div>

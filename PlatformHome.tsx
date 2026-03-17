@@ -197,7 +197,7 @@ export const PlatformHome = () => {
 
               <div className="mt-5 flex items-center gap-2 text-white/30 text-xs font-bold">
                 <span>📍</span>
-                <span>Canaã dos Carajás, Pará — Brasil</span>
+                <span>Sua Localização — Brasil</span>
               </div>
             </div>
           </div>

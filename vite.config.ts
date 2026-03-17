@@ -16,8 +16,8 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
         manifest: {
-          name: 'Canaã Delivery',
-          short_name: 'Canaã Delivery',
+          name: 'Delivery App',
+          short_name: 'Delivery App',
           description: 'Delivery de Açaí e Lanches',
           theme_color: '#ffffff',
           icons: [
