@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS orders (
 -- 8. CONFIGURAÇÕES GLOBAIS (apenas 1 linha)
 CREATE TABLE IF NOT EXISTS settings (
   id INTEGER PRIMARY KEY DEFAULT 1,
-  store_name TEXT NOT NULL DEFAULT 'Obba Açaí',
+  store_name TEXT NOT NULL DEFAULT 'Loja Padrão',
   logo_url TEXT,
   banner_url TEXT,
   whatsapp_number TEXT,
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS settings (
 INSERT INTO settings (id, store_name, store_status, delivery_fee, delivery_only, opening_hours)
 VALUES (
   1,
-  'Obba Açaí',
+  'Loja Padrão',
   'open',
   5.00,
   false,

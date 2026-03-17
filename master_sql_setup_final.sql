@@ -1,4 +1,4 @@
-﻿-- =====================================================
+-- =====================================================
 -- SABOR AÃ‡AÃTERIA - SETUP COMPLETO DO BANCO DE DADOS
 -- =====================================================
 -- Sistema de Delivery - CanaÃ£ dos CarajÃ¡s-PA 2025-2026
@@ -26,7 +26,7 @@
 -- =====================================================
 
 -- =====================================================
--- OBBA AÃ‡AÃ - SCHEMA DO BANCO DE DADOS SUPABASE
+-- PLATAFORMA DELIVERY - SCHEMA DO BANCO DE DADOS SUPABASE
 -- =====================================================
 -- Execute este script completo no SQL Editor do Supabase
 -- =====================================================
@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS orders (
 -- 8. CONFIGURAÃ‡Ã•ES GLOBAIS (apenas 1 linha)
 CREATE TABLE IF NOT EXISTS settings (
   id INTEGER PRIMARY KEY DEFAULT 1,
-  store_name TEXT NOT NULL DEFAULT 'Obba AÃ§aÃ­',
+  store_name TEXT NOT NULL DEFAULT 'Loja Padrão',
   logo_url TEXT,
   banner_url TEXT,
   whatsapp_number TEXT,
@@ -131,7 +131,7 @@ CREATE TABLE IF NOT EXISTS settings (
 INSERT INTO settings (id, store_name, store_status, delivery_fee, delivery_only, opening_hours)
 VALUES (
   1,
-  'Obba AÃ§aÃ­',
+  'Loja Padrão',
   'open',
   5.00,
   false,
@@ -323,7 +323,7 @@ SELECT 'Schema criado com sucesso! âœ…' AS status;
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS display_order INTEGER DEFAULT 0;
 
 -- =====================================================
--- OBBA AÃ‡AÃ - STORAGE SETUP
+-- PLATAFORMA DELIVERY - STORAGE SETUP
 -- =====================================================
 -- Execute este script no SQL Editor do Supabase para
 -- configurar o bucket de imagens.
@@ -342,7 +342,7 @@ DROP POLICY IF EXISTS "Public Delete" ON storage.objects;
 
 -- 3. Criar PolÃ­ticas de SeguranÃ§a (RLS) para o Storage
 
--- Permitir leitura pÃºblica (qualquer um pode ver as imagens)
+-- Permitir leitura pÃºblica (qualquer one pode ver as imagens)
 CREATE POLICY "Public Access"
 ON storage.objects FOR SELECT
 USING ( bucket_id = 'product-images' );
@@ -369,7 +369,7 @@ USING ( bucket_id = 'product-images' );
 
 SELECT 'Storage configurado com sucesso! âœ…' AS status;
 -- =====================================================
--- OBBA AÃ‡AÃ - SCHEMA DE ESTOQUE
+-- PLATAFORMA DELIVERY - SCHEMA DE ESTOQUE
 -- =====================================================
 
 -- 1. FORNECEDORES
@@ -462,9 +462,9 @@ ALTER TABLE settings ADD COLUMN IF NOT EXISTS closed_message TEXT DEFAULT 'ðŸ�
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS open_message TEXT DEFAULT 'ðŸŸ¢ Aberto atÃ© Ã s 23:00';
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS theme_colors JSONB;
 ALTER TABLE settings 
-ADD COLUMN IF NOT EXISTS instagram_url TEXT DEFAULT 'https://www.instagram.com/obba_acai_/',
-ADD COLUMN IF NOT EXISTS business_address TEXT DEFAULT 'CanaÃ£ dos CarajÃ¡s - PA',
-ADD COLUMN IF NOT EXISTS copyright_text TEXT DEFAULT 'Â© 2025-2026 Obba AÃ§aÃ­';
+ADD COLUMN IF NOT EXISTS instagram_url TEXT DEFAULT '',
+ADD COLUMN IF NOT EXISTS business_address TEXT DEFAULT '',
+ADD COLUMN IF NOT EXISTS copyright_text TEXT DEFAULT 'Â© 2026';
 -- Add columns for editable home page info
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS delivery_time TEXT DEFAULT '40min Ã  1h';
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS pickup_time TEXT DEFAULT '20min Ã  45min';

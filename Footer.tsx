@@ -10,8 +10,9 @@ export const Footer = () => {
       <div className="max-w-4xl mx-auto">
         {/* Instagram Link */}
         <div className="flex justify-center mb-3">
+          {settings.instagramUrl ? (
           <a
-            href={settings.instagramUrl || "https://www.instagram.com/obba_acai_/"}
+            href={settings.instagramUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white px-4 py-2 rounded-full font-bold hover:opacity-90 transition-opacity shadow-lg text-sm"
@@ -21,12 +22,13 @@ export const Footer = () => {
             </svg>
             Siga-nos no Instagram
           </a>
+          ) : null}
         </div>
 
         {/* Location & Year */}
         <div className="text-center mb-2">
-          <p className="text-xs">{settings.businessAddress || "Canaã dos Carajás - PA"}</p>
-          <p className="text-[10px] text-gray-400 mt-0.5">{settings.copyrightText || "© 2025-2026 Obba Açaí"}</p>
+          {settings.businessAddress && <p className="text-xs">{settings.businessAddress}</p>}
+          <p className="text-[10px] text-gray-400 mt-0.5">{settings.copyrightText || `© ${new Date().getFullYear()} ${settings.storeName || 'Loja'}`}</p>
         </div>
 
         {/* Developer Credit */}
