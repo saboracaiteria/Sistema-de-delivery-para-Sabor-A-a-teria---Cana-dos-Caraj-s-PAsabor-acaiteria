@@ -9,6 +9,7 @@ interface ImageCropModalProps {
     onComplete: (croppedFile: File) => void;
     onCancel: () => void;
     title?: string;
+    isProcessing?: boolean;
 }
 
 export const ImageCropModal: React.FC<ImageCropModalProps> = ({
@@ -16,7 +17,8 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     aspectRatio = 1,
     onComplete,
     onCancel,
-    title = 'Recortar Imagem'
+    title = 'Recortar Imagem',
+    isProcessing = false
 }) => {
     const [crop, setCrop] = useState<Crop>({
         unit: '%',
@@ -67,10 +69,68 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     };
 
     const handleComplete = async () => {
+        if (isProcessing) return;
+        
+        // If user didn't move the crop, use the initial crop state
+        if (!completedCrop && imgRef.current) {
+            const { width, height } = imgRef.current;
+            const pixelCrop: PixelCrop = {
+                unit: 'px',
+                x: (width * 0.05),
+                y: (height * 0.05),
+                width: (width * 0.9),
+                height: (height * 0.9 / (aspectRatio || 1))
+            };
+            setCompletedCrop(pixelCrop);
+            
+            // Short delay to ensure state update (or we could just use the object directly)
+            const croppedFile = await getCroppedImgDirect(pixelCrop);
+            if (croppedFile) onComplete(croppedFile);
+            return;
+        }
+
         const croppedFile = await getCroppedImg();
         if (croppedFile) {
             onComplete(croppedFile);
         }
+    };
+
+    const getCroppedImgDirect = async (pCrop: PixelCrop): Promise<File | null> => {
+        if (!imgRef.current) return null;
+
+        const image = imgRef.current;
+        const canvas = document.createElement('canvas');
+        const scaleX = image.naturalWidth / image.width;
+        const scaleY = image.naturalHeight / image.height;
+
+        canvas.width = pCrop.width;
+        canvas.height = pCrop.height;
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) return null;
+
+        ctx.drawImage(
+            image,
+            pCrop.x * scaleX,
+            pCrop.y * scaleY,
+            pCrop.width * scaleX,
+            pCrop.height * scaleY,
+            0,
+            0,
+            pCrop.width,
+            pCrop.height
+        );
+
+        return new Promise((resolve) => {
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    resolve(null);
+                    return;
+                }
+                const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
+                resolve(file);
+            }, 'image/jpeg', 0.95);
+        });
     };
 
     return (
@@ -113,9 +173,21 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                     </button>
                     <button
                         onClick={handleComplete}
-                        className="flex-1 py-3 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition-colors"
+                        disabled={isProcessing}
+                        className={`flex-1 py-3 rounded-lg font-bold transition-colors flex items-center justify-center gap-2 ${
+                            isProcessing 
+                            ? 'bg-purple-400 cursor-not-allowed text-white' 
+                            : 'bg-purple-600 text-white hover:bg-purple-700'
+                        }`}
                     >
-                        Confirmar
+                        {isProcessing ? (
+                            <>
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                Enviando...
+                            </>
+                        ) : (
+                            'Confirmar'
+                        )}
                     </button>
                 </div>
             </div>
