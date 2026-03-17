@@ -13,7 +13,7 @@ export const ModernHero = () => {
     const { settings, isStoreOpen, setSidebarOpen } = useApp();
 
     return (
-        <div className="relative w-full h-[320px] md:h-[480px] overflow-hidden rounded-b-[2.5rem] md:rounded-b-[4rem] bg-gray-50 mb-6 md:mb-10 group">
+        <div className="relative w-full h-[260px] md:h-[480px] overflow-hidden rounded-b-[2.5rem] md:rounded-b-[4rem] bg-gray-50 mb-6 md:mb-10 group">
             {/* Top Navigation Bar */}
             <div className="absolute top-0 left-0 right-0 z-[55] p-4 flex items-center justify-between pointer-events-none">
                 <button
@@ -50,12 +50,12 @@ export const ModernHero = () => {
             </motion.div>
 
             {/* Floating Glass Card for Store Info */}
-            <div className="absolute bottom-6 left-4 right-4 md:left-10 md:right-10 z-20">
+            <div className="absolute bottom-2 md:bottom-6 left-3 right-3 md:left-10 md:right-10 z-20">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="bg-white/70 backdrop-blur-2xl border border-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2.5rem] p-5 md:p-8 flex flex-col md:flex-row items-center md:items-end gap-5 md:gap-8 overflow-hidden relative"
+                    className="bg-white/70 backdrop-blur-2xl border border-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2rem] md:rounded-[2.5rem] p-3.5 md:p-8 flex flex-col md:flex-row items-center md:items-end gap-3 md:gap-8 overflow-hidden relative"
                 >
                     {/* Decorative subtle glow */}
                     <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-200/40 rounded-full blur-3xl pointer-events-none" />
@@ -65,7 +65,7 @@ export const ModernHero = () => {
                         <div className="absolute inset-0 bg-purple-500/10 blur-xl rounded-full scale-110" />
                         <img
                             src={settings.logoUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%234E0797'/%3E%3Ctext x='50' y='67' font-size='50' text-anchor='middle' fill='white' font-family='sans-serif'%3E🏪%3C/text%3E%3C/svg%3E"}
-                            className={`w-24 h-24 md:w-32 md:h-32 object-cover bg-white p-1 shadow-lg relative z-10 ${settings.logoShape === 'circle' ? 'rounded-full' : 'rounded-[2rem]'}`}
+                            className={`w-20 h-20 md:w-32 md:h-32 object-cover bg-white p-1 shadow-lg relative z-10 ${settings.logoShape === 'circle' ? 'rounded-full' : 'rounded-2xl md:rounded-[2rem]'}`}
                             alt="Logo"
                         />
                         
@@ -81,15 +81,15 @@ export const ModernHero = () => {
                     </div>
 
                     {/* Store Name & Details */}
-                    <div className="flex-1 text-center md:text-left pb-1">
-                        <div className="flex flex-col gap-1 md:gap-0">
-                            <span className="text-purple-600 font-bold text-xs tracking-[0.2em] uppercase md:mb-1">Seja Bem-vindo</span>
-                            <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-none">
+                    <div className="flex-1 text-center md:text-left">
+                        <div className="flex flex-col gap-0.5 md:gap-0">
+                            <span className="hidden md:block text-purple-600 font-bold text-xs tracking-[0.2em] uppercase md:mb-1">Seja Bem-vindo</span>
+                            <h1 className="text-2xl md:text-5xl font-black text-slate-900 tracking-tight leading-none">
                                 {settings.storeName}
                             </h1>
                         </div>
                         
-                        <div className="flex items-center justify-center md:justify-start gap-4 mt-4">
+                        <div className="flex items-center justify-center md:justify-start gap-4 mt-3 md:mt-4">
                             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full text-xs font-bold text-slate-600">
                                 <Clock size={14} className="text-purple-500" />
                                 {settings.deliveryTime || '30-45 min'}

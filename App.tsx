@@ -3989,7 +3989,7 @@ const AppContent = () => {
       {isStorefrontRoute && (
         <button
           onClick={() => setIsModernUI(!isModernUI)}
-          className={`fixed top-16 md:bottom-20 md:top-auto right-4 z-[100] flex items-center gap-2 px-3 py-2 rounded-full shadow-lg transition-all text-xs font-bold font-outfit backdrop-blur-md border ${isModernUI ? 'bg-white/90 text-purple-700 border-purple-100 hover:bg-white' : 'bg-gray-900/90 text-white border-gray-700 hover:bg-gray-900'}`}
+          className={`fixed bottom-24 md:bottom-20 right-4 z-[100] flex items-center gap-2 px-3 py-2 rounded-full shadow-lg transition-all text-xs font-bold font-outfit backdrop-blur-md border ${isModernUI ? 'bg-white/90 text-purple-700 border-purple-100 hover:bg-white' : 'bg-gray-900/90 text-white border-gray-700 hover:bg-gray-900'}`}
         >
           <LayoutTemplate size={14} />
           {isModernUI ? 'Usar Versão Antiga' : 'Versão Moderna'}
