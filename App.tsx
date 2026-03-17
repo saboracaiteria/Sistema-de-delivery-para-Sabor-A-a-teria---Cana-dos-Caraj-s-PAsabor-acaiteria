@@ -301,9 +301,25 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           const { data: storesData } = await query;
           
           if (storesData && storesData.length > 0) {
+            // Tentar pegar o slug da URL primeiro
+            const match = hash.match(/^#\/([^\/]+)/);
+            let urlSlug = null;
+            if (match && match[1] && !['login', 'panel', 'platform', 'setup', 'cart', 'checkout'].includes(match[1])) {
+              urlSlug = match[1];
+            }
+
             const savedSlug = localStorage.getItem('currentStoreSlug');
-            let matchedStore = storesData.find(s => s.slug === savedSlug);
-            if (!matchedStore) matchedStore = storesData[0];
+            
+            let matchedStore = null;
+            if (urlSlug) {
+              matchedStore = storesData.find(s => s.slug === urlSlug);
+            }
+            if (!matchedStore && savedSlug) {
+              matchedStore = storesData.find(s => s.slug === savedSlug);
+            }
+            if (!matchedStore) {
+              matchedStore = storesData[0];
+            }
 
             setStore(matchedStore);
             currentStoreId = matchedStore.id;
