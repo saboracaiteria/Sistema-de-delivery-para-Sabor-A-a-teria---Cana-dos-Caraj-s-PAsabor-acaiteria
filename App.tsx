@@ -3965,13 +3965,17 @@ const AppContent = () => {
     if (!isPlatformHome && settings && settings.storeName) {
       const manifestNode = document.querySelector('link[rel="manifest"]');
       if (manifestNode) {
+        const storeId = store?.slug || 'default';
         const manifestObj = {
+          id: `delivery-app-${storeId}`,
           name: settings.storeName,
           short_name: settings.storeName.length > 12 ? settings.storeName.substring(0, 12).trim() : settings.storeName,
           description: `Delivery Oficial - ${settings.storeName}`,
+          start_url: `/#/${storeId}`,
+          scope: "/",
+          display: 'standalone',
           theme_color: settings.themeColors?.primary || '#8b5cf6',
           background_color: '#f9fafb',
-          display: 'standalone',
           icons: [
             {
               src: settings.logoUrl || '/pwa-192x192.png',
@@ -3993,8 +3997,14 @@ const AppContent = () => {
         const manifestURL = URL.createObjectURL(blob);
         manifestNode.setAttribute('href', manifestURL);
       }
+    } else if (isPlatformHome) {
+      // Reset to default manifest for Home Page
+      const manifestNode = document.querySelector('link[rel="manifest"]');
+      if (manifestNode) {
+        manifestNode.setAttribute('href', '/manifest.webmanifest');
+      }
     }
-  }, [isAdminRoute, location.pathname, settings?.storeName, settings?.logoUrl, settings?.themeColors]);
+  }, [isAdminRoute, location.pathname, settings?.storeName, settings?.logoUrl, settings?.themeColors, store]);
 
   useEffect(() => {
     const handleBackButton = async () => {
