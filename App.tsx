@@ -3946,13 +3946,23 @@ const AppContent = () => {
 
   // Dynamic Document Title and PWA Manifest (Route Aware)
   useEffect(() => {
-    if (isAdminRoute) {
-      document.title = location.pathname.startsWith('/platform') 
-        ? "Painel da Plataforma" 
-        : `Painel - ${settings.storeName || 'Delivery'}`;
+    const isPlatformHome = location.pathname === '/';
+    const isPlatformAdmin = location.pathname.startsWith('/platform');
+
+    if (isPlatformHome) {
+      document.title = "Sistema de Delivery";
+    } else if (isPlatformAdmin) {
+      document.title = "Painel da Plataforma";
+    } else if (isAdminRoute) {
+      document.title = `Painel - ${settings.storeName || 'Delivery'}`;
     } else if (settings && settings.storeName) {
       document.title = settings.storeName;
+    } else {
+      document.title = "Sistema de Delivery";
+    }
 
+    // Only update Manifest if NOT on platform home (to keep store identity for PWA)
+    if (!isPlatformHome && settings && settings.storeName) {
       const manifestNode = document.querySelector('link[rel="manifest"]');
       if (manifestNode) {
         const manifestObj = {
@@ -3983,8 +3993,6 @@ const AppContent = () => {
         const manifestURL = URL.createObjectURL(blob);
         manifestNode.setAttribute('href', manifestURL);
       }
-    } else {
-      document.title = "Sistema de Delivery";
     }
   }, [isAdminRoute, location.pathname, settings?.storeName, settings?.logoUrl, settings?.themeColors]);
 
