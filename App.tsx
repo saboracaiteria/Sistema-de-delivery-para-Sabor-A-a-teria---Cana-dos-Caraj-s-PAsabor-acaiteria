@@ -4031,7 +4031,7 @@ const AppContent = () => {
 
       {isStorefrontRoute && <Sidebar />}
       {isStorefrontRoute && <FloatingCartButton />}
-      {(location.pathname === '/' || isStoreHome) && <Footer />}
+      {isStoreHome && <Footer />}
     </div>
   );
 };
