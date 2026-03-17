@@ -3958,7 +3958,7 @@ const AppContent = () => {
           <div className="relative w-20 h-20 mb-6">
             <div className="absolute inset-0 bg-purple-500/50 rounded-2xl blur-xl animate-pulse" />
             <div className="relative w-full h-full bg-gradient-to-br from-purple-500 to-violet-700 rounded-2xl flex items-center justify-center shadow-xl border border-white/20">
-              <Store size={40} className="text-white drop-shadow-md animate-bounce" style={{ animationDuration: '2s' }} />
+              <StoreIcon size={40} className="text-white drop-shadow-md animate-bounce" style={{ animationDuration: '2s' }} />
             </div>
           </div>
           
