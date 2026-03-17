@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
-import { Store, LogOut, ChevronRight, Activity, Copy, CheckCircle, Plus, X, Palette, LayoutTemplate, Loader2, Trash2, AlertTriangle, Lock, Pencil, Save } from 'lucide-react';
+import { Store, LogOut, ChevronRight, Activity, Copy, CheckCircle, Plus, X, Palette, LayoutTemplate, Loader2, Trash2, AlertTriangle, Lock, Pencil, Save, Coffee, Box } from 'lucide-react';
 import { useApp } from './App';
 import type { Store as StoreType } from './types';
 import { SUPER_ADMIN_PASSWORD } from './constants';
+import { applyAcaiteriaTemplate } from './storeTemplateUtils';
 
 export const PlatformAdminPanel = () => {
   const { adminRole, setAdminRole } = useApp();
@@ -363,6 +364,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
   const [storeName, setStoreName] = useState('');
   const [ownerEmail, setOwnerEmail] = useState('');
   const [ownerPassword, setOwnerPassword] = useState('');
+  const [dataTemplate, setDataTemplate] = useState<'acaiteria' | 'empty'>('acaiteria');
   const [uiMode, setUiMode] = useState<'modern' | 'classic'>('modern');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -458,6 +460,11 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
             { dayOfWeek: 6, open: '08:00', close: '22:00', enabled: true },
           ],
         });
+
+        // 4. Se o usuário escolheu o template da Açaiteria, importar os dados
+        if (dataTemplate === 'acaiteria') {
+          await applyAcaiteriaTemplate(storeData.id);
+        }
       }
 
       const link = `${window.location.origin}/#/${slug}`;
@@ -574,9 +581,51 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
                 </p>
               </div>
 
+              {/* Data Template Selector */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3">Template da Loja (Dados)</label>
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  {/* Acaiteria Option */}
+                  <button
+                    type="button"
+                    onClick={() => setDataTemplate('acaiteria')}
+                    className={`relative p-4 rounded-2xl border-2 transition-all text-left ${dataTemplate === 'acaiteria' ? 'border-purple-500 bg-purple-50 shadow-lg shadow-purple-100' : 'border-gray-200 bg-white hover:border-purple-200'}`}
+                  >
+                    {dataTemplate === 'acaiteria' && (
+                      <div className="absolute top-2 right-2 w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center">
+                        <CheckCircle size={14} className="text-white" />
+                      </div>
+                    )}
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${dataTemplate === 'acaiteria' ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                      <Coffee size={20} />
+                    </div>
+                    <p className="font-bold text-gray-900 text-sm">Açaíteria (Padrão)</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Categorias e produtos preenchidos</p>
+                  </button>
+
+                  {/* Empty Option */}
+                  <button
+                    type="button"
+                    onClick={() => setDataTemplate('empty')}
+                    className={`relative p-4 rounded-2xl border-2 transition-all text-left ${dataTemplate === 'empty' ? 'border-blue-500 bg-blue-50 shadow-lg shadow-blue-100' : 'border-gray-200 bg-white hover:border-blue-200'}`}
+                  >
+                    {dataTemplate === 'empty' && (
+                      <div className="absolute top-2 right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                        <CheckCircle size={14} className="text-white" />
+                      </div>
+                    )}
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${dataTemplate === 'empty' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                      <Box size={20} />
+                    </div>
+                    <p className="font-bold text-gray-900 text-sm">Modo Livre</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Começar do zero (cardápio vazio)</p>
+                  </button>
+                </div>
+              </div>
+
               {/* UI Mode Selector */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3">Modelo do Cardápio</label>
+                <label className="block text-sm font-bold text-gray-700 mb-3">Estilo Visual do Cardápio</label>
                 <div className="grid grid-cols-2 gap-3">
                   {/* Modern Option */}
                   <button
