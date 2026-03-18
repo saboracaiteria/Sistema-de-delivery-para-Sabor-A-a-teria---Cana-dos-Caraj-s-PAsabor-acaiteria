@@ -22,7 +22,7 @@ export const PlatformAdminPanel = () => {
     try {
       const { data, error } = await supabase
         .from('stores')
-        .select('*')
+        .select('*, settings(store_status)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -86,6 +86,47 @@ export const PlatformAdminPanel = () => {
       alert('Loja excluída com sucesso!');
     } catch (err: any) {
       alert(`Erro ao excluir: ${err.message}`);
+    }
+  };
+
+  const handleUpdateStorePassword = async (id: string, newPassword: string) => {
+    if (!newPassword.trim()) return;
+    try {
+      const { error } = await supabase
+        .from('stores')
+        .update({ password: newPassword.trim() })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setStores(prev => prev.map(s => s.id === id ? { ...s, password: newPassword.trim() } : s));
+      alert('Senha atualizada com sucesso!');
+    } catch (err: any) {
+      alert(`Erro ao atualizar senha: ${err.message}`);
+    }
+  };
+
+  const handleToggleStoreStatus = async (storeId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'open' ? 'closed' : 'open';
+    try {
+      const { error } = await supabase
+        .from('settings')
+        .update({ store_status: newStatus })
+        .eq('store_id', storeId);
+
+      if (error) throw error;
+
+      setStores(prev => prev.map(s => {
+        if (s.id === storeId) {
+          const updatedSettings = Array.isArray(s.settings) 
+            ? [{ ...s.settings[0], store_status: newStatus }]
+            : { ...s.settings, store_status: newStatus };
+          return { ...s, settings: updatedSettings };
+        }
+        return s;
+      }));
+    } catch (err: any) {
+      alert(`Erro ao alterar status: ${err.message}`);
     }
   };
 
@@ -236,8 +277,24 @@ export const PlatformAdminPanel = () => {
 
                 <div className="p-5">
                   <div className="flex justify-between items-start mb-4">
-                    <div className={`w-11 h-11 rounded-xl ${accent.icon} bg-opacity-20 flex items-center justify-center`}>
-                      <Store size={22} className="text-white" />
+                    <div className="flex items-center gap-3">
+                      <div className={`w-11 h-11 rounded-xl ${accent.icon} bg-opacity-20 flex items-center justify-center`}>
+                        <Store size={22} className="text-white" />
+                      </div>
+                      {/* Status Badge Toggle */}
+                      <button
+                        onClick={() => {
+                          const status = Array.isArray(store.settings) ? store.settings[0]?.store_status : store.settings?.store_status;
+                          handleToggleStoreStatus(store.id, status || 'open');
+                        }}
+                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter transition-all ${
+                          (Array.isArray(store.settings) ? store.settings[0]?.store_status : store.settings?.store_status) === 'open'
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                        }`}
+                      >
+                        {(Array.isArray(store.settings) ? store.settings[0]?.store_status : store.settings?.store_status) === 'open' ? 'Pausar Loja' : 'Ativar Loja'}
+                      </button>
                     </div>
                     <button
                       onClick={() => handleCopyLink(store.slug)}
@@ -285,8 +342,23 @@ export const PlatformAdminPanel = () => {
                     </div>
                   )}
 
-                  <div className="mt-1 mb-4">
+                  <div className="mt-1 mb-4 flex justify-between items-center">
                     <span className="text-xs text-white/30 font-mono">/{store.slug}</span>
+                    <div className="flex items-center gap-2">
+                      <Lock size={12} className="text-white/20" />
+                      <input
+                        type="text"
+                        defaultValue={store.password}
+                        onBlur={(e) => {
+                          if (e.target.value !== store.password) {
+                            handleUpdateStorePassword(store.id, e.target.value);
+                          }
+                        }}
+                        className="bg-transparent border-b border-white/5 hover:border-white/20 text-[10px] text-white/40 outline-none w-16 focus:text-white/80 transition-all font-mono"
+                        placeholder="Senha"
+                        title="Alterar Senha do Lojista"
+                      />
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between pt-3 border-t border-white/[0.07]">
@@ -428,6 +500,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
           slug: slug,
           owner_id: userId || null,
           owner_email: generatedEmail,
+          password: ownerPassword,
         })
         .select()
         .single();

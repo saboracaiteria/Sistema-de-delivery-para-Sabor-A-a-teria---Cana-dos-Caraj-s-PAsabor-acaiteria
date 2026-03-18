@@ -4,6 +4,7 @@ export interface Store {
   slug: string;
   name: string;
   ownerId?: string;
+  password?: string;
 }
 
 export interface ProductOption {

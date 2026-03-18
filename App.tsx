@@ -8,7 +8,7 @@ import {
   MapPin, Phone, CreditCard, Banknote, Clock, Search,
   ChevronLeft, ChevronDown, ChevronUp, Edit, FileText,
   Settings, BarChart2, List, Folder, LogOut, CheckCircle,
-  Printer, Tag, ToggleLeft, ToggleRight, Upload, Info, ArrowLeft, AlertCircle, Camera,
+  Printer, Tag, ToggleLeft, ToggleRight, Upload, Info, ArrowLeft, AlertCircle, Camera, Loader2,
   Link as LinkIcon, Lock as LockIcon, Palette, Package, MessageSquare, LayoutTemplate, Share2, Check, Store as StoreIcon
 } from 'lucide-react';
 import { App as CapacitorApp } from '@capacitor/app';
@@ -19,7 +19,7 @@ import { formatCurrency, calculateStoreStatus, fileToBase64 } from './storeUtils
 import { Footer } from './Footer';
 import {
   CATEGORIES, PRODUCTS, GROUPS, WHATSAPP_NUMBER, LOGO_URL,
-  PAYMENT_METHODS, INITIAL_COUPONS, MOCK_ORDERS, SUPER_ADMIN_EMAILS
+  PAYMENT_METHODS, INITIAL_COUPONS, MOCK_ORDERS, SUPER_ADMIN_EMAILS, SUPER_ADMIN_PASSWORD
 } from './constants';
 import {
   Category, Product, ProductGroup, CartItem, ProductOption,
@@ -1129,21 +1129,54 @@ const Sidebar = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleAdminAccess = () => {
-    if (password === '1245') {
-      setAdminRole('admin');
-      navigate(`/${store?.slug}/panel`);
-      setShowPassword(false);
-      setSidebarOpen(false);
-      setPassword('');
-    } else if (password === '777') {
-      setAdminRole('employee');
-      navigate(`/${store?.slug}/panel`);
-      setShowPassword(false);
-      setSidebarOpen(false);
-      setPassword('');
-    } else {
-      alert('Senha incorreta!');
+  const [accessLoading, setAccessLoading] = useState(false);
+
+  const handleAdminAccess = async () => {
+    if (!password) return;
+
+    setAccessLoading(true);
+    try {
+      // 1. Check Super Admin Password
+      if (password === SUPER_ADMIN_PASSWORD) {
+        setAdminRole('superadmin');
+        navigate('/platform');
+        setShowPassword(false);
+        setSidebarOpen(false);
+        setPassword('');
+        return;
+      }
+
+      // 2. Check Store-specific Password
+      if (store?.password && password === store.password) {
+        setAdminRole('admin');
+        navigate(`/${store.slug}/panel`);
+        setShowPassword(false);
+        setSidebarOpen(false);
+        setPassword('');
+        return;
+      }
+
+      // 3. Fallback Legacy / Employee Passwords
+      if (password === '1245') {
+        setAdminRole('admin');
+        navigate(`/${store?.slug}/panel`);
+        setShowPassword(false);
+        setSidebarOpen(false);
+        setPassword('');
+      } else if (password === '777') {
+        setAdminRole('employee');
+        navigate(`/${store?.slug}/panel`);
+        setShowPassword(false);
+        setSidebarOpen(false);
+        setPassword('');
+      } else {
+        alert('Senha incorreta!');
+      }
+    } catch (err) {
+      console.error("Erro no acesso administrativo:", err);
+      alert("Ocorreu um erro ao verificar o acesso.");
+    } finally {
+      setAccessLoading(false);
     }
   };
 
@@ -1259,9 +1292,10 @@ const Sidebar = () => {
               </button>
               <button
                 onClick={handleAdminAccess}
-                className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold transition-colors shadow-lg shadow-purple-200"
+                disabled={accessLoading}
+                className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold transition-colors shadow-lg shadow-purple-200 flex items-center justify-center gap-2"
               >
-                Entrar
+                {accessLoading ? <Loader2 size={18} className="animate-spin" /> : 'Entrar'}
               </button>
             </div>
           </motion.div>
