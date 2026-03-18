@@ -1140,7 +1140,7 @@ const Sidebar = () => {
       const { data: latestStore, error: fetchError } = await supabase
         .from('stores')
         .select('password, slug')
-        .eq('slug', slug)
+        .eq('slug', store?.slug)
         .single();
 
       if (fetchError) {
@@ -1162,7 +1162,7 @@ const Sidebar = () => {
       // 3. Check Store-specific Password (using latest from DB)
       if (currentStorePassword && password === currentStorePassword) {
         setAdminRole('admin');
-        navigate(`/${slug}/panel`);
+        navigate(`/${store?.slug}/panel`);
         setShowPassword(false);
         setSidebarOpen(false);
         setPassword('');
