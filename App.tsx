@@ -4018,20 +4018,20 @@ const AppContent = () => {
           name: settings.storeName,
           short_name: settings.storeName.length > 12 ? settings.storeName.substring(0, 12).trim() : settings.storeName,
           description: `Delivery Oficial - ${settings.storeName}`,
-          start_url: `/#/${storeId}`,
-          scope: "/",
+          start_url: `${window.location.origin}/#/${storeId}`,
+          scope: `${window.location.origin}/`,
           display: 'standalone',
           theme_color: settings.themeColors?.primary || '#8b5cf6',
           background_color: '#f9fafb',
           icons: [
             {
-              src: settings.logoUrl || '/pwa-192x192.png',
+              src: settings.logoUrl?.startsWith('http') ? settings.logoUrl : `${window.location.origin}${settings.logoUrl || '/pwa-192x192.png'}`,
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any maskable'
             },
             {
-              src: settings.logoUrl || '/pwa-512x512.png',
+              src: settings.logoUrl?.startsWith('http') ? settings.logoUrl : `${window.location.origin}${settings.logoUrl || '/pwa-512x512.png'}`,
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any maskable'
