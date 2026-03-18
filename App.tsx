@@ -1136,7 +1136,20 @@ const Sidebar = () => {
 
     setAccessLoading(true);
     try {
-      // 1. Check Super Admin Password
+      // 1. Fetch latest store data to avoid stale password issues
+      const { data: latestStore, error: fetchError } = await supabase
+        .from('stores')
+        .select('password, slug')
+        .eq('slug', slug)
+        .single();
+
+      if (fetchError) {
+        console.error("Erro ao buscar senha mais recente:", fetchError);
+      }
+
+      const currentStorePassword = latestStore?.password || store?.password;
+
+      // 2. Check Super Admin Password
       if (password === SUPER_ADMIN_PASSWORD) {
         setAdminRole('superadmin');
         navigate('/platform');
@@ -1146,10 +1159,10 @@ const Sidebar = () => {
         return;
       }
 
-      // 2. Check Store-specific Password
-      if (store?.password && password === store.password) {
+      // 3. Check Store-specific Password (using latest from DB)
+      if (currentStorePassword && password === currentStorePassword) {
         setAdminRole('admin');
-        navigate(`/${store.slug}/panel`);
+        navigate(`/${slug}/panel`);
         setShowPassword(false);
         setSidebarOpen(false);
         setPassword('');

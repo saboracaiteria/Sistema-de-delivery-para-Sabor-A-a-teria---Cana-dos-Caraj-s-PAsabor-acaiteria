@@ -92,12 +92,17 @@ export const PlatformAdminPanel = () => {
   const handleUpdateStorePassword = async (id: string, newPassword: string) => {
     if (!newPassword.trim()) return;
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('stores')
         .update({ password: newPassword.trim() })
-        .eq('id', id);
+        .eq('id', id)
+        .select();
 
       if (error) throw error;
+      
+      if (!data || data.length === 0) {
+        throw new Error("Sem permissão para atualizar ou loja não encontrada.");
+      }
       
       setStores(prev => prev.map(s => s.id === id ? { ...s, password: newPassword.trim() } : s));
       alert('Senha atualizada com sucesso!');
