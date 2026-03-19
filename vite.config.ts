@@ -37,7 +37,32 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-          maximumFileSizeToCacheInBytes: 3000000
+          maximumFileSizeToCacheInBytes: 3000000,
+          // CACHE-BUSTING: Force SW to take control immediately
+          skipWaiting: true,
+          clientsClaim: true,
+          // Clean old caches on new deploy
+          cleanupOutdatedCaches: true,
+          // Navigation requests always go to network first
+          navigateFallback: '/index.html',
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'supabase-api',
+                expiration: { maxEntries: 50, maxAgeSeconds: 300 }
+              }
+            },
+            {
+              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'images',
+                expiration: { maxEntries: 100, maxAgeSeconds: 86400 }
+              }
+            }
+          ]
         }
       })
     ],
