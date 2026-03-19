@@ -1,7 +1,8 @@
 -- =====================================================
 -- FINAL RLS FIX V3 - SUPABASE
--- Este script resolve ambiguidades e reforça a segurança
 -- =====================================================
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 DO $$
 DECLARE
@@ -16,17 +17,14 @@ BEGIN
     -- 1. Limpar TODAS as políticas existentes para evitar conflitos
     FOR tbl IN 
         SELECT tablename 
-        FROM pg_policies 
+        FROM pg_tables 
         WHERE schemaname = 'public' 
           AND tablename IN ('stores', 'settings', 'categories', 'products', 'product_groups', 'product_options', 'product_group_relations', 'orders', 'coupons', 'daily_visitors', 'suppliers', 'purchases', 'stock_items')
     LOOP
         EXECUTE format('ALTER TABLE %I DISABLE ROW LEVEL SECURITY', tbl.tablename);
-        EXECUTE format('DROP POLICY IF EXISTS "Master Admin All" ON %I', tbl.tablename);
-        EXECUTE format('DROP POLICY IF EXISTS "Public Read All" ON %I', tbl.tablename);
-        EXECUTE format('DROP POLICY IF EXISTS "Owner Manage All" ON %I', tbl.tablename);
-        -- Remover políticas com prefixos antigos de scripts anteriores
-        FOR tbl IN SELECT policyname FROM pg_policies WHERE tablename = tbl.tablename LOOP
-             EXECUTE format('DROP POLICY IF EXISTS %I ON %I', tbl.policyname, tbl.tablename);
+        -- Remover políticas existentes
+        FOR pol IN SELECT policyname FROM pg_policies WHERE tablename = tbl.tablename LOOP
+             EXECUTE format('DROP POLICY IF EXISTS %I ON %I', pol.policyname, tbl.tablename);
         END LOOP;
     END LOOP;
 

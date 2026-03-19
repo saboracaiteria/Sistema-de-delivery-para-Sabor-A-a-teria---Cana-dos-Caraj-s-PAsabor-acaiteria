@@ -1,8 +1,8 @@
 -- =====================================================
 -- ADMIN MANAGEMENT RPC
--- Permite que o Master Admin crie e gerencie contas de lojistas
--- sem ser deslogado (sem usar signUp/signIn do cliente)
 -- =====================================================
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- 1. Função para Criar Dono de Loja
 CREATE OR REPLACE FUNCTION create_store_owner(p_email text, p_password text)
