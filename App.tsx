@@ -501,6 +501,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { data } = await supabase.from('settings').select('*').eq('store_id', storeId).single();
     if (data) {
       setSettings({
+        id: data.id,
         storeName: data.store_name,
         logoUrl: data.logo_url,
         logoShape: data.logo_shape || 'circle',
@@ -904,6 +905,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
     // Mapear camelCase para snake_case
     const dbSettings: any = { store_id: store.id };
+    if (settings.id) dbSettings.id = settings.id; // Inclui ID se existir para update direto
     if (s.storeName !== undefined) dbSettings.store_name = s.storeName;
     if (s.logoUrl !== undefined) dbSettings.logo_url = s.logoUrl;
     if (s.logoShape !== undefined) dbSettings.logo_shape = s.logoShape;
