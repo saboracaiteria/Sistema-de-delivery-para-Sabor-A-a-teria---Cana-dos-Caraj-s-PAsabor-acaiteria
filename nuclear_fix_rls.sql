@@ -24,7 +24,6 @@ BEGIN
             'daily_visitors', 'suppliers', 'purchases', 'stock_items'
         )
     LOOP
-        EXECUTE format('DROP POLICY IF EXISTS %I ON %I', (SELECT policyname FROM pg_policies WHERE tablename = tbl.tablename LIMIT 1), tbl.tablename);
         -- Como pode haver múltiplas políticas, vamos dar um drop em massa
         FOR query IN SELECT format('DROP POLICY IF EXISTS %I ON %I', policyname, tablename) FROM pg_policies WHERE tablename = tbl.tablename LOOP
             EXECUTE query;
