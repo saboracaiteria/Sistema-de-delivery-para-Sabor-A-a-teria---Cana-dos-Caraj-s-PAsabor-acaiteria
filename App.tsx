@@ -951,9 +951,11 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     try {
       console.log('Salvando configurações para store_id:', store.id, dbSettings);
       
-      const { error } = await supabase
-        .from('settings')
-        .upsert(dbSettings, { onConflict: 'store_id' });
+      // Usar RPC SECURITY DEFINER para bypass do RLS (autorização feita internamente via JWT email)
+      const { error } = await supabase.rpc('save_store_settings', {
+        p_store_id: store.id,
+        p_settings: dbSettings
+      });
 
       if (error) {
         console.error("Erro ao atualizar configurações no Supabase:", error);
