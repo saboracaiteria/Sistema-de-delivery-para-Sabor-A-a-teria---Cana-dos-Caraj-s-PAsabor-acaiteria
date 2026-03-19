@@ -305,7 +305,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           
           if (storesData && storesData.length > 0) {
             // Tentar pegar o slug da URL primeiro
-            const match = hash.match(/^#\/([^\/]+)/);
+            const match = hash.match(/^#\/([^/?#]+)/);
             let urlSlug = null;
             if (match && match[1] && !['login', 'panel', 'platform', 'setup', 'cart', 'checkout'].includes(match[1])) {
               urlSlug = match[1];
@@ -334,7 +334,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         } else {
           // 2. Client Mode: Fetch store by slug
           let slug = 'sabor-acaiteria'; // Default fallback
-          const match = hash.match(/^#\/([^\/]+)/);
+          const match = hash.match(/^#\/([^/?#]+)/);
 
           if (match && match[1] && !['login', 'panel', 'cart', 'checkout', 'platform', 'setup'].includes(match[1])) {
             slug = match[1];
@@ -2519,7 +2519,7 @@ const AdminPanel = () => {
 };
 
 const OrdersPage = () => {
-  const { orders, updateOrderStatus, updateOrderDiscount, groups, store } = useApp();
+  const { orders, updateOrderStatus, updateOrderDiscount, groups, store, deleteOrder, adminRole, copyOrderToClipboard } = useApp();
   const navigate = useNavigate();
   const { printText, connectedDevice } = usePrinter();
 
@@ -2576,7 +2576,6 @@ const OrdersPage = () => {
 
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string } | null>(null);
-  const { deleteOrder, adminRole, copyOrderToClipboard } = useApp();
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
@@ -2883,7 +2882,7 @@ const CouponsPage = () => {
 };
 
 const AddonsPage = () => {
-  const { groups, addGroup, updateGroup, deleteGroup } = useApp();
+  const { groups, addGroup, updateGroup, deleteGroup, store } = useApp();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<ProductGroup | null>(null);
@@ -4058,7 +4057,7 @@ const SettingsPage = () => {
 
 
 const ThemeSettingsPage = () => {
-  const { settings, updateSettings } = useApp();
+  const { settings, updateSettings, store } = useApp();
   const navigate = useNavigate();
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
