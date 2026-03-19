@@ -905,7 +905,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
     // Mapear camelCase para snake_case
     const dbSettings: any = { store_id: store.id };
-    if (settings.id) dbSettings.id = settings.id; // Inclui ID se existir para update direto
+    const configId = s.id || settings.id; // Tenta usar ID do argumento ou do estado global
+    if (configId) dbSettings.id = configId;
     if (s.storeName !== undefined) dbSettings.store_name = s.storeName;
     if (s.logoUrl !== undefined) dbSettings.logo_url = s.logoUrl;
     if (s.logoShape !== undefined) dbSettings.logo_shape = s.logoShape;
