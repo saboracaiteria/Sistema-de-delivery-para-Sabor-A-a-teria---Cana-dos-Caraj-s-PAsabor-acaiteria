@@ -64,6 +64,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
     const [activeConfirmation, setActiveConfirmation] = useState<{ product: Product, newActive: boolean } | null>(null);
     const [showLinkInput, setShowLinkInput] = useState(false);
     const [tempImageUrl, setTempImageUrl] = useState('');
+    const { store } = useApp();
     const navigate = useNavigate();
 
     const handleOpenModal = (product?: Product) => {
@@ -261,7 +262,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
         <div className="min-h-screen bg-gray-100 p-4 pb-20">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate(`/${useApp().store?.slug}/panel`)}><ChevronLeft /></button>
+                    <button onClick={() => navigate(`/${store?.slug}/panel`)}><ChevronLeft /></button>
                     <div>
                         <h1 className="text-xl font-bold">Produtos</h1>
                         {storeName && <p className="text-sm text-gray-500 font-medium">Loja: <span className="text-purple-600">{storeName}</span></p>}

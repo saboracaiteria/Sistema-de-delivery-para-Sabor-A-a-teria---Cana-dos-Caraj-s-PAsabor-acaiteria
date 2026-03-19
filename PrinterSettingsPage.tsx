@@ -6,6 +6,7 @@ import { useApp } from './App';
 import { usePrinter } from './PrinterContext';
 
 export const PrinterSettingsPage = () => {
+    const { store } = useApp();
     const navigate = useNavigate();
     const { devices, connectedDevice, isScanning, scanDevices, connectDevice, disconnectDevice, printText } = usePrinter();
 
@@ -30,7 +31,7 @@ export const PrinterSettingsPage = () => {
     return (
         <div className="min-h-screen bg-gray-100 p-4">
             <div className="flex items-center gap-3 mb-6">
-                <button onClick={() => navigate(`/${useApp().store?.slug}/panel`)}><ChevronLeft /></button>
+                <button onClick={() => navigate(`/${store?.slug}/panel`)}><ChevronLeft /></button>
                 <h1 className="text-xl font-bold">Configuração de Impressora</h1>
             </div>
 

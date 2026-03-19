@@ -2379,7 +2379,7 @@ const OrdersPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate(`/${useApp().store?.slug}/panel`)}><ChevronLeft /></button>
+        <button onClick={() => navigate(`/${store?.slug}/panel`)}><ChevronLeft /></button>
         <h1 className="text-xl font-bold">Pedidos</h1>
       </div>
       <div className="space-y-4">
@@ -2564,7 +2564,7 @@ const CouponsPage = () => {
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(`/${useApp().store?.slug}/panel`)}><ChevronLeft /></button>
+          <button onClick={() => navigate(`/${store?.slug}/panel`)}><ChevronLeft /></button>
           <h1 className="text-xl font-bold">Cupons</h1>
         </div>
         <button onClick={() => { setEditingCoupon({ type: 'percent' }); setIsModalOpen(true); }} className="bg-purple-600 text-white p-2 rounded-full"><Plus /></button>
@@ -2804,7 +2804,7 @@ const AddonsPage = () => {
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(`/${useApp().store?.slug}/panel`)}><ChevronLeft /></button>
+          <button onClick={() => navigate(`/${store?.slug}/panel`)}><ChevronLeft /></button>
           <h1 className="text-xl font-bold">Adicionais / Combos</h1>
         </div>
         <button
@@ -3260,7 +3260,7 @@ const SettingsPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-4 pb-20">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate(`/${useApp().store?.slug}/panel`)}><ChevronLeft /></button>
+        <button onClick={() => navigate(`/${store?.slug}/panel`)}><ChevronLeft /></button>
         <h1 className="text-xl font-bold">Configurações</h1>
       </div>
 
@@ -3855,7 +3855,7 @@ const ThemeSettingsPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-4 pb-20">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate(`/${useApp().store?.slug}/panel`)}><ChevronLeft /></button>
+        <button onClick={() => navigate(`/${store?.slug}/panel`)}><ChevronLeft /></button>
         <h1 className="text-xl font-bold">Cores do Site</h1>
       </div>
 
