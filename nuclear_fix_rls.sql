@@ -46,8 +46,7 @@ BEGIN
     ALTER TABLE stock_items ENABLE ROW LEVEL SECURITY;
 
     -- 3. Criar Políticas para STORES
-    CREATE POLICY "superadmin_stores" ON stores FOR ALL 
-    USING ((auth.jwt() ->> 'email') = ANY(superadmin_emails));
+    EXECUTE format('CREATE POLICY "superadmin_stores" ON stores FOR ALL USING ((auth.jwt() ->> ''email'') = ANY(%L))', superadmin_emails);
     
     CREATE POLICY "owner_stores" ON stores FOR UPDATE 
     USING (auth.uid() = owner_id);
@@ -78,11 +77,12 @@ BEGIN
     END LOOP;
 
     -- 5. Política Especial para Relations (N:N)
-    CREATE POLICY "sa_relations" ON product_group_relations FOR ALL 
-    USING ((auth.jwt() ->> 'email') = ANY(superadmin_emails));
+    EXECUTE format('CREATE POLICY "sa_relations" ON product_group_relations FOR ALL USING ((auth.jwt() ->> ''email'') = ANY(%L))', superadmin_emails);
     
-    CREATE POLICY "ow_relations" ON product_group_relations FOR ALL 
-    USING (EXISTS (SELECT 1 FROM products p JOIN stores s ON p.store_id = s.id WHERE p.id = product_id AND s.owner_id = auth.uid()));
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'product_group_relations') THEN
+        CREATE POLICY "ow_relations" ON product_group_relations FOR ALL 
+        USING (EXISTS (SELECT 1 FROM products p JOIN stores s ON p.store_id = s.id WHERE p.id = product_id AND s.owner_id = auth.uid()));
+    END IF;
 
     -- 6. Garantir vínculo de owner_id
     UPDATE stores s SET owner_id = u.id FROM auth.users u WHERE s.owner_email = u.email AND (s.owner_id IS NULL OR s.owner_id <> u.id);
