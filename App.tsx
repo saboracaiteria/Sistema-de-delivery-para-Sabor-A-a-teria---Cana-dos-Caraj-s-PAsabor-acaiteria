@@ -951,10 +951,11 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     try {
       console.log('Salvando configurações para store_id:', store.id, dbSettings);
       
-      // Usar RPC SECURITY DEFINER para bypass do RLS (autorização feita internamente via JWT email)
+      // Usar RPC SECURITY DEFINER — aceita JWT ou senha da loja como auth
       const { error } = await supabase.rpc('save_store_settings', {
         p_store_id: store.id,
-        p_settings: dbSettings
+        p_settings: dbSettings,
+        p_store_password: (store as any).password || null
       });
 
       if (error) {
