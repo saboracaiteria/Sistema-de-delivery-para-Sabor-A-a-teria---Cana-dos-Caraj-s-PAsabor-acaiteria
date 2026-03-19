@@ -32,8 +32,8 @@ BEGIN
         VALUES (gen_random_uuid(), p_email, v_encrypted_password, now(), 'authenticated', 'authenticated', '00000000-0000-0000-0000-000000000000', '{"provider":"email","providers":["email"]}', '{}', now(), now())
         RETURNING id INTO v_user_id;
 
-        INSERT INTO auth.identities (id, user_id, identity_data, provider, created_at, updated_at)
-        VALUES (v_user_id, v_user_id, format('{"sub":"%s","email":"%s"}', v_user_id, p_email)::jsonb, 'email', now(), now());
+        INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, created_at, updated_at)
+        VALUES (v_user_id, v_user_id, format('{"sub":"%s","email":"%s"}', v_user_id, p_email)::jsonb, 'email', v_user_id::text, now(), now());
     ELSE
         UPDATE auth.users SET encrypted_password = v_encrypted_password, updated_at = now() WHERE id = v_user_id;
     END IF;

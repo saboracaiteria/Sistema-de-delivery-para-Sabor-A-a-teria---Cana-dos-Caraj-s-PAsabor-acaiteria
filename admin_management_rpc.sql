@@ -61,12 +61,12 @@ BEGIN
         )
         RETURNING id INTO v_user_id;
 
-        -- Criar entrada na tabela auth.identities para o provedor de email
         INSERT INTO auth.identities (
-            id, -- Deve ser o id do usuário no auth.users para o provider email
+            id,
             user_id,
             identity_data,
             provider,
+            provider_id, -- Adicionado para compatibilidade com versões recentes
             last_sign_in_at,
             created_at,
             updated_at
@@ -76,6 +76,7 @@ BEGIN
             v_user_id,
             format('{"sub":"%s","email":"%s"}', v_user_id, p_email)::jsonb,
             'email',
+            v_user_id::text,
             NULL,
             now(),
             now()
@@ -155,8 +156,8 @@ BEGIN
         VALUES (gen_random_uuid(), p_email, crypt(p_password, gen_salt('bf')), now(), 'authenticated', 'authenticated', '00000000-0000-0000-0000-000000000000', '{"provider":"email","providers":["email"]}', '{}', now(), now())
         RETURNING id INTO v_user_id;
 
-        INSERT INTO auth.identities (id, user_id, identity_data, provider, created_at, updated_at)
-        VALUES (v_user_id, v_user_id, format('{"sub":"%s","email":"%s"}', v_user_id, p_email)::jsonb, 'email', now(), now());
+        INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, created_at, updated_at)
+        VALUES (v_user_id, v_user_id, format('{"sub":"%s","email":"%s"}', v_user_id, p_email)::jsonb, 'email', v_user_id::text, now(), now());
     ELSE
         UPDATE auth.users SET encrypted_password = crypt(p_password, gen_salt('bf')), updated_at = now() WHERE id = v_user_id;
     END IF;
