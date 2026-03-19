@@ -283,4 +283,7 @@ BEGIN
     END LOOP;
 END $$;
 
-RAISE NOTICE '✅ Bootstrap completo! Todas as contas auth sincronizadas.';
+DO $$ BEGIN
+    RAISE NOTICE '✅ Bootstrap completo! Todas as contas auth sincronizadas.';
+END $$;
+
