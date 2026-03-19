@@ -92,6 +92,27 @@ export const PlatformAdminPanel = () => {
   const handleUpdateStorePassword = async (id: string, newPassword: string) => {
     if (!newPassword.trim()) return;
     try {
+      // 1. Get current store data to find owner_id
+      const store = stores.find(s => s.id === id);
+      if (!store) throw new Error("Loja não encontrada.");
+
+      // 2. Sync password in Auth via RPC (only if owner_id exists)
+      if (store.owner_id) {
+        const { error: rpcError } = await supabase.rpc('update_store_owner_password', {
+          p_user_id: store.owner_id,
+          p_new_password: newPassword.trim()
+        });
+
+        if (rpcError) {
+          console.error("Erro ao sincronizar senha no Auth:", rpcError);
+          // Alert but continue to update store table so they are at least "synced" in the view
+          // although RLS might fail if Auth is not updated.
+          // Better to fail here if sync is critical.
+          throw new Error(`Erro ao sincronizar login: ${rpcError.message}`);
+        }
+      }
+
+      // 3. Update password in the stores table
       const { data, error } = await supabase
         .from('stores')
         .update({ password: newPassword.trim() })
@@ -105,7 +126,7 @@ export const PlatformAdminPanel = () => {
       }
       
       setStores(prev => prev.map(s => s.id === id ? { ...s, password: newPassword.trim() } : s));
-      alert('Senha atualizada com sucesso!');
+      alert('Senha atualizada no sistema e no login!');
     } catch (err: any) {
       alert(`Erro ao atualizar senha: ${err.message}`);
     }
@@ -347,9 +368,23 @@ export const PlatformAdminPanel = () => {
                     </div>
                   )}
 
-                  <div className="mt-1 mb-4 flex justify-between items-center">
-                    <span className="text-xs text-white/30 font-mono">/{store.slug}</span>
-                    <div className="flex items-center gap-2">
+                  <div className="mt-1 mb-4 flex flex-col gap-1.5">
+                    <div className="flex justify-between items-center text-[10px] text-white/30">
+                      <span className="font-mono">/{store.slug}</span>
+                      <div className="flex items-center gap-1.5 opacity-60">
+                        <Lock size={10} />
+                        <span className="font-medium">Painel Admin</span>
+                      </div>
+                    </div>
+                    
+                    {store.owner_email && (
+                      <p className="text-[10px] text-purple-300 font-medium opacity-80 flex items-center gap-1.5">
+                        <Activity size={10} className="text-purple-400" />
+                        {store.owner_email}
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-2 mt-1">
                       <Lock size={12} className="text-white/20" />
                       <input
                         type="text"
@@ -359,9 +394,9 @@ export const PlatformAdminPanel = () => {
                             handleUpdateStorePassword(store.id, e.target.value);
                           }
                         }}
-                        className="bg-transparent border-b border-white/5 hover:border-white/20 text-[10px] text-white/40 outline-none w-16 focus:text-white/80 transition-all font-mono"
+                        className="bg-transparent border-b border-white/5 hover:border-white/20 text-[10px] text-white/40 outline-none w-full focus:text-white/80 transition-all font-mono"
                         placeholder="Senha"
-                        title="Alterar Senha do Lojista"
+                        title="Alterar Senha de Login"
                       />
                     </div>
                   </div>
@@ -479,23 +514,18 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
     const generatedEmail = `${slug.toLowerCase()}@internal.com`;
 
     try {
-      // 1. Create the auth user for the store owner
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: generatedEmail,
-        password: ownerPassword,
+      // 1. Create the auth user for the store owner via RPC
+      // This is secure and doesn't log the admin out!
+      const { data: userId, error: rpcError } = await supabase.rpc('create_store_owner', {
+        p_email: generatedEmail,
+        p_password: ownerPassword
       });
 
-      if (authError) {
-        if (authError.message.includes('already registered')) {
-          setError('Este e-mail já está cadastrado.');
-        } else {
-          setError(`Erro ao criar conta: ${authError.message}`);
-        }
+      if (rpcError) {
+        setError(`Erro ao criar conta de login: ${rpcError.message}`);
         setSaving(false);
         return;
       }
-
-      const userId = authData.user?.id;
 
       // 2. Create the store record
       const { data: storeData, error: storeError } = await supabase
