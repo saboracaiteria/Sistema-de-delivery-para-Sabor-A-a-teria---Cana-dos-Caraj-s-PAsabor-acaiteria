@@ -135,7 +135,6 @@ export interface ThemeColors {
 }
 
 export interface GlobalSettings {
-  id?: number | string;
   storeId?: string;
   storeName: string;
   logoUrl?: string; // URL da logo no Storage

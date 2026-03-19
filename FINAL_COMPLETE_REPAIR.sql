@@ -1,5 +1,5 @@
 -- =====================================================
--- FINAL COMPLETE REPAIR (V5 + COLUNAS FALTANTES)
+-- FINAL COMPLETE REPAIR (V6 + PK DE CONFIGURAÇÕES)
 -- Execute este script uma única vez para resolver tudo.
 -- =====================================================
 
@@ -74,9 +74,10 @@ BEGIN
 END;
 $$;
 
--- 3. Adicionar Colunas store_id onde faltam
+-- 3. AJUSTE DE COLUNAS E PRIMARY KEYS
 DO $$
 BEGIN
+    -- 3.1 Garantir store_id nas tabelas secundárias
     -- Suppliers
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'suppliers' AND column_name = 'store_id') THEN
         ALTER TABLE suppliers ADD COLUMN store_id UUID REFERENCES stores(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001';
@@ -97,15 +98,28 @@ BEGIN
         ALTER TABLE product_group_relations ADD COLUMN store_id UUID REFERENCES stores(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001';
     END IF;
 
-    -- Daily Visitors (Ajuste de PK)
+    -- 3.2 Ajustar Primary Keys para Multi-tenant
+    
+    -- SETTINGS: Transformar store_id na PRIMARY KEY
+    -- Primeiro removemos a PK antiga 'id' se existir
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'settings' AND column_name = 'id') THEN
+        ALTER TABLE settings DROP CONSTRAINT IF EXISTS settings_pkey CASCADE;
+        ALTER TABLE settings DROP COLUMN IF EXISTS id;
+    END IF;
+    -- Adicionar store_id como PK
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'settings_pkey') THEN
+        ALTER TABLE settings ADD PRIMARY KEY (store_id);
+    END IF;
+
+    -- DAILY VISITORS: Ajuste de PK composta (date, store_id)
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'daily_visitors' AND column_name = 'store_id') THEN
-        ALTER TABLE daily_visitors DROP CONSTRAINT IF EXISTS daily_visitors_pkey;
+        ALTER TABLE daily_visitors DROP CONSTRAINT IF EXISTS daily_visitors_pkey CASCADE;
         ALTER TABLE daily_visitors ADD COLUMN store_id UUID REFERENCES stores(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001';
         ALTER TABLE daily_visitors ADD PRIMARY KEY (date, store_id);
     END IF;
 END $$;
 
--- 4. Limpar e Recriar RLS (V5 - Ultra Robusta)
+-- 4. Limpar e Recriar RLS (V6 - Ultra Robusta)
 DO $$
 DECLARE
     superadmin_emails TEXT[] := ARRAY[

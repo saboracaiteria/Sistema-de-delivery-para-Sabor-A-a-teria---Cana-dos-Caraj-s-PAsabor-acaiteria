@@ -501,7 +501,6 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { data } = await supabase.from('settings').select('*').eq('store_id', storeId).single();
     if (data) {
       setSettings({
-        id: data.id,
         storeName: data.store_name,
         logoUrl: data.logo_url,
         logoShape: data.logo_shape || 'circle',
@@ -903,10 +902,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       return;
     }
 
-    // Mapear camelCase para snake_case
     const dbSettings: any = { store_id: store.id };
-    const configId = s.id || settings.id; // Tenta usar ID do argumento ou do estado global
-    if (configId) dbSettings.id = configId;
     if (s.storeName !== undefined) dbSettings.store_name = s.storeName;
     if (s.logoUrl !== undefined) dbSettings.logo_url = s.logoUrl;
     if (s.logoShape !== undefined) dbSettings.logo_shape = s.logoShape;
