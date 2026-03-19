@@ -1,5 +1,5 @@
 -- =====================================================
--- FINAL COMPLETE REPAIR (V4 + RPC FIX)
+-- FINAL COMPLETE REPAIR (V5 + COLUNAS FALTANTES)
 -- Execute este script uma única vez para resolver tudo.
 -- =====================================================
 
@@ -74,8 +74,38 @@ BEGIN
 END;
 $$;
 
+-- 3. Adicionar Colunas store_id onde faltam
+DO $$
+BEGIN
+    -- Suppliers
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'suppliers' AND column_name = 'store_id') THEN
+        ALTER TABLE suppliers ADD COLUMN store_id UUID REFERENCES stores(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001';
+    END IF;
 
--- 3. Limpar e Recriar RLS (V4 - Ultra Robusta)
+    -- Stock Items
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'stock_items' AND column_name = 'store_id') THEN
+        ALTER TABLE stock_items ADD COLUMN store_id UUID REFERENCES stores(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001';
+    END IF;
+
+    -- Purchases
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'purchases' AND column_name = 'store_id') THEN
+        ALTER TABLE purchases ADD COLUMN store_id UUID REFERENCES stores(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001';
+    END IF;
+
+    -- Product Group Relations
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'product_group_relations' AND column_name = 'store_id') THEN
+        ALTER TABLE product_group_relations ADD COLUMN store_id UUID REFERENCES stores(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001';
+    END IF;
+
+    -- Daily Visitors (Ajuste de PK)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'daily_visitors' AND column_name = 'store_id') THEN
+        ALTER TABLE daily_visitors DROP CONSTRAINT IF EXISTS daily_visitors_pkey;
+        ALTER TABLE daily_visitors ADD COLUMN store_id UUID REFERENCES stores(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001';
+        ALTER TABLE daily_visitors ADD PRIMARY KEY (date, store_id);
+    END IF;
+END $$;
+
+-- 4. Limpar e Recriar RLS (V5 - Ultra Robusta)
 DO $$
 DECLARE
     superadmin_emails TEXT[] := ARRAY[
