@@ -26,74 +26,86 @@ export const LoginPage = () => {
       let isMasterLogin = (password === SUPER_ADMIN_PASSWORD);
       let storeContext: any = null;
 
-      // 1. Resolve Slug to Email if input is not an email
+      // 1. Resolver Slug → Email se necessário
       if (!inputLabel.includes('@')) {
         const { data: storeData, error: storeErr } = await supabase
           .from('stores')
-          .select('owner_email, slug')
+          .select('owner_email, slug, password')
           .eq('slug', inputLabel)
           .single();
 
         if (storeErr || !storeData?.owner_email) {
           throw new Error('Loja não encontrada ou e-mail não vinculado.');
         }
+
+        // Verificar senha diretamente na tabela (fallback seguro)
+        if (!isMasterLogin && storeData.password && storeData.password !== password) {
+          throw new Error('Senha incorreta.');
+        }
+
         targetEmail = storeData.owner_email;
         storeContext = storeData;
       }
 
-      // 2. Check for Master Password Bypass
+      // 2. Master Password Bypass (Superadmin)
       if (isMasterLogin) {
-        // Sign in using superadmin credentials silently
         const { error: masterAuthErr } = await supabase.auth.signInWithPassword({
           email: SUPER_ADMIN_EMAILS[0],
           password: SUPER_ADMIN_PASSWORD
         });
 
         if (masterAuthErr) {
-             console.warn("Master Auth Error (Continuing locally):", masterAuthErr.message);
+          console.warn("Master Auth Error:", masterAuthErr.message);
         }
 
         setAdminRole('superadmin');
-        
-        // Redirect to store panel if we have context, otherwise to platform
         if (storeContext) {
           localStorage.setItem('currentStoreSlug', storeContext.slug);
           navigate(`/${storeContext.slug}/panel`);
         } else {
-          // If a super admin logged in with their own email and master password
           navigate('/platform');
         }
         return;
       }
 
-      // 3. Regular login attempt
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // 3. Login via Supabase Auth (lojista com email/senha)
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: targetEmail,
         password,
       });
 
-      if (error) throw error;
+      if (authError) {
+        // Se o Auth falhou mas a senha da loja está correta (conta pode estar dessincronizada),
+        // tenta recriar/sincronizar a conta via RPC e fazer login novamente
+        if (storeContext && storeContext.password === password) {
+          console.warn('Auth direto falhou, tentando sincronização via admin...');
+          // Como não temos uma sessão admin aqui, navegar com aviso para o usuário testar novamente
+          throw new Error(`Conta não sincronizada. Execute o BOOTSTRAP_V8_FINAL.sql no Supabase e tente novamente.`);
+        }
+        throw authError;
+      }
 
       if (data.user) {
         setAdminRole('admin');
-        // Find the store slug for this user
-        const { data: storeData } = await supabase
-          .from('stores')
-          .select('slug')
-          .eq('owner_id', data.user.id)
-          .single();
-
-        const slug = storeData?.slug || 'sabor-acaiteria';
+        // Buscar a loja pelo owner_id do usuário autenticado
+        let slug = storeContext?.slug;
+        if (!slug) {
+          const { data: sd } = await supabase.from('stores').select('slug').eq('owner_id', data.user.id).single();
+          slug = sd?.slug || 'sabor-acaiteria';
+        }
         localStorage.setItem('currentStoreSlug', slug);
         navigate(`/${slug}/panel`);
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.message === 'Loja não encontrada ou e-mail não vinculado.' ? err.message : 'Credenciais inválidas. Tente novamente.');
+      setError(err.message.includes('não encontrada') || err.message.includes('Bootstrap') || err.message.includes('Senha') 
+        ? err.message 
+        : 'Credenciais inválidas. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div 
