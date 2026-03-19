@@ -49,3 +49,43 @@ CREATE POLICY "Anon_Delete" ON settings FOR DELETE TO anon USING (true);
 DO $$ BEGIN
     RAISE NOTICE '✅ Políticas abertas para lojistas sem sessão Auth!';
 END $$;
+
+-- =====================================================
+-- STORAGE: Abrir upload para role 'anon' no bucket product-images
+-- Necessário para lojistas sem sessão Supabase Auth
+-- =====================================================
+
+-- Garantir que o bucket existe e é público
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('product-images', 'product-images', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Leitura pública (manter)
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
+CREATE POLICY "Public Access" ON storage.objects 
+FOR SELECT USING (bucket_id = 'product-images');
+
+-- Upload aberto para anon e authenticated
+DROP POLICY IF EXISTS "Admin upload images" ON storage.objects;
+DROP POLICY IF EXISTS "Anon_Upload_Images" ON storage.objects;
+CREATE POLICY "Anon_Upload_Images" ON storage.objects 
+FOR INSERT TO anon, authenticated
+WITH CHECK (bucket_id = 'product-images');
+
+-- Update aberto
+DROP POLICY IF EXISTS "Admin manage images" ON storage.objects;
+DROP POLICY IF EXISTS "Anon_Update_Images" ON storage.objects;
+CREATE POLICY "Anon_Update_Images" ON storage.objects 
+FOR UPDATE TO anon, authenticated
+USING (bucket_id = 'product-images')
+WITH CHECK (bucket_id = 'product-images');
+
+-- Delete aberto
+DROP POLICY IF EXISTS "Anon_Delete_Images" ON storage.objects;
+CREATE POLICY "Anon_Delete_Images" ON storage.objects 
+FOR DELETE TO anon, authenticated
+USING (bucket_id = 'product-images');
+
+DO $$ BEGIN
+    RAISE NOTICE '✅ Storage policies abertas para upload sem sessão Auth!';
+END $$;
