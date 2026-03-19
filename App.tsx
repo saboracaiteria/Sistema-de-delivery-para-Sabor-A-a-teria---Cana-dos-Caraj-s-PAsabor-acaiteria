@@ -544,19 +544,24 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   // Handle URL coupon parameter
   useEffect(() => {
-    // Only attempt to apply if coupons are loaded to prevent race conditions
-    if (coupons.length > 0 && !appliedCoupon) {
-      const searchParams = new URLSearchParams(window.location.search);
-      const urlCoupon = searchParams.get('cupom');
-      if (urlCoupon) {
-        // Find if coupon exists and is active (applyCoupon handles this validation too, but we do it to avoid toast errors on load)
-        const validCoupon = coupons.find(c => c.code.toUpperCase() === urlCoupon.toUpperCase() && c.active);
-        if (validCoupon) {
-          setAppliedCoupon(validCoupon);
-        }
+    const searchParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '');
+    const urlCoupon = searchParams.get('cupom') || hashParams.get('cupom');
+
+    if (urlCoupon) {
+      localStorage.setItem('pending_coupon', urlCoupon.toUpperCase());
+    }
+
+    const pendingCoupon = localStorage.getItem('pending_coupon');
+
+    if (pendingCoupon && coupons.length > 0 && !appliedCoupon) {
+      const validCoupon = coupons.find(c => c.code.toUpperCase() === pendingCoupon && c.active);
+      if (validCoupon) {
+        setAppliedCoupon(validCoupon);
+        localStorage.removeItem('pending_coupon'); // Clean up after applying
       }
     }
-  }, [coupons, appliedCoupon]);
+  }, [coupons, appliedCoupon, window.location.search, window.location.hash]);
 
   // --- Funções de Mutação (CRUD) ---
 
@@ -2750,7 +2755,7 @@ const OrdersPage = () => {
 };
 
 const CouponsPage = () => {
-  const { coupons, addCoupon, updateCoupon, deleteCoupon } = useApp();
+  const { coupons, addCoupon, updateCoupon, deleteCoupon, store } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Partial<Coupon>>({});
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; code: string } | null>(null);
@@ -2788,7 +2793,7 @@ const CouponsPage = () => {
   };
 
   const handleCopyLink = (code: string, id: string) => {
-    const link = `${window.location.origin}/?cupom=${code}`;
+    const link = `${window.location.origin}/#/${store?.slug}?cupom=${code}`;
     navigator.clipboard.writeText(link).then(() => {
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
