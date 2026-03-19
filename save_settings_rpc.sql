@@ -21,6 +21,8 @@ AS $$
 DECLARE
     v_caller_email TEXT;
     v_is_authorized BOOLEAN := FALSE;
+    v_store_name TEXT;
+    v_existing_store_name TEXT;
     superadmin_emails TEXT[] := ARRAY[
         'parauapebasdeliveryoficial@gmail.com',
         'nildopereira60@gmail.com',
@@ -58,6 +60,15 @@ BEGIN
         RAISE EXCEPTION 'Acesso negado.' USING ERRCODE = '42501';
     END IF;
 
+    -- Buscar store_name existente para usar como fallback (evita violação NOT NULL)
+    SELECT COALESCE(s.store_name, st.name) INTO v_existing_store_name
+    FROM stores st
+    LEFT JOIN settings s ON s.store_id = st.id
+    WHERE st.id = p_store_id;
+
+    -- Usar store_name fornecido ou o existente no banco
+    v_store_name := COALESCE((p_settings ->> 'store_name'), v_existing_store_name, 'Loja');
+
     -- Upsert nas configurações (SECURITY DEFINER — bypass total do RLS)
     INSERT INTO settings (
         store_id, store_name, logo_url, logo_shape, banner_url,
@@ -67,7 +78,7 @@ BEGIN
         instagram_url, business_address, copyright_text, updated_at
     ) VALUES (
         p_store_id,
-        (p_settings ->> 'store_name'),
+        v_store_name,
         (p_settings ->> 'logo_url'),
         COALESCE((p_settings ->> 'logo_shape'), 'circle'),
         (p_settings ->> 'banner_url'),

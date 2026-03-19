@@ -3165,10 +3165,16 @@ const SettingsPage = () => {
   // Local state for all settings to avoid redundant DB calls on every keystroke
   const [localSettings, setLocalSettings] = useState<GlobalSettings>(settings);
 
-  // Sync local state when global settings change (e.g. on load or real-time update)
+  // Sync local state when global settings change (e.g. on load)
+  // Use ref to prevent the circular update loop:
+  // updateSettings → setSettings (global) → useEffect → setLocalSettings → re-render
+  const isFirstLoad = React.useRef(true);
   useEffect(() => {
-    setLocalSettings(settings);
-  }, [settings]);
+    if (isFirstLoad.current) {
+      setLocalSettings(settings);
+      isFirstLoad.current = false;
+    }
+  }, [settings.storeId]); // Only sync on store change, not every settings update
 
   const handleSave = async () => {
     try {
@@ -3226,8 +3232,11 @@ const SettingsPage = () => {
     const publicUrl = await uploadImageToSupabase(croppedFile);
     if (publicUrl) {
       try {
-        await updateSettings({ [cropModalData.field]: publicUrl });
-        // Feedback visual imediato após o await do updateSettings
+        // Always include store_name to avoid NOT NULL constraint
+        await updateSettings({ 
+          [cropModalData.field]: publicUrl,
+          storeName: localSettings.storeName || settings.storeName || store?.name
+        });
         setShowSaveConfirm(true);
         setTimeout(() => setShowSaveConfirm(false), 3000);
       } catch (err) {
