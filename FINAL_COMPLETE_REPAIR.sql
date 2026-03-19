@@ -85,6 +85,7 @@ DECLARE
         'canaadoscarajaspasabor@gmail.com'
     ];
     tbl RECORD;
+    pol RECORD;
 BEGIN
     FOR tbl IN SELECT unnest(ARRAY['stores', 'settings', 'categories', 'products', 'product_groups', 'product_options', 'product_group_relations', 'orders', 'coupons', 'daily_visitors', 'suppliers', 'purchases', 'stock_items']) AS tablename LOOP
         -- Remover todas as tentativas anteriores para limpar o terreno
