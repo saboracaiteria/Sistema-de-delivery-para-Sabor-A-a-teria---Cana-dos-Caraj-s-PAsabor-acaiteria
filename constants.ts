@@ -6,7 +6,8 @@ export const LOGO_URL = "https://webservice.zapermenu.com.br/api/storage/public/
 export const SUPER_ADMIN_EMAILS = [
   "nildoxz@gmail.com",
   "parauapebasdeliveryoficial@gmail.com",
-  "nildopereira60@gmail.com"
+  "nildopereira60@gmail.com",
+  "canaadoscarajaspasabor@gmail.com"
 ];
 export const SUPER_ADMIN_PASSWORD = import.meta.env.VITE_SUPER_ADMIN_PASSWORD || "12457812";
 
