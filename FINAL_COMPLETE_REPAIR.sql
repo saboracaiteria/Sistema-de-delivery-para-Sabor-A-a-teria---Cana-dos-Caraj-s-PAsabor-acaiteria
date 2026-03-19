@@ -89,8 +89,8 @@ BEGIN
     FOR tbl IN SELECT unnest(ARRAY['stores', 'settings', 'categories', 'products', 'product_groups', 'product_options', 'product_group_relations', 'orders', 'coupons', 'daily_visitors', 'suppliers', 'purchases', 'stock_items']) AS tablename LOOP
         -- Remover todas as tentativas anteriores para limpar o terreno
         EXECUTE format('ALTER TABLE %I DISABLE ROW LEVEL SECURITY', tbl.tablename);
-        FOR tbl IN SELECT policyname FROM pg_policies WHERE tablename = tbl.tablename LOOP
-             EXECUTE format('DROP POLICY IF EXISTS %I ON %I', tbl.policyname, tbl.tablename);
+        FOR pol IN SELECT policyname FROM pg_policies WHERE tablename = tbl.tablename LOOP
+             EXECUTE format('DROP POLICY IF EXISTS %I ON %I', pol.policyname, tbl.tablename);
         END LOOP;
         EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl.tablename);
 
