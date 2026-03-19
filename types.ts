@@ -78,6 +78,8 @@ export interface OrderRecord {
   itemsSummary: string; // Short summary for list view
   fullDetails: CartItem[]; // Full cart for re-printing
   status: OrderStatus;
+  discountPercent?: number; // Desconto em % aplicado pelo lojista
+  isQuote?: boolean; // Se é orçamento ao invés de pedido
 }
 
 export interface Coupon {

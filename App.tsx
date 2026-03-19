@@ -104,6 +104,7 @@ interface AppContextType {
   setAdminRole: (role: Role) => void;
   addOrder: (order: OrderRecord) => void;
   updateOrderStatus: (id: string, status: OrderStatus) => void;
+  updateOrderDiscount: (id: string, discountPercent: number) => Promise<void>;
   deleteOrder: (id: string) => void;
   copyOrderToClipboard: (order: OrderRecord) => void;
 
@@ -1021,6 +1022,16 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     await supabase.from('orders').update({ status }).eq('id', id);
   };
 
+  const updateOrderDiscount = async (id: string, discountPercent: number) => {
+    // Optimistic update
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, discountPercent } : o));
+    const { error } = await supabase.from('orders').update({ discount_percent: discountPercent }).eq('id', id);
+    if (error) {
+      console.error('Erro ao atualizar desconto:', error);
+      alert('Erro ao salvar desconto no banco de dados.');
+    }
+  };
+
   const deleteOrder = async (id: string) => {
     console.log('Deletando pedido:', id);
 
@@ -1109,6 +1120,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       addCoupon, updateCoupon, deleteCoupon,
       updateSettings, setAdminRole, addOrder,
       updateOrderStatus,
+      updateOrderDiscount,
       deleteOrder,
       copyOrderToClipboard,
       checkStoreStatus: () => isStoreOpen ? 'open' : 'closed',
@@ -2093,6 +2105,7 @@ const CheckoutPage = () => {
   const [address, setAddress] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>(DeliveryMethod.DELIVERY);
   const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS[0]);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -2105,10 +2118,32 @@ const CheckoutPage = () => {
   const discount = appliedCoupon ? (appliedCoupon.type === 'percent' ? subtotal * (appliedCoupon.value / 100) : appliedCoupon.value) : 0;
   const total = Math.max(0, subtotal - discount) + (deliveryMethod === DeliveryMethod.DELIVERY ? settings.deliveryFee : 0);
 
-  const handleFinish = () => {
-    if (!customerName) return alert('Preencha o nome');
-    if (deliveryMethod === DeliveryMethod.DELIVERY && !address) return alert('Preencha o endereço');
+  const storeName = settings.storeName || store?.name || 'Loja';
 
+  const buildItemsText = () => {
+    return cart.map(i => {
+      let txt = `${i.quantity}x ${i.product.name}`;
+      const selectedOptionsText: string[] = [];
+      Object.entries(i.selectedOptions).forEach(([optionId, qty]) => {
+        if ((qty as number) > 0) {
+          for (const group of groups) {
+            const option = group.options.find(opt => opt.id === optionId);
+            if (option) {
+              selectedOptionsText.push(`${option.name} ${qty}x`);
+              break;
+            }
+          }
+        }
+      });
+      if (selectedOptionsText.length > 0) {
+        txt += `\n   (${selectedOptionsText.join(', ')})`;
+      }
+      if (i.note) txt += `\n   Obs: ${i.note}`;
+      return txt;
+    }).join('\n');
+  };
+
+  const createOrder = (isQuote: boolean) => {
     const newOrder: OrderRecord = {
       id: Math.floor(Math.random() * 10000).toString(),
       date: new Date().toISOString(),
@@ -2120,45 +2155,186 @@ const CheckoutPage = () => {
       total,
       itemsSummary: `${cart.length} itens`,
       status: 'pending',
-      fullDetails: cart
+      fullDetails: cart,
+      isQuote,
     };
-
     addOrder(newOrder);
+    return newOrder;
+  };
 
-    const itemsText = cart.map(i => {
-      let txt = `${i.quantity}x ${i.product.name}`;
+  const handleSendOrder = () => {
+    if (!customerName) return alert('Preencha o nome');
+    if (deliveryMethod === DeliveryMethod.DELIVERY && !address) return alert('Preencha o endereço');
 
-      // Get option names from groups
-      const selectedOptionsText: string[] = [];
-      Object.entries(i.selectedOptions).forEach(([optionId, qty]) => {
-        if ((qty as number) > 0) {
-          // Find the option name
-          for (const group of groups) {
-            const option = group.options.find(opt => opt.id === optionId);
-            if (option) {
-              selectedOptionsText.push(`${option.name} ${qty}x`);
-              break;
-            }
-          }
-        }
-      });
-
-      if (selectedOptionsText.length > 0) {
-        txt += `\n   (${selectedOptionsText.join(', ')})`;
-      }
-
-      if (i.note) txt += `\n   Obs: ${i.note}`;
-      return txt;
-    }).join('\n');
-
-    const msg = `*Novo Pedido*\nCliente: ${customerName}\nTel: ${phone}\nTipo: ${deliveryMethod}\nEndereço: ${address}\nPagamento: ${paymentMethod}\n\nItens:\n${itemsText}${appliedCoupon ? `\n\nCupom: ${appliedCoupon.code} (-${formatCurrency(discount)})` : ''}\n\n*Total: ${formatCurrency(total)}*`;
+    createOrder(false);
+    const itemsText = buildItemsText();
+    const msg = `*Novo Pedido - ${storeName}*\nCliente: ${customerName}\nTel: ${phone}\nTipo: ${deliveryMethod}\nEndereço: ${address}\nPagamento: ${paymentMethod}\n\nItens:\n${itemsText}${appliedCoupon ? `\n\nCupom: ${appliedCoupon.code} (-${formatCurrency(discount)})` : ''}\n\n*Total: ${formatCurrency(total)}*\n\n_⚠️ Pedido sujeito a revisão. Você poderá receber um desconto especial!_`;
 
     const url = `https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
     clearCart();
     removeCoupon();
-    navigate(`/${store?.slug}`);
+    setShowConfirmation(true);
   };
+
+  const handleSendQuoteWhatsApp = () => {
+    if (!customerName) return alert('Preencha o nome');
+
+    createOrder(true);
+    const itemsText = buildItemsText();
+    const msg = `*📋 ORÇAMENTO - ${storeName}*\n\nCliente: ${customerName}\nTel: ${phone}\n\nItens:\n${itemsText}${appliedCoupon ? `\n\nCupom: ${appliedCoupon.code} (-${formatCurrency(discount)})` : ''}\n\n*Subtotal: ${formatCurrency(subtotal)}*\n${deliveryMethod === DeliveryMethod.DELIVERY ? `Taxa de Entrega: ${formatCurrency(settings.deliveryFee)}\n` : ''}*Total Estimado: ${formatCurrency(total)}*\n\n_⚠️ Orçamento sujeito a revisão. Você poderá receber um desconto especial!_\n_📅 Válido por 24 horas_`;
+
+    const url = `https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+    clearCart();
+    removeCoupon();
+    setShowConfirmation(true);
+  };
+
+  const handleDownloadQuotePDF = async () => {
+    if (!customerName) return alert('Preencha o nome');
+
+    createOrder(true);
+
+    const { default: jsPDF } = await import('jspdf');
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`ORÇAMENTO`, 105, 20, { align: 'center' });
+    doc.setFontSize(14);
+    doc.text(storeName, 105, 30, { align: 'center' });
+
+    // Info
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const today = new Date();
+    doc.text(`Data: ${today.toLocaleDateString('pt-BR')}`, 14, 45);
+    doc.text(`Cliente: ${customerName}`, 14, 52);
+    if (phone) doc.text(`Telefone: ${phone}`, 14, 59);
+
+    // Separator
+    doc.setDrawColor(200);
+    doc.line(14, 65, 196, 65);
+
+    // Items header
+    let y = 75;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('Qtd', 14, y);
+    doc.text('Item', 30, y);
+    doc.text('Preço Un.', 130, y);
+    doc.text('Subtotal', 165, y);
+    doc.line(14, y + 2, 196, y + 2);
+
+    // Items
+    y += 10;
+    doc.setFont('helvetica', 'normal');
+    cart.forEach(item => {
+      doc.text(`${item.quantity}x`, 14, y);
+      doc.text(item.product.name.substring(0, 40), 30, y);
+      doc.text(`R$ ${item.totalPrice.toFixed(2)}`, 130, y);
+      doc.text(`R$ ${(item.totalPrice * item.quantity).toFixed(2)}`, 165, y);
+      y += 7;
+
+      // Options
+      const options: string[] = [];
+      Object.entries(item.selectedOptions).forEach(([optionId, qty]) => {
+        if ((qty as number) > 0) {
+          for (const group of groups) {
+            const opt = group.options.find(o => o.id === optionId);
+            if (opt) { options.push(`${opt.name} (${qty}x)`); break; }
+          }
+        }
+      });
+      if (options.length > 0) {
+        doc.setFontSize(8);
+        doc.setTextColor(100);
+        doc.text(`   → ${options.join(', ')}`, 30, y);
+        doc.setFontSize(10);
+        doc.setTextColor(0);
+        y += 6;
+      }
+      if (item.note) {
+        doc.setFontSize(8);
+        doc.setTextColor(100);
+        doc.text(`   Obs: ${item.note}`, 30, y);
+        doc.setFontSize(10);
+        doc.setTextColor(0);
+        y += 6;
+      }
+    });
+
+    // Totals
+    y += 5;
+    doc.line(14, y, 196, y);
+    y += 8;
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Subtotal:`, 130, y);
+    doc.text(`R$ ${subtotal.toFixed(2)}`, 165, y);
+    if (appliedCoupon) {
+      y += 7;
+      doc.setTextColor(0, 128, 0);
+      doc.text(`Desconto (${appliedCoupon.code}):`, 130, y);
+      doc.text(`- R$ ${discount.toFixed(2)}`, 165, y);
+      doc.setTextColor(0);
+    }
+    if (deliveryMethod === DeliveryMethod.DELIVERY) {
+      y += 7;
+      doc.text(`Taxa de Entrega:`, 130, y);
+      doc.text(`R$ ${settings.deliveryFee.toFixed(2)}`, 165, y);
+    }
+    y += 10;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text(`TOTAL ESTIMADO:`, 110, y);
+    doc.text(`R$ ${total.toFixed(2)}`, 165, y);
+
+    // Footer
+    y += 20;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(120);
+    doc.text('⚠️ Orçamento sujeito a revisão. Você poderá receber um desconto especial!', 14, y);
+    doc.text('Válido por 24 horas.', 14, y + 6);
+
+    doc.save(`orcamento_${storeName.replace(/\s+/g, '_')}_${today.toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
+
+    clearCart();
+    removeCoupon();
+    setShowConfirmation(true);
+  };
+
+  // Confirmation screen after sending
+  if (showConfirmation) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-green-500 to-green-700 flex flex-col items-center justify-center p-6 text-white text-center">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200 }}
+        >
+          <CheckCircle size={80} className="mb-6" />
+        </motion.div>
+        <h2 className="text-2xl font-bold mb-3">Enviado com Sucesso!</h2>
+        <p className="text-green-100 mb-2 text-sm max-w-sm">
+          Seu pedido/orçamento foi enviado e será revisado pela loja.
+        </p>
+        <div className="bg-white/20 rounded-xl p-4 mt-4 max-w-sm backdrop-blur-sm">
+          <p className="text-sm font-medium">
+            🎉 Você poderá receber um <strong>desconto especial</strong> após a revisão!
+          </p>
+        </div>
+        <button
+          onClick={() => navigate(`/${store?.slug}`)}
+          className="mt-8 bg-white text-green-700 font-bold px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-shadow"
+        >
+          Voltar para a Loja
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#333] p-4 text-white">
@@ -2195,18 +2371,38 @@ const CheckoutPage = () => {
           </select>
         </div>
 
-        <div className="mt-6 bg-[#f6f6f6] text-gray-800 p-4 rounded-lg flex justify-between items-center">
-          <span>Total</span>
+        {/* Review notice */}
+        <div className="mt-4 bg-yellow-500/20 border border-yellow-500/40 rounded-lg p-3 flex items-start gap-2">
+          <AlertCircle size={18} className="text-yellow-400 mt-0.5 flex-shrink-0" />
+          <p className="text-yellow-100 text-xs">
+            Seu pedido será revisado pela loja. Você poderá receber um <strong>desconto especial</strong> na confirmação!
+          </p>
+        </div>
+
+        <div className="mt-4 bg-[#f6f6f6] text-gray-800 p-4 rounded-lg flex justify-between items-center">
+          <span>Total Estimado</span>
           <span className="font-bold text-xl">{formatCurrency(total)}</span>
         </div>
 
-        <button onClick={handleFinish} className="mt-4 w-full bg-[#4caf50] text-white font-bold py-3 rounded flex items-center justify-center gap-2">
-          <span className="bg-white/20 p-1 rounded-full"><Phone size={16} /></span> ENVIAR
-        </button>
+        {/* 3 Action Buttons */}
+        <div className="mt-4 space-y-3">
+          <button onClick={handleSendOrder} className="w-full bg-[#4caf50] text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#43a047] transition-colors shadow-md">
+            <span className="bg-white/20 p-1 rounded-full"><Phone size={16} /></span> ENVIAR PEDIDO
+          </button>
+
+          <button onClick={handleSendQuoteWhatsApp} className="w-full bg-[#25D366] text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#1da851] transition-colors shadow-md">
+            <span className="bg-white/20 p-1 rounded-full"><MessageSquare size={16} /></span> SOLICITAR ORÇAMENTO (WhatsApp)
+          </button>
+
+          <button onClick={handleDownloadQuotePDF} className="w-full bg-[#e53935] text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#c62828] transition-colors shadow-md">
+            <span className="bg-white/20 p-1 rounded-full"><FileText size={16} /></span> BAIXAR ORÇAMENTO (PDF)
+          </button>
+        </div>
       </div>
     </div>
   );
 };
+
 
 // --- Admin Panel (Full Features) ---
 
@@ -2318,7 +2514,7 @@ const AdminPanel = () => {
 };
 
 const OrdersPage = () => {
-  const { orders, updateOrderStatus, groups } = useApp();
+  const { orders, updateOrderStatus, updateOrderDiscount, groups, store } = useApp();
   const navigate = useNavigate();
   const { printText, connectedDevice } = usePrinter();
 
@@ -2366,7 +2562,8 @@ const OrdersPage = () => {
       "[L]--------------------------------\n" +
       `[L]Pagamento: ${order.paymentMethod}\n` +
       `[L]Entrega: ${order.method === DeliveryMethod.DELIVERY ? 'Entrega' : 'Retirada'}\n` +
-      `[R]<b>TOTAL: ${formatCurrency(order.total)}</b>\n` +
+      (order.discountPercent ? `[R]Desconto (${order.discountPercent}%): - ${formatCurrency(order.total * (order.discountPercent / 100))}\n` : "") +
+      `[R]<b>TOTAL FINAL: ${formatCurrency(order.total * (1 - (order.discountPercent || 0) / 100))}</b>\n` +
       "[L]\n[L]\n[L]\n";
 
     await printText(receipt);
@@ -2390,15 +2587,27 @@ const OrdersPage = () => {
                 <span className="font-bold text-lg">#{order.id}</span>
                 <p className="text-sm text-gray-500">{new Date(order.date).toLocaleString()}</p>
               </div>
-              <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                order.status === 'completed' ? 'bg-green-100 text-green-700' :
-                  'bg-blue-100 text-blue-700'
-                }`}>{order.status}</span>
+              <div className="flex flex-col items-end gap-1">
+                {order.isQuote && <span className="px-2 py-1 bg-blue-500 text-white rounded text-[10px] font-black uppercase tracking-wider shadow-sm animate-pulse">ORÇAMENTO</span>}
+                <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                  order.status === 'completed' ? 'bg-green-100 text-green-700' :
+                    'bg-blue-100 text-blue-700'
+                  }`}>{order.status}</span>
+              </div>
             </div>
             <p className="font-medium">{order.customerName}</p>
             <p className="text-sm text-gray-600 mt-1">{order.itemsSummary}</p>
             <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
-              <span className="font-bold">{formatCurrency(order.total)}</span>
+              <div className="flex flex-col">
+                {order.discountPercent ? (
+                   <>
+                     <span className="text-xs text-red-500 line-through">{formatCurrency(order.total)}</span>
+                     <span className="font-bold text-green-600">{formatCurrency(order.total * (1 - order.discountPercent / 100))}</span>
+                   </>
+                ) : (
+                   <span className="font-bold">{formatCurrency(order.total)}</span>
+                )}
+              </div>
               <div className="flex gap-2">
                 <button onClick={() => setSelectedOrder(order)} className="p-2 bg-blue-50 text-blue-600 rounded text-xs font-bold">Ver Detalhes</button>
                 <button onClick={() => copyOrderToClipboard(order)} className="p-2 bg-gray-50 text-gray-600 rounded hover:bg-gray-200" title="Copiar Pedido"><FileText size={18} /></button>
@@ -2474,9 +2683,38 @@ const OrdersPage = () => {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center pt-4 border-t font-bold text-lg">
-                <span>Total</span>
-                <span>{formatCurrency(selectedOrder.total)}</span>
+              <div className="pt-4 border-t space-y-2">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-bold text-gray-600">Desconto Especial (%)</span>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="number" 
+                      min="0" 
+                      max="100" 
+                      value={selectedOrder.discountPercent || 0} 
+                      onChange={(e) => updateOrderDiscount(selectedOrder.id, Number(e.target.value))}
+                      className="w-20 border rounded p-1 text-center font-bold text-green-600"
+                    />
+                    <span className="font-bold text-green-600">%</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between text-sm text-gray-500">
+                  <span>Subtotal do Pedido</span>
+                  <span>{formatCurrency(selectedOrder.total)}</span>
+                </div>
+                
+                {selectedOrder.discountPercent ? (
+                  <div className="flex justify-between text-green-600 font-bold italic">
+                    <span>Desconto Aplicado (-{selectedOrder.discountPercent}%)</span>
+                    <span>- {formatCurrency(selectedOrder.total * (selectedOrder.discountPercent / 100))}</span>
+                  </div>
+                ) : null}
+
+                <div className="flex justify-between items-center pt-2 border-t font-black text-xl text-purple-700">
+                  <span>TOTAL FINAL</span>
+                  <span>{formatCurrency(selectedOrder.total * (1 - (selectedOrder.discountPercent || 0) / 100))}</span>
+                </div>
               </div>
             </div>
 
