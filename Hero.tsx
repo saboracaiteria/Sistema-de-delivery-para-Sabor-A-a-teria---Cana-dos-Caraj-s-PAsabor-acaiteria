@@ -33,7 +33,7 @@ export const Hero = () => {
                 className="absolute inset-0 z-0"
             >
                 <img
-                    src={settings.bannerUrl || "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=2670&auto=format&fit=crop"}
+                    src={settings.bannerUrl || "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2670&auto=format&fit=crop"}
                     className="w-full h-full object-cover"
                     alt="Banner"
                 />

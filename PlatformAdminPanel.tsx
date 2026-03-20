@@ -558,6 +558,9 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
           store_status: 'open',
           delivery_fee: 5.00,
           delivery_only: false,
+          banner_url: dataTemplate === 'empty' ? 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2670&auto=format&fit=crop' : null,
+          note_title: dataTemplate === 'empty' ? 'Observações' : 'Alguma observação?',
+          note_placeholder: dataTemplate === 'empty' ? 'Ex: Detalhes sobre a entrega, cor, tamanho, etc...' : 'Ex: Sem cebola, caprichar no creme...',
           opening_hours: [
             { dayOfWeek: 0, open: '08:00', close: '22:00', enabled: true },
             { dayOfWeek: 1, open: '08:00', close: '22:00', enabled: true },

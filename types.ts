@@ -168,6 +168,8 @@ export interface GlobalSettings {
   instagramUrl?: string;
   businessAddress?: string;
   copyrightText?: string;
+  noteTitle?: string;
+  notePlaceholder?: string;
 }
 
 export interface VisitorStat {
