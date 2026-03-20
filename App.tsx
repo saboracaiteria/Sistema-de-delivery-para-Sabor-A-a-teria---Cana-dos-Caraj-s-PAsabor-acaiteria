@@ -1993,12 +1993,46 @@ const CartPage = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col items-end gap-2">
-                <button onClick={() => updateCartQuantity(item.cartId, item.quantity + 1)} className="w-8 h-8 bg-red-600 text-white rounded flex items-center justify-center shadow-sm">
-                  <Plus size={16} />
+              <div className="flex flex-col items-end gap-1.5 shrink-0">
+                <button 
+                  onClick={() => updateCartQuantity(item.cartId, item.quantity + 1)} 
+                  className="w-10 h-10 bg-red-600 text-white rounded-lg flex items-center justify-center shadow-md active:scale-95 transition-transform"
+                >
+                  <Plus size={18} />
                 </button>
-                <span className="font-bold text-lg w-8 text-center">{item.quantity}</span>
-                <button onClick={() => removeFromCart(item.cartId)} className="w-8 h-8 bg-red-600 text-white rounded flex items-center justify-center shadow-sm">
+                
+                <div className="flex flex-col items-center">
+                  <input 
+                    type="number"
+                    min="0"
+                    value={item.quantity === 0 ? "" : item.quantity}
+                    onChange={(e) => {
+                      const val = e.target.value === "" ? 0 : parseInt(e.target.value);
+                      if (!isNaN(val)) {
+                        updateCartQuantity(item.cartId, val);
+                      }
+                    }}
+                    onFocus={(e) => e.target.select()}
+                    className="font-bold text-lg w-12 h-10 text-center bg-gray-50 border-2 border-gray-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:bg-white focus:border-transparent outline-none transition-all shadow-inner"
+                  />
+                </div>
+
+                <button 
+                  onClick={() => updateCartQuantity(item.cartId, item.quantity - 1)} 
+                  className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center shadow-sm active:scale-95 transition-transform ${item.quantity > 1 ? 'bg-white text-red-600 border-gray-200' : 'bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed'}`}
+                  disabled={item.quantity <= 1}
+                >
+                  <Minus size={18} />
+                </button>
+
+                <button 
+                  onClick={() => {
+                    if (confirm('Deseja remover este item do carrinho?')) {
+                      removeFromCart(item.cartId);
+                    }
+                  }} 
+                  className="mt-1 p-2 text-gray-400 hover:text-red-600 transition-colors flex items-center gap-1"
+                >
                   <Trash2 size={16} />
                 </button>
               </div>
