@@ -575,7 +575,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const updateCartQuantity = (cartId: string, quantity: number) => {
     setCart(prev => {
-      if (quantity <= 0) return prev.filter(item => item.cartId !== cartId);
+      // Don't remove items here to allow user to type '0' without cart closing
       return prev.map(item => item.cartId === cartId ? { ...item, quantity } : item);
     });
   };
@@ -1906,7 +1906,8 @@ const CartPage = () => {
   const [noteText, setNoteText] = useState('');
   const [couponCode, setCouponCode] = useState('');
 
-  const subtotal = cart.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0);
+  const activeItems = cart.filter(item => item.quantity > 0);
+  const subtotal = activeItems.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0);
   const discount = appliedCoupon ? (appliedCoupon.type === 'percent' ? subtotal * (appliedCoupon.value / 100) : appliedCoupon.value) : 0;
   const finalTotal = Math.max(0, subtotal - discount);
 
@@ -2126,9 +2127,13 @@ const CartPage = () => {
                 <span className="text-[9px]">Não aceitamos pedidos</span>
               </button>
             ) : (
-              <button onClick={() => navigate(`/${store?.slug}/checkout`)} className="flex-1 py-3 bg-red-600 text-white font-bold rounded text-xs uppercase hover:bg-red-700">
-                FINALIZAR PEDIDO
-              </button>
+            <button 
+              onClick={() => navigate(`/${store?.slug}/checkout`)} 
+              disabled={activeItems.length === 0}
+              className={`flex-1 py-3 text-white font-bold rounded text-xs uppercase transition-colors ${activeItems.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
+            >
+              FINALIZAR PEDIDO
+            </button>
             )}
           </div>
         </div>
@@ -2153,14 +2158,15 @@ const CheckoutPage = () => {
     }
   }, [isStoreOpen, navigate]);
 
-  const subtotal = cart.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0);
+  const activeItems = cart.filter(item => item.quantity > 0);
+  const subtotal = activeItems.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0);
   const discount = appliedCoupon ? (appliedCoupon.type === 'percent' ? subtotal * (appliedCoupon.value / 100) : appliedCoupon.value) : 0;
   const total = Math.max(0, subtotal - discount) + (deliveryMethod === DeliveryMethod.DELIVERY ? settings.deliveryFee : 0);
 
   const storeName = settings.storeName || store?.name || 'Loja';
 
   const buildItemsText = () => {
-    return cart.map(i => {
+    return cart.filter(i => i.quantity > 0).map(i => {
       let txt = `${i.quantity}x ${i.product.name}`;
       const selectedOptionsText: string[] = [];
       Object.entries(i.selectedOptions).forEach(([optionId, qty]) => {
@@ -2183,6 +2189,7 @@ const CheckoutPage = () => {
   };
 
   const createOrder = (isQuote: boolean) => {
+    const activeCart = cart.filter(i => i.quantity > 0);
     const newOrder: OrderRecord = {
       id: Math.floor(Math.random() * 10000).toString(),
       date: new Date().toISOString(),
@@ -2192,9 +2199,9 @@ const CheckoutPage = () => {
       address,
       paymentMethod,
       total,
-      itemsSummary: `${cart.length} itens`,
+      itemsSummary: `${activeCart.length} itens`,
       status: 'pending',
-      fullDetails: cart,
+      fullDetails: activeCart,
       isQuote,
     };
     addOrder(newOrder);
@@ -2270,7 +2277,7 @@ const CheckoutPage = () => {
     // Items
     y += 10;
     doc.setFont('helvetica', 'normal');
-    cart.forEach(item => {
+    cart.filter(item => item.quantity > 0).forEach(item => {
       doc.text(`${item.quantity}x`, 14, y);
       doc.text(item.product.name.substring(0, 40), 30, y);
       doc.text(`R$ ${item.totalPrice.toFixed(2)}`, 130, y);

@@ -153,12 +153,12 @@ export const ModernProductCard = React.memo(({ product, index }: { product: Prod
                 whileHover={{ y: -5, scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleAdd}
-                className="bg-white rounded-[1.5rem] p-3 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(78,7,151,0.08)] transition-all duration-300 cursor-pointer border border-gray-100 flex gap-4 overflow-hidden relative group"
+                className="bg-white rounded-[1.5rem] p-3 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(78,7,151,0.08)] transition-all duration-300 cursor-pointer border border-gray-100 flex flex-col gap-3 overflow-hidden relative group"
             >
                 {/* Decorative glow */}
                 <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/0 via-purple-500/5 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2rem] blur-xl" />
 
-                <div className="relative w-28 h-28 shrink-0 rounded-[1rem] overflow-hidden bg-gray-50 shadow-inner">
+                <div className="relative w-full aspect-square shrink-0 rounded-[1.2rem] overflow-hidden bg-gray-50 shadow-inner">
                     <motion.img
                         src={product.image}
                         alt={product.name}
@@ -168,20 +168,20 @@ export const ModernProductCard = React.memo(({ product, index }: { product: Prod
                     />
                 </div>
 
-                <div className="flex flex-col justify-between flex-1 py-1 relative z-10">
-                    <div>
-                        <h3 className="font-extrabold text-gray-800 tracking-tight text-base leading-tight mb-1">{product.name}</h3>
-                        <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed font-medium">{product.description}</p>
+                <div className="flex flex-col justify-between flex-1 relative z-10">
+                    <div className="mb-2">
+                        <h3 className="font-extrabold text-gray-800 tracking-tight text-sm md:text-base line-clamp-2 leading-tight mb-1">{product.name}</h3>
+                        <p className="text-[10px] md:text-xs text-gray-500 line-clamp-1 leading-relaxed font-medium">{product.description}</p>
                     </div>
 
-                    <div className="flex items-end justify-between mt-2">
+                    <div className="flex items-end justify-between">
                         <div className="flex flex-col">
-                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">A partir de</span>
-                            <span className="font-black text-purple-700 text-lg leading-none">R$ {product.price.toFixed(2)}</span>
+                            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">A partir de</span>
+                            <span className="font-black text-purple-700 text-base md:text-lg leading-none">R$ {product.price.toFixed(2)}</span>
                         </div>
 
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors shadow-sm ${hasOptions ? 'bg-purple-50 text-purple-600 group-hover:bg-purple-100' : 'bg-[#4E0797] text-white group-hover:bg-[#3d0577] shadow-[0_4px_10px_rgba(78,7,151,0.3)]'}`}>
-                            {hasOptions ? <Plus strokeWidth={3} size={18} /> : <ShoppingCart strokeWidth={2.5} size={16} />}
+                        <div className={`w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center transition-colors shadow-sm ${hasOptions ? 'bg-purple-50 text-purple-600 group-hover:bg-purple-100' : 'bg-[#4E0797] text-white group-hover:bg-[#3d0577] shadow-[0_4px_10px_rgba(78,7,151,0.3)]'}`}>
+                            {hasOptions ? <Plus strokeWidth={3} size={16} /> : <ShoppingCart strokeWidth={2.5} size={14} />}
                         </div>
                     </div>
                 </div>
@@ -286,7 +286,7 @@ export const ModernHomePage = () => {
         <div className="bg-[#FAFAFA] min-h-screen pb-32 font-outfit selection:bg-purple-200">
             <ModernHero />
 
-            <div className="max-w-2xl mx-auto px-4 md:px-0">
+            <div className="max-w-6xl mx-auto px-4 md:px-0">
                 {/* Notice Alert */}
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -299,7 +299,7 @@ export const ModernHomePage = () => {
                         <span className="block text-xs text-gray-600 mt-1 font-medium">Entregas somente até as {settings.deliveryCloseTime || '21:00'}hrs!</span>
                     </div>
                 </motion.div>
-
+ 
                 {/* Categories */}
                 <div className="space-y-10">
                     {categorizedProducts.map((cat, catIdx) => (
@@ -308,8 +308,8 @@ export const ModernHomePage = () => {
                                 <span className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 text-xl">{cat.icon}</span>
                                 {cat.title}
                             </h2>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+ 
+                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                                 {cat.products.map((product, idx) => (
                                     <ModernProductCard key={product.id} product={product} index={idx} />
                                 ))}
