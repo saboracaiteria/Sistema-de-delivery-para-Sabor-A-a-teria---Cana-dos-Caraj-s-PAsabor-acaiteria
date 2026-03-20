@@ -1759,12 +1759,12 @@ export const ProductModal = ({ product, onClose }: { product: Product; onClose: 
             <div className="pt-6">
               <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
                 <Edit size={18} className="text-gray-400" />
-                {settings?.noteTitle || "Alguma observação?"}
+                {settings?.noteTitle || "Observações"}
               </h3>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder={settings?.notePlaceholder || "Ex: Sem cebola, caprichar no creme..."}
+                placeholder={settings?.notePlaceholder || "Ex: Detalhes sobre a entrega, cor, tamanho, etc..."}
                 className="w-full p-4 bg-gray-100 rounded-xl border-2 border-transparent focus:border-purple-500 focus:bg-white transition-all outline-none text-sm font-medium resize-none"
                 rows={3}
               />
