@@ -188,7 +188,7 @@ export const ModernProductCard = React.memo(({ product, index }: { product: Prod
                         src={product.image}
                         alt={product.name}
                         className="w-full h-full object-cover"
-                        whileHover={{ scale: 1.08 }}
+                        whileHover={{ scale: 1.15 }}
                         transition={{ duration: 0.4 }}
                     />
                 </div>

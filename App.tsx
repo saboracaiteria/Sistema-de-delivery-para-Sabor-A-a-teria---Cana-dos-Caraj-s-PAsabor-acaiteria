@@ -1519,6 +1519,16 @@ export const ProductModal = ({ product, onClose }: { product: Product; onClose: 
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setMousePos({ x, y });
+  };
 
   const productGroups = useMemo(() => {
     if (!product.groupIds) return [];
@@ -1669,12 +1679,39 @@ export const ProductModal = ({ product, onClose }: { product: Product; onClose: 
         </div>
 
         <div className="flex-1 overflow-y-auto bg-gray-50/50 pb-8">
-          {/* Product Info */}
-          {/* <div className="bg-white p-4 mb-2">
-            <img src={product.image} className="w-full h-48 object-cover rounded-lg mb-3" />
-            <p className="text-gray-600 text-sm">{product.description}</p>
-            <p className="text-xl font-bold text-green-600 mt-2">R$ {product.price.toFixed(2)}</p>
-          </div> */}
+          {/* Product Info with Image & Zoom */}
+          <div className="bg-white p-5 mb-2 shadow-sm">
+            <div className="relative group cursor-zoom-in overflow-hidden rounded-2xl aspect-square md:max-h-96 mx-auto mb-4 border border-gray-100 bg-gray-50 flex items-center justify-center">
+              <motion.img 
+                src={product.image} 
+                className="w-full h-full object-contain transition-transform duration-200 ease-out"
+                onMouseMove={handleMouseMove}
+                onMouseEnter={() => setIsZoomed(true)}
+                onMouseLeave={() => setIsZoomed(false)}
+                onClick={() => setIsFullscreen(true)}
+                style={{
+                  transform: isZoomed ? 'scale(2.5)' : 'scale(1)',
+                  transformOrigin: `${mousePos.x}% ${mousePos.y}%`
+                }}
+              />
+              
+              {/* Zoom hint for PC */}
+              <div className="absolute top-3 right-3 p-2 bg-black/40 backdrop-blur-sm rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
+                <Search size={16} />
+              </div>
+              
+              {/* Fullscreen hint for Mobile */}
+              <div className="absolute bottom-3 right-3 p-2 bg-black/40 backdrop-blur-sm rounded-lg text-white md:hidden animate-pulse">
+                <Info size={14} className="inline mr-1" /> Toque para ampliar
+              </div>
+            </div>
+
+            <p className="text-gray-600 text-sm leading-relaxed mb-4">{product.description}</p>
+            <div className="flex items-center justify-between bg-purple-50 p-4 rounded-xl border border-purple-100">
+              <span className="text-gray-500 font-bold uppercase tracking-wider text-xs">Preço Unitário</span>
+              <span className="text-2xl font-black text-purple-700">R$ {product.price.toFixed(2)}</span>
+            </div>
+          </div>
 
           {/* Groups */}
           <div className="p-5 space-y-8">
@@ -1807,6 +1844,39 @@ export const ProductModal = ({ product, onClose }: { product: Product; onClose: 
           </button>
         </div>
       </div>
+
+      {/* Fullscreen Image Overlay */}
+      <AnimatePresence>
+        {isFullscreen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
+            onClick={(e) => { e.stopPropagation(); setIsFullscreen(false); }}
+          >
+            <motion.button
+              className="absolute top-6 right-6 p-3 bg-white/20 hover:bg-white/30 rounded-full text-white z-[210]"
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setIsFullscreen(false)}
+            >
+              <X size={32} />
+            </motion.button>
+            
+            <motion.img
+              src={product.image}
+              className="max-w-full max-h-full object-contain shadow-2xl"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            />
+            
+            <div className="absolute bottom-8 left-0 right-0 text-center text-white/60 text-sm font-medium pointer-events-none">
+              Dica: Use gestos de pinça para aproximar no celular
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
