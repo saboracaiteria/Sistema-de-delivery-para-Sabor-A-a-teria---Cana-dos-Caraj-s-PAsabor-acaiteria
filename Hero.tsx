@@ -1,13 +1,13 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Search, MapPin, Clock, Menu } from 'lucide-react';
+import { Search, MapPin, Clock, Menu, X } from 'lucide-react';
 import { useApp } from './App';
 import { PwaInstallPrompt } from './PwaInstallPrompt';
 import { ShareQRCode } from './ShareQRCode';
 
 export const Hero = () => {
-    const { settings, isStoreOpen, setSidebarOpen } = useApp();
+    const { settings, isStoreOpen, setSidebarOpen, searchTerm, setSearchTerm } = useApp();
 
     return (
         <div className="relative w-full h-[250px] md:h-[400px] overflow-hidden rounded-b-[1.5rem] md:rounded-b-[2.5rem] shadow-2xl mb-2 md:mb-4">
@@ -78,20 +78,34 @@ export const Hero = () => {
                     {settings.storeName}
                 </motion.h1>
 
+                {/* Search Bar */}
                 <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="flex items-center justify-center gap-2 md:gap-4 text-[10px] md:text-sm text-white/90 mb-3 md:mb-6 drop-shadow-sm"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                    className="w-full max-w-sm mt-2 relative"
                 >
-                    <span className="flex items-center gap-1 bg-black/30 px-2 md:px-3 py-0.5 md:py-1 rounded-full">
-                        <Clock className="w-2.5 h-2.5 md:w-[14px] md:h-[14px] text-cyan-400" /> {settings.deliveryTime || '30-45 min'}
-                    </span>
-                    <span className="flex items-center gap-1 bg-black/30 px-2 md:px-3 py-0.5 md:py-1 rounded-full">
-                        <MapPin className="w-2.5 h-2.5 md:w-[14px] md:h-[14px] text-cyan-400" /> Entrega: R$ {settings.deliveryFee?.toFixed(2)}
-                    </span>
+                    <div className="relative flex items-center">
+                        <div className="absolute left-3 text-white/50">
+                            <Search size={16} />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Buscar produtos..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-full py-2 pl-10 pr-10 text-sm text-white placeholder:text-white/50 focus:outline-none focus:bg-white/20 transition-all shadow-inner"
+                        />
+                        {searchTerm && (
+                            <button 
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-3 text-white/50 hover:text-white"
+                            >
+                                <X size={16} />
+                            </button>
+                        )}
+                    </div>
                 </motion.div>
-
             </div>
         </div>
     );

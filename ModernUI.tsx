@@ -10,7 +10,8 @@ import { ShareQRCode } from './ShareQRCode';
 
 // Modern Hero Component
 export const ModernHero = () => {
-    const { settings, isStoreOpen, setSidebarOpen } = useApp();
+    const { settings, isStoreOpen, setSidebarOpen, searchTerm, setSearchTerm } = useApp();
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
 
     return (
         <div className="w-full bg-white md:bg-gray-50 mb-6 md:mb-10 font-outfit">
@@ -26,9 +27,33 @@ export const ModernHero = () => {
 
                     <div className="flex items-center gap-2 pointer-events-auto">
                         <ShareQRCode variant="modern" />
-                        <button className="p-2.5 bg-white/80 backdrop-blur-lg border border-white/50 rounded-2xl text-slate-800 hover:bg-white transition-all shadow-sm active:scale-95">
-                            <Search strokeWidth={2.5} size={20} md:size={22} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <AnimatePresence>
+                                {isSearchVisible && (
+                                    <motion.div
+                                        initial={{ width: 0, opacity: 0 }}
+                                        animate={{ width: 200, opacity: 1 }}
+                                        exit={{ width: 0, opacity: 0 }}
+                                        className="relative overflow-hidden"
+                                    >
+                                        <input
+                                            type="text"
+                                            autoFocus
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            placeholder="Buscar..."
+                                            className="w-full h-10 bg-white/80 backdrop-blur-lg border border-white/50 rounded-2xl px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white transition-all shadow-sm"
+                                        />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                            <button 
+                                onClick={() => setIsSearchVisible(!isSearchVisible)}
+                                className={`p-2.5 backdrop-blur-lg border border-white/50 rounded-2xl transition-all shadow-sm active:scale-95 flex items-center justify-center ${isSearchVisible ? 'bg-purple-600 text-white' : 'bg-white/80 text-slate-800 hover:bg-white'}`}
+                            >
+                                {isSearchVisible ? <X strokeWidth={2.5} size={20} /> : <Search strokeWidth={2.5} size={20} md:size={22} />}
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -272,15 +297,19 @@ export const ModernFloatingCart = () => {
 
 // Storefront Container
 export const ModernHomePage = () => {
-    const { categories, products, settings, isStoreOpen } = useApp();
+    const { categories, products, settings, isStoreOpen, searchTerm } = useApp();
 
     // Memoize categorized products to avoid filtering on every render
     const categorizedProducts = useMemo(() => {
         return categories.map(cat => ({
             ...cat,
-            products: products.filter(p => p.categoryId === cat.id && p.active !== false)
+            products: products.filter(p => 
+                p.categoryId === cat.id && 
+                p.active !== false &&
+                (searchTerm === '' || p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.description?.toLowerCase().includes(searchTerm.toLowerCase()))
+            )
         })).filter(cat => cat.products.length > 0 && cat.active !== false);
-    }, [categories, products]);
+    }, [categories, products, searchTerm]);
 
     return (
         <div className="bg-[#FAFAFA] min-h-screen pb-32 font-outfit selection:bg-purple-200">

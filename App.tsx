@@ -113,6 +113,8 @@ interface AppContextType {
   isSidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   loading: boolean;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -134,6 +136,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [appliedCoupon, setAppliedCoupon, couponLoaded] = usePersistedState<Coupon | null>('appliedCoupon', null);
   const [isModernUI, setIsModernUI, modernUILoaded] = usePersistedState<boolean>('isModernUI', true);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const isStorageLoaded = cartLoaded && roleLoaded && couponLoaded && modernUILoaded;
 
@@ -1132,7 +1135,9 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       isStoreOpen,
       setSidebarOpen,
       appliedCoupon, applyCoupon, removeCoupon,
-      loading
+      loading,
+      searchTerm,
+      setSearchTerm
     }}>
       {children}
     </AppContext.Provider>
@@ -1809,7 +1814,7 @@ export const ProductModal = ({ product, onClose }: { product: Product; onClose: 
 // --- Pages ---
 
 const HomePage = () => {
-  const { categories, products, settings, isStoreOpen } = useApp();
+  const { categories, products, settings, isStoreOpen, searchTerm } = useApp();
   const status = isStoreOpen ? 'open' : 'closed';
 
   return (
@@ -1841,7 +1846,11 @@ const HomePage = () => {
         {/* Categories */}
         <div className="space-y-2">
           {categories.filter(cat => cat.active !== false).map(cat => {
-            const catProducts = products.filter(p => p.categoryId === cat.id && p.active !== false);
+            const catProducts = products.filter(p => 
+              p.categoryId === cat.id && 
+              p.active !== false &&
+              (searchTerm === '' || p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.description?.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
             return (
               <div key={cat.id} id={`cat-${cat.id}`}>
                 <h2 className="text-lg font-bold text-gray-700 mb-3 pl-1 flex items-center gap-2">
