@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+        devOptions: {
+          enabled: true // Permite testar PWA em modo dev
+        },
         manifest: {
           name: 'Delivery App',
           short_name: 'Delivery App',
@@ -43,9 +46,17 @@ export default defineConfig(({ mode }) => {
           clientsClaim: true,
           // Clean old caches on new deploy
           cleanupOutdatedCaches: true,
-          // Navigation requests always go to network first
+          // Ensure index.html is NEVER cached aggressively by the SW
           navigateFallback: '/index.html',
           runtimeCaching: [
+            {
+              urlPattern: ({ request }) => request.mode === 'navigate',
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'pages',
+                expiration: { maxEntries: 10 }
+              }
+            },
             {
               urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
               handler: 'NetworkFirst',

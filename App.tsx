@@ -49,6 +49,20 @@ import { LoginPage } from './LoginPage';
 import { PlatformHome } from './PlatformHome';
 import { PlatformAdminPanel } from './PlatformAdminPanel';
 
+// @ts-ignore - Virtual module provided by vite-plugin-pwa
+import { registerSW } from 'virtual:pwa-register';
+
+// Auto-update Service Worker
+const updateSW = registerSW({
+  onNeedRefresh() {
+    console.log('Nova versão detectada! Recarregando...');
+    updateSW(true); // Forces the new SW to take over and reloads the page
+  },
+  onOfflineReady() {
+    console.log('App pronto para uso offline.');
+  },
+});
+
 
 
 
@@ -175,6 +189,22 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
     return () => clearInterval(interval);
   }, [settings]); // Re-run when settings change
+  
+  // PWA Update Check on Focus 
+  useEffect(() => {
+    const handleUpdateCheck = () => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then(reg => {
+          if (reg) {
+            reg.update();
+            console.log('Verificando atualizações do PWA ao ganhar foco...');
+          }
+        });
+      }
+    };
+    window.addEventListener('focus', handleUpdateCheck);
+    return () => window.removeEventListener('focus', handleUpdateCheck);
+  }, []);
 
 
   useEffect(() => {
