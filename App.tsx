@@ -4400,9 +4400,9 @@ const AppContent = () => {
     const isPlatformAdmin = location.pathname.startsWith('/platform');
 
     if (isPlatformHome) {
-      document.title = "Sistema de Delivery";
+      document.title = "Canaã Delivery OS";
     } else if (isPlatformAdmin) {
-      document.title = "Painel da Plataforma";
+      document.title = "Canaã Delivery OS - Admin";
     } else if (isAdminRoute) {
       document.title = `Painel - ${settings.storeName || 'Delivery'}`;
     } else if (settings && settings.storeName) {

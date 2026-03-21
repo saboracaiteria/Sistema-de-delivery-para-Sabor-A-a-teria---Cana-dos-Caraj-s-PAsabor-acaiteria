@@ -91,9 +91,9 @@ export const PlatformHome = () => {
             </div>
           </div>
           <span className="text-xl font-black text-white tracking-tight">
-            Plataforma{' '}
+            Canaã{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-violet-400">
-              Delivery
+              Delivery OS
             </span>
           </span>
         </div>
