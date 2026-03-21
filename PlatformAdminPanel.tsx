@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
-import { Store, LogOut, ChevronRight, Activity, Copy, CheckCircle, Plus, X, Palette, LayoutTemplate, Loader2, Trash2, AlertTriangle, Lock, Pencil, Save, Coffee, Box, Eye, EyeOff, Clock } from 'lucide-react';
+import { Store, LogOut, ChevronRight, Activity, Copy, CheckCircle, Plus, X, Palette, LayoutTemplate, Loader2, Trash2, AlertTriangle, Lock, Pencil, Save, Coffee, Box, Eye, EyeOff, Clock, Calendar } from 'lucide-react';
 import { useApp } from './App';
 import type { Store as StoreType } from './types';
 import { SUPER_ADMIN_PASSWORD } from './constants';
@@ -18,6 +18,7 @@ export const PlatformAdminPanel = () => {
   const [editingStoreId, setEditingStoreId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({});
+  const [renewingStore, setRenewingStore] = useState<StoreType | null>(null);
 
   const toggleSecret = (id: string) => {
     setVisibleSecrets(prev => ({ ...prev, [id]: !prev[id] }));
@@ -158,6 +159,43 @@ export const PlatformAdminPanel = () => {
       }));
     } catch (err: any) {
       alert(`Erro ao alterar status: ${err.message}`);
+    }
+  };
+
+  const handleRenewPlan = async (storeId: string, durationDays: number) => {
+    try {
+      const store = stores.find(s => s.id === storeId);
+      if (!store) return;
+
+      const now = new Date();
+      const currentExpiry = store.plan_expiry_date ? new Date(store.plan_expiry_date) : now;
+      const baseDate = currentExpiry > now ? currentExpiry : now;
+      
+      const newExpiry = new Date(baseDate);
+      newExpiry.setDate(newExpiry.getDate() + durationDays);
+
+      const { error } = await supabase
+        .from('stores')
+        .update({
+          plan_type: durationDays <= 15 ? 'test' : 'paid',
+          plan_duration_days: durationDays,
+          plan_expiry_date: newExpiry.toISOString()
+        })
+        .eq('id', storeId);
+
+      if (error) throw error;
+
+      setStores(prev => prev.map(s => s.id === storeId ? { 
+        ...s, 
+        plan_type: durationDays <= 15 ? 'test' : 'paid',
+        plan_duration_days: durationDays,
+        plan_expiry_date: newExpiry.toISOString() 
+      } : s));
+      
+      setRenewingStore(null);
+      alert('Plano renovado com sucesso!');
+    } catch (err: any) {
+      alert(`Erro ao renovar plano: ${err.message}`);
     }
   };
 
@@ -399,11 +437,17 @@ export const PlatformAdminPanel = () => {
                           {store.plan_type === 'test' ? 'Período de Teste' : 'Plano Ativo'}
                         </span>
                       </div>
-                      <span className={`text-[10px] font-bold ${remaining?.expired ? 'text-red-400' : 'text-emerald-400'}`}>
-                        {remaining?.expired ? 'Expirado' : `${remaining?.days}d ${remaining?.hours}h restante`}
+                      <span className={`text-[10px] font-bold ${remaining?.expired ? 'text-red-400' : (remaining && remaining.days < 3 ? 'text-orange-400' : 'text-emerald-400')}`}>
+                        {remaining?.expired ? 'Expirado' : (
+                          <div className="flex gap-1">
+                            <span className="bg-white/10 px-1 rounded">{remaining?.days}d</span>
+                            <span className="bg-white/10 px-1 rounded">{remaining?.hours}h</span>
+                            <span className="bg-white/20 px-1 rounded opacity-70">{remaining?.minutes}m</span>
+                          </div>
+                        )}
                       </span>
                     </div>
-                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-2">
                       <motion.div
                         className={`h-full bg-gradient-to-r ${remaining?.expired ? 'from-red-500 to-rose-600' : 'from-purple-500 to-emerald-500'} rounded-full`}
                         initial={{ width: 0 }}
@@ -413,6 +457,13 @@ export const PlatformAdminPanel = () => {
                         transition={{ duration: 1, ease: 'easeOut' }}
                       />
                     </div>
+                    <button
+                      onClick={() => setRenewingStore(store)}
+                      className="w-full py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-[10px] font-bold text-white/50 hover:text-white transition-all flex items-center justify-center gap-2"
+                    >
+                      <Calendar size={12} className="text-purple-400" />
+                      Renovar Plano
+                    </button>
                   </div>
 
                   <div className="mt-4 mb-4 flex flex-col gap-1.5">
@@ -514,6 +565,16 @@ export const PlatformAdminPanel = () => {
             store={deleteTarget}
             onClose={() => setDeleteTarget(null)}
             onConfirm={() => handleDeleteStore(deleteTarget)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {renewingStore && (
+          <RenewPlanModal
+            store={renewingStore}
+            onClose={() => setRenewingStore(null)}
+            onConfirm={(days) => handleRenewPlan(renewingStore.id, days)}
           />
         )}
       </AnimatePresence>
@@ -1027,6 +1088,83 @@ const DeleteStoreModal: React.FC<DeleteStoreModalProps> = ({ store, onClose, onC
                   <Trash2 size={18} /> Excluir
                 </>
               )}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// --- Renew Plan Modal ---
+
+interface RenewPlanModalProps {
+  store: StoreType;
+  onClose: () => void;
+  onConfirm: (days: number) => void;
+}
+
+const RenewPlanModal: React.FC<RenewPlanModalProps> = ({ store, onClose, onConfirm }) => {
+  const [selectedDays, setSelectedDays] = useState(30);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-purple-100 flex items-center justify-center text-purple-600 shadow-inner">
+              <Calendar size={24} />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-gray-900">Renovar Plano</h3>
+              <p className="text-xs text-gray-500 font-medium">{store.name}</p>
+            </div>
+          </div>
+
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Escolha a Duração</p>
+          <div className="grid grid-cols-2 gap-3 mb-8">
+            {[7, 15, 30, 60, 90, 120].map((d) => (
+              <button
+                key={d}
+                onClick={() => setSelectedDays(d)}
+                className={`py-4 rounded-2xl text-sm font-bold border-2 transition-all flex flex-col items-center justify-center gap-0.5 ${
+                  selectedDays === d
+                    ? 'border-purple-600 bg-purple-50 text-purple-700 shadow-lg shadow-purple-100'
+                    : 'border-gray-50 bg-gray-50 text-gray-400 hover:border-purple-200'
+                }`}
+              >
+                <span>{d} dias</span>
+                <span className="text-[9px] uppercase tracking-tighter opacity-60">
+                  {d <= 15 ? 'Período Teste' : 'Plano Mensal'}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 py-3.5 rounded-xl font-bold text-gray-400 hover:bg-gray-100 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => onConfirm(selectedDays)}
+              className="flex-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-purple-800 text-white font-bold hover:from-purple-500 hover:to-purple-700 shadow-xl shadow-purple-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              <CheckCircle size={18} /> Renovar
             </button>
           </div>
         </div>
