@@ -1704,7 +1704,7 @@ export const ProductModal = ({ product, onClose }: { product: Product; onClose: 
           }}
         >
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors"><ArrowLeft size={24} style={{ color: 'var(--color-header-text, #ffffff)' }} /></button>
-          <h2 className="text-xl font-black uppercase tracking-wide absolute left-1/2 -translate-x-1/2 w-3/4 text-center truncate">{product.name}</h2>
+          <h2 className="text-xl font-black uppercase tracking-wide flex-1 text-center px-4">{product.name}</h2>
           <div className="w-10" /> {/* Spacer for centering */}
         </div>
 
@@ -1781,7 +1781,7 @@ export const ProductModal = ({ product, onClose }: { product: Product; onClose: 
                         <div key={opt.id} className={`bg-white p-4 rounded-2xl shadow-sm border-2 ${qty > 0 ? 'border-purple-500 bg-purple-50/30' : 'border-gray-100'} transition-all duration-300 ease-out hover:shadow-md cursor-pointer relative overflow-hidden`}>
                           <div className="flex justify-between items-center gap-4">
                             <div className="flex-1 min-w-0">
-                              <h4 className={`font-bold text-base truncate ${qty > 0 ? 'text-purple-900' : 'text-gray-800'}`}>{opt.name}</h4>
+                              <h4 className={`font-bold text-base ${qty > 0 ? 'text-purple-900' : 'text-gray-800'}`}>{opt.name}</h4>
                               {opt.description && (
                                 <p className="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">{opt.description}</p>
                               )}
