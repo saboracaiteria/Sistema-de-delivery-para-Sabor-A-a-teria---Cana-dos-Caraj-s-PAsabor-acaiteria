@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
-import { Store, LogOut, ChevronRight, Activity, Copy, CheckCircle, Plus, X, Palette, LayoutTemplate, Loader2, Trash2, AlertTriangle, Lock, Pencil, Save, Coffee, Box, Eye, EyeOff } from 'lucide-react';
+import { Store, LogOut, ChevronRight, Activity, Copy, CheckCircle, Plus, X, Palette, LayoutTemplate, Loader2, Trash2, AlertTriangle, Lock, Pencil, Save, Coffee, Box, Eye, EyeOff, Clock } from 'lucide-react';
 import { useApp } from './App';
 import type { Store as StoreType } from './types';
 import { SUPER_ADMIN_PASSWORD } from './constants';
@@ -210,6 +210,21 @@ export const PlatformAdminPanel = () => {
     { from: 'from-cyan-500', to: 'to-sky-700', icon: 'bg-cyan-500', badge: 'bg-cyan-100 text-cyan-700' },
   ];
 
+  const calculateRemaining = (expiryDate?: string) => {
+    if (!expiryDate) return null;
+    const now = new Date();
+    const expiry = new Date(expiryDate);
+    const diff = expiry.getTime() - now.getTime();
+    
+    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, expired: true };
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return { days, hours, minutes, expired: false };
+  };
+
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #0a0118 0%, #130a2e 50%, #1a0a3e 100%)' }}>
       {/* Hero Header */}
@@ -295,6 +310,8 @@ export const PlatformAdminPanel = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {stores.map((store, idx) => {
             const accent = cardAccents[idx % cardAccents.length];
+            const remaining = calculateRemaining(store.plan_expiry_date);
+            
             return (
               <motion.div
                 key={store.id}
@@ -373,7 +390,32 @@ export const PlatformAdminPanel = () => {
                     </div>
                   )}
 
-                  <div className="mt-1 mb-4 flex flex-col gap-1.5">
+                  {/* Plan Progress / Timer */}
+                  <div className="mt-3 bg-white/5 rounded-xl p-2.5 border border-white/5">
+                    <div className="flex justify-between items-center mb-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={12} className="text-purple-400" />
+                        <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">
+                          {store.plan_type === 'test' ? 'Período de Teste' : 'Plano Ativo'}
+                        </span>
+                      </div>
+                      <span className={`text-[10px] font-bold ${remaining?.expired ? 'text-red-400' : 'text-emerald-400'}`}>
+                        {remaining?.expired ? 'Expirado' : `${remaining?.days}d ${remaining?.hours}h restante`}
+                      </span>
+                    </div>
+                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <motion.div
+                        className={`h-full bg-gradient-to-r ${remaining?.expired ? 'from-red-500 to-rose-600' : 'from-purple-500 to-emerald-500'} rounded-full`}
+                        initial={{ width: 0 }}
+                        animate={{ 
+                          width: remaining?.expired ? '100%' : `${Math.max(0, Math.min(100, (remaining ? (remaining.days + remaining.hours/24) / (store.plan_duration_days || 30) * 100 : 0)))}%` 
+                        }}
+                        transition={{ duration: 1, ease: 'easeOut' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 mb-4 flex flex-col gap-1.5">
                     <div className="flex justify-between items-center text-[10px] text-white/30">
                       <span className="font-mono">/{store.slug}</span>
                       <div className="flex items-center gap-1.5 opacity-60">
@@ -494,6 +536,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
   const [dataTemplate, setDataTemplate] = useState<'acaiteria' | 'empty'>('acaiteria');
   const [uiMode, setUiMode] = useState<'modern' | 'classic'>('modern');
   const [saving, setSaving] = useState(false);
+  const [planDuration, setPlanDuration] = useState<number>(7);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [createdLink, setCreatedLink] = useState('');
@@ -542,6 +585,10 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
         return;
       }
 
+      // Calculate expiry date
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + planDuration);
+
       // 2. Create the store record
       const { data: storeData, error: storeError } = await supabase
         .from('stores')
@@ -551,6 +598,10 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
           owner_id: userId || null,
           owner_email: generatedEmail,
           password: ownerPassword,
+          plan_type: planDuration <= 15 ? 'test' : 'paid',
+          plan_duration_days: planDuration,
+          plan_start_date: new Date().toISOString(),
+          plan_expiry_date: expiryDate.toISOString(),
         })
         .select()
         .single();
@@ -705,6 +756,30 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
                 <p className="mt-1.5 text-xs text-gray-400 font-medium leading-relaxed">
                   O lojista usará esta senha para acessar o próprio painel.
                 </p>
+              </div>
+
+              {/* Plan Duration Selector */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3 ml-1">Duração do Plano</label>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                  {[7, 15, 30, 60, 90, 120].map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setPlanDuration(d)}
+                      className={`py-2 rounded-xl text-xs font-bold border-2 transition-all ${
+                        planDuration === d
+                          ? 'border-purple-600 bg-purple-600 text-white shadow-md'
+                          : 'border-gray-100 bg-gray-50 text-gray-400 hover:border-purple-200'
+                      }`}
+                    >
+                      {d} dias
+                      <div className="text-[8px] opacity-70 mt-0.5">
+                        {d <= 15 ? 'Teste' : 'Plano'}
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Data Template Selector */}

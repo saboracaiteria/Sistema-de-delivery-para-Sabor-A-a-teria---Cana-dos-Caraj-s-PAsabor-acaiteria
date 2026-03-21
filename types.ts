@@ -3,8 +3,14 @@ export interface Store {
   id: string;
   slug: string;
   name: string;
-  ownerId?: string;
+  owner_id?: string;
+  owner_email?: string;
   password?: string;
+  plan_type?: 'test' | 'paid';
+  plan_duration_days?: number;
+  plan_start_date?: string;
+  plan_expiry_date?: string;
+  settings?: any; // To avoid type issues in PlatformAdminPanel
 }
 
 export interface ProductOption {
