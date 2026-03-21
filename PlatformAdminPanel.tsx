@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
-import { Store, LogOut, ChevronRight, Activity, Copy, CheckCircle, Plus, X, Palette, LayoutTemplate, Loader2, Trash2, AlertTriangle, Lock, Pencil, Save, Coffee, Box } from 'lucide-react';
+import { Store, LogOut, ChevronRight, Activity, Copy, CheckCircle, Plus, X, Palette, LayoutTemplate, Loader2, Trash2, AlertTriangle, Lock, Pencil, Save, Coffee, Box, Eye, EyeOff } from 'lucide-react';
 import { useApp } from './App';
 import type { Store as StoreType } from './types';
 import { SUPER_ADMIN_PASSWORD } from './constants';
@@ -17,6 +17,11 @@ export const PlatformAdminPanel = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingStoreId, setEditingStoreId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({});
+
+  const toggleSecret = (id: string) => {
+    setVisibleSecrets(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const fetchStores = async () => {
     try {
@@ -220,7 +225,7 @@ export const PlatformAdminPanel = () => {
                 <Store size={28} className="text-white" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Gerenciamento OS</h1>
+                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Canaã Delivery OS</h1>
                 <p className="text-purple-300 font-medium text-sm">Painel de Controle da Plataforma</p>
               </div>
             </div>
@@ -378,16 +383,25 @@ export const PlatformAdminPanel = () => {
                     </div>
                     
                     {store.owner_email && (
-                      <p className="text-[10px] text-purple-300 font-medium opacity-80 flex items-center gap-1.5">
-                        <Activity size={10} className="text-purple-400" />
-                        {store.owner_email}
-                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] text-purple-300 font-medium opacity-80 flex items-center gap-1.5">
+                          <Activity size={10} className="text-purple-400" />
+                          {visibleSecrets[store.id] ? store.owner_email : "••••••••••••••••"}
+                        </p>
+                        <button
+                          onClick={() => toggleSecret(store.id)}
+                          className="p-1 rounded text-white/30 hover:text-white transition-all"
+                          title={visibleSecrets[store.id] ? "Esconder dados" : "Mostrar dados"}
+                        >
+                          {visibleSecrets[store.id] ? <EyeOff size={12} /> : <Eye size={12} />}
+                        </button>
+                      </div>
                     )}
 
                     <div className="flex items-center gap-2 mt-1">
                       <Lock size={12} className="text-white/20" />
                       <input
-                        type="text"
+                        type={visibleSecrets[store.id] ? "text" : "password"}
                         defaultValue={store.password}
                         onBlur={(e) => {
                           if (e.target.value !== store.password) {
@@ -397,6 +411,7 @@ export const PlatformAdminPanel = () => {
                         className="bg-transparent border-b border-white/5 hover:border-white/20 text-[10px] text-white/40 outline-none w-full focus:text-white/80 transition-all font-mono"
                         placeholder="Senha"
                         title="Alterar Senha de Login"
+                        readOnly={!visibleSecrets[store.id]}
                       />
                     </div>
                   </div>
