@@ -263,6 +263,57 @@ export const PlatformAdminPanel = () => {
     return { days, hours, minutes, expired: false };
   };
 
+  const LiveCountdown = ({ store }: { store: StoreType }) => {
+    const [now, setNow] = useState(new Date());
+
+    useEffect(() => {
+      const interval = setInterval(() => setNow(new Date()), 60000);
+      return () => clearInterval(interval);
+    }, []);
+
+    const remaining = calculateRemaining(store.plan_expiry_date);
+    if (!remaining) return null;
+
+    return (
+      <div className="mt-3 bg-white/5 rounded-xl p-2.5 border border-white/5">
+        <div className="flex justify-between items-center mb-1.5">
+          <div className="flex items-center gap-1.5">
+            <Clock size={12} className="text-purple-400" />
+            <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">
+              {store.plan_type === 'test' ? 'Período de Teste' : 'Plano Ativo'}
+            </span>
+          </div>
+          <span className={`text-[10px] font-bold ${remaining.expired ? 'text-red-400' : (remaining.days < 3 ? 'text-orange-400' : 'text-emerald-400')}`}>
+            {remaining.expired ? 'Expirado' : (
+              <div className="flex gap-1">
+                <span className="bg-white/10 px-1 rounded">{remaining.days}d</span>
+                <span className="bg-white/10 px-1 rounded">{remaining.hours}h</span>
+                <span className="bg-white/20 px-1 rounded opacity-70">{remaining.minutes}m</span>
+              </div>
+            )}
+          </span>
+        </div>
+        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-2">
+          <motion.div
+            className={`h-full bg-gradient-to-r ${remaining.expired ? 'from-red-500 to-rose-600' : 'from-purple-500 to-emerald-500'} rounded-full`}
+            initial={{ width: 0 }}
+            animate={{ 
+              width: remaining.expired ? '100%' : `${Math.max(0, Math.min(100, (remaining.days + remaining.hours/24) / (store.plan_duration_days || 30) * 100))}%` 
+            }}
+            transition={{ duration: 1, ease: 'easeOut' }}
+          />
+        </div>
+        <button
+          onClick={() => setRenewingStore(store)}
+          className="w-full py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-[10px] font-bold text-white/50 hover:text-white transition-all flex items-center justify-center gap-2"
+        >
+          <Calendar size={12} className="text-purple-400" />
+          Renovar Plano
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #0a0118 0%, #130a2e 50%, #1a0a3e 100%)' }}>
       {/* Hero Header */}
@@ -428,43 +479,7 @@ export const PlatformAdminPanel = () => {
                     </div>
                   )}
 
-                  {/* Plan Progress / Timer */}
-                  <div className="mt-3 bg-white/5 rounded-xl p-2.5 border border-white/5">
-                    <div className="flex justify-between items-center mb-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <Clock size={12} className="text-purple-400" />
-                        <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">
-                          {store.plan_type === 'test' ? 'Período de Teste' : 'Plano Ativo'}
-                        </span>
-                      </div>
-                      <span className={`text-[10px] font-bold ${remaining?.expired ? 'text-red-400' : (remaining && remaining.days < 3 ? 'text-orange-400' : 'text-emerald-400')}`}>
-                        {remaining?.expired ? 'Expirado' : (
-                          <div className="flex gap-1">
-                            <span className="bg-white/10 px-1 rounded">{remaining?.days}d</span>
-                            <span className="bg-white/10 px-1 rounded">{remaining?.hours}h</span>
-                            <span className="bg-white/20 px-1 rounded opacity-70">{remaining?.minutes}m</span>
-                          </div>
-                        )}
-                      </span>
-                    </div>
-                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-2">
-                      <motion.div
-                        className={`h-full bg-gradient-to-r ${remaining?.expired ? 'from-red-500 to-rose-600' : 'from-purple-500 to-emerald-500'} rounded-full`}
-                        initial={{ width: 0 }}
-                        animate={{ 
-                          width: remaining?.expired ? '100%' : `${Math.max(0, Math.min(100, (remaining ? (remaining.days + remaining.hours/24) / (store.plan_duration_days || 30) * 100 : 0)))}%` 
-                        }}
-                        transition={{ duration: 1, ease: 'easeOut' }}
-                      />
-                    </div>
-                    <button
-                      onClick={() => setRenewingStore(store)}
-                      className="w-full py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-[10px] font-bold text-white/50 hover:text-white transition-all flex items-center justify-center gap-2"
-                    >
-                      <Calendar size={12} className="text-purple-400" />
-                      Renovar Plano
-                    </button>
-                  </div>
+                  <LiveCountdown store={store} />
 
                   <div className="mt-4 mb-4 flex flex-col gap-1.5">
                     <div className="flex justify-between items-center text-[10px] text-white/30">
