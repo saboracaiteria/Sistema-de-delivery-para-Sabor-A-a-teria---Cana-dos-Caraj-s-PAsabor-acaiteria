@@ -162,14 +162,14 @@ export const PlatformAdminPanel = () => {
     }
   };
 
-  const handleRenewPlan = async (storeId: string, durationDays: number) => {
+  const handleRenewPlan = async (storeId: string, durationDays: number, isCumulative: boolean) => {
     try {
       const store = stores.find(s => s.id === storeId);
       if (!store) return;
 
       const now = new Date();
       const currentExpiry = store.plan_expiry_date ? new Date(store.plan_expiry_date) : now;
-      const baseDate = currentExpiry > now ? currentExpiry : now;
+      const baseDate = (isCumulative && currentExpiry > now) ? currentExpiry : now;
       
       const newExpiry = new Date(baseDate);
       newExpiry.setDate(newExpiry.getDate() + durationDays);
@@ -193,9 +193,9 @@ export const PlatformAdminPanel = () => {
       } : s));
       
       setRenewingStore(null);
-      alert('Plano renovado com sucesso!');
+      alert('Plano atualizado com sucesso!');
     } catch (err: any) {
-      alert(`Erro ao renovar plano: ${err.message}`);
+      alert(`Erro ao atualizar plano: ${err.message}`);
     }
   };
 
@@ -589,7 +589,7 @@ export const PlatformAdminPanel = () => {
           <RenewPlanModal
             store={renewingStore}
             onClose={() => setRenewingStore(null)}
-            onConfirm={(days) => handleRenewPlan(renewingStore.id, days)}
+            onConfirm={(days, reset) => handleRenewPlan(renewingStore.id, days, reset)}
           />
         )}
       </AnimatePresence>
@@ -837,8 +837,8 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
               {/* Plan Duration Selector */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-3 ml-1">Duração do Plano</label>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                  {[7, 15, 30, 60, 90, 120].map((d) => (
+                <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
+                  {[7, 15, 30, 60, 90, 120, 365].map((d) => (
                     <button
                       key={d}
                       type="button"
@@ -851,7 +851,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
                     >
                       {d} dias
                       <div className="text-[8px] opacity-70 mt-0.5">
-                        {d <= 15 ? 'Teste' : 'Plano'}
+                        {d <= 15 ? 'Teste' : d === 365 ? 'Anual' : 'Plano'}
                       </div>
                     </button>
                   ))}
@@ -1116,11 +1116,12 @@ const DeleteStoreModal: React.FC<DeleteStoreModalProps> = ({ store, onClose, onC
 interface RenewPlanModalProps {
   store: StoreType;
   onClose: () => void;
-  onConfirm: (days: number) => void;
+  onConfirm: (days: number, isCumulative: boolean) => void;
 }
 
 const RenewPlanModal: React.FC<RenewPlanModalProps> = ({ store, onClose, onConfirm }) => {
   const [selectedDays, setSelectedDays] = useState(30);
+  const [isCumulative, setIsCumulative] = useState(true);
 
   return (
     <motion.div
@@ -1149,8 +1150,8 @@ const RenewPlanModal: React.FC<RenewPlanModalProps> = ({ store, onClose, onConfi
           </div>
 
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Escolha a Duração</p>
-          <div className="grid grid-cols-2 gap-3 mb-8">
-            {[7, 15, 30, 60, 90, 120].map((d) => (
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            {[7, 15, 30, 60, 90, 120, 365].map((d) => (
               <button
                 key={d}
                 onClick={() => setSelectedDays(d)}
@@ -1162,10 +1163,39 @@ const RenewPlanModal: React.FC<RenewPlanModalProps> = ({ store, onClose, onConfi
               >
                 <span>{d} dias</span>
                 <span className="text-[9px] uppercase tracking-tighter opacity-60">
-                  {d <= 15 ? 'Período Teste' : 'Plano Mensal'}
+                  {d <= 15 ? 'Período Teste' : d === 365 ? 'Plano Anual' : 'Plano Mensal'}
                 </span>
               </button>
             ))}
+          </div>
+
+          {/* Reset vs Cumulative Toggle */}
+          <div className="bg-gray-50 rounded-2xl p-4 mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-gray-600">Modo de Renovação</span>
+              <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isCumulative ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}`}>
+                {isCumulative ? 'Acumulativo' : 'Zerar e Iniciar'}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsCumulative(true)}
+                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${isCumulative ? 'bg-white shadow text-purple-700' : 'text-gray-400 hover:bg-white/50'}`}
+              >
+                Acumular
+              </button>
+              <button
+                onClick={() => setIsCumulative(false)}
+                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${!isCumulative ? 'bg-white shadow text-orange-600' : 'text-gray-400 hover:bg-white/50'}`}
+              >
+                Zerar Saldo
+              </button>
+            </div>
+            <p className="text-[9px] text-gray-400 mt-2 leading-tight">
+              {isCumulative 
+                ? "* Adiciona os novos dias ao tempo que já resta na loja."
+                : "* Ignora o tempo restante e inicia o novo plano hoje."}
+            </p>
           </div>
 
           <div className="flex gap-3">
@@ -1176,7 +1206,7 @@ const RenewPlanModal: React.FC<RenewPlanModalProps> = ({ store, onClose, onConfi
               Cancelar
             </button>
             <button
-              onClick={() => onConfirm(selectedDays)}
+              onClick={() => onConfirm(selectedDays, isCumulative)}
               className="flex-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-purple-800 text-white font-bold hover:from-purple-500 hover:to-purple-700 shadow-xl shadow-purple-200 transition-all active:scale-95 flex items-center justify-center gap-2"
             >
               <CheckCircle size={18} /> Renovar
