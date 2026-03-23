@@ -396,152 +396,152 @@ export const PlatformAdminPanel = () => {
           <span className="text-white/30 text-xs">{stores.length} loja{stores.length !== 1 ? 's' : ''}</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {stores.map((store, idx) => {
             const accent = cardAccents[idx % cardAccents.length];
             const remaining = calculateRemaining(store.plan_expiry_date);
+            const storeStatus = Array.isArray(store.settings) ? store.settings[0]?.store_status : store.settings?.store_status;
+            const isOpen = storeStatus === 'open';
+            const isExpanded = editingStoreId === `expand_${store.id}`;
             
             return (
               <motion.div
                 key={store.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.06 }}
-                className="relative bg-white/[0.04] backdrop-blur-md border border-white/10 rounded-3xl overflow-hidden hover:bg-white/[0.07] hover:border-white/20 transition-all group"
+                transition={{ delay: idx * 0.04 }}
+                className="relative bg-white/[0.04] backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden hover:bg-white/[0.07] hover:border-white/20 transition-all group cursor-pointer"
+                onClick={() => setEditingStoreId(isExpanded ? null : `expand_${store.id}`)}
               >
                 {/* Top colored accent bar */}
                 <div className={`h-1 w-full bg-gradient-to-r ${accent.from} ${accent.to}`} />
 
-                <div className="p-5">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-11 h-11 rounded-xl ${accent.icon} bg-opacity-20 flex items-center justify-center`}>
-                        <Store size={22} className="text-white" />
-                      </div>
-                      {/* Status Badge Toggle */}
-                      <button
-                        onClick={() => {
-                          const status = Array.isArray(store.settings) ? store.settings[0]?.store_status : store.settings?.store_status;
-                          handleToggleStoreStatus(store.id, status || 'open');
-                        }}
-                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter transition-all ${
-                          (Array.isArray(store.settings) ? store.settings[0]?.store_status : store.settings?.store_status) === 'open'
-                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                            : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                        }`}
-                      >
-                        {(Array.isArray(store.settings) ? store.settings[0]?.store_status : store.settings?.store_status) === 'open' ? 'Pausar Loja' : 'Ativar Loja'}
-                      </button>
+                <div className="p-3 sm:p-4">
+                  {/* Compact Header: Icon + Status Dot */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${accent.icon} bg-opacity-20 flex items-center justify-center`}>
+                      <Store size={18} className="text-white" />
                     </div>
-                    <button
-                      onClick={() => handleCopyLink(store.slug)}
-                      className={`p-1.5 px-3 rounded-lg transition-all flex items-center gap-1.5 text-xs font-bold ${
-                        copiedSlug === store.slug
-                          ? 'bg-emerald-500/20 text-emerald-300'
-                          : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'
-                      }`}
-                    >
-                      {copiedSlug === store.slug ? <CheckCircle size={13} /> : <Copy size={13} />}
-                      {copiedSlug === store.slug ? 'Copiado!' : 'Copiar Link'}
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-2.5 h-2.5 rounded-full ${isOpen ? 'bg-emerald-400' : 'bg-red-400'} shadow-lg ${isOpen ? 'shadow-emerald-500/50' : 'shadow-red-500/50'}`} />
+                    </div>
                   </div>
 
-                  {editingStoreId === store.id ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={editingName}
-                        onChange={(e) => setEditingName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleUpdateStoreName(store.id);
-                          if (e.key === 'Escape') setEditingStoreId(null);
-                        }}
-                        className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 outline-none font-bold text-white text-base focus:border-purple-400 transition-colors"
-                        autoFocus
-                      />
-                      <button onClick={() => handleUpdateStoreName(store.id)} className="p-1.5 rounded-lg text-emerald-400 hover:bg-emerald-500/20 transition-colors" title="Salvar">
-                        <Save size={18} />
-                      </button>
-                      <button onClick={() => setEditingStoreId(null)} className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/20 transition-colors" title="Cancelar">
-                        <X size={18} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 group/title">
-                      <h3 className="text-lg font-bold text-white tracking-tight">{store.name}</h3>
-                      <button
-                        onClick={() => { setEditingStoreId(store.id); setEditingName(store.name); }}
-                        className="p-1 rounded text-white/30 opacity-0 group-hover:opacity-100 hover:text-white transition-all"
-                        title="Editar Nome"
-                      >
-                        <Pencil size={13} />
-                      </button>
+                  {/* Store Name */}
+                  <h3 className="text-sm sm:text-base font-bold text-white tracking-tight truncate mb-1">{store.name}</h3>
+                  <p className="text-[9px] sm:text-[10px] text-white/30 font-mono truncate">/{store.slug}</p>
+
+                  {/* Compact Remaining Badge */}
+                  {remaining && (
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                        <motion.div
+                          className={`h-full bg-gradient-to-r ${remaining.expired ? 'from-red-500 to-rose-600' : 'from-purple-500 to-emerald-500'} rounded-full`}
+                          initial={{ width: 0 }}
+                          animate={{ 
+                            width: remaining.expired ? '100%' : `${Math.max(0, Math.min(100, (remaining.days + remaining.hours/24) / (store.plan_duration_days || 30) * 100))}%` 
+                          }}
+                          transition={{ duration: 1, ease: 'easeOut' }}
+                        />
+                      </div>
+                      <span className={`text-[9px] sm:text-[10px] font-bold whitespace-nowrap ${remaining.expired ? 'text-red-400' : (remaining.days < 3 ? 'text-orange-400' : 'text-emerald-400')}`}>
+                        {remaining.expired ? 'Exp' : `${remaining.days}d`}
+                      </span>
                     </div>
                   )}
 
-                  <LiveCountdown store={store} />
+                  {/* Expanded Details */}
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="overflow-hidden"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <div className="pt-3 mt-3 border-t border-white/10 space-y-2.5">
+                          {/* Status Toggle */}
+                          <button
+                            onClick={() => handleToggleStoreStatus(store.id, storeStatus || 'open')}
+                            className={`w-full px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                              isOpen
+                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            }`}
+                          >
+                            {isOpen ? 'Pausar Loja' : 'Ativar Loja'}
+                          </button>
 
-                  <div className="mt-4 mb-4 flex flex-col gap-1.5">
-                    <div className="flex justify-between items-center text-[10px] text-white/30">
-                      <span className="font-mono">/{store.slug}</span>
-                      <div className="flex items-center gap-1.5 opacity-60">
-                        <Lock size={10} />
-                        <span className="font-medium">Painel Admin</span>
-                      </div>
-                    </div>
-                    
-                    {store.owner_email && (
-                      <div className="flex items-center justify-between">
-                        <p className="text-[10px] text-purple-300 font-medium opacity-80 flex items-center gap-1.5">
-                          <Activity size={10} className="text-purple-400" />
-                          {visibleSecrets[store.id] ? store.owner_email : "••••••••••••••••"}
-                        </p>
-                        <button
-                          onClick={() => toggleSecret(store.id)}
-                          className="p-1 rounded text-white/30 hover:text-white transition-all"
-                          title={visibleSecrets[store.id] ? "Esconder dados" : "Mostrar dados"}
-                        >
-                          {visibleSecrets[store.id] ? <EyeOff size={12} /> : <Eye size={12} />}
-                        </button>
-                      </div>
+                          {/* Plan Info */}
+                          {remaining && (
+                            <div className="bg-white/5 rounded-lg p-2 border border-white/5">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-[9px] font-bold text-white/40 uppercase">{store.plan_type === 'test' ? 'Teste' : 'Plano'}</span>
+                                <span className={`text-[9px] font-bold ${remaining.expired ? 'text-red-400' : 'text-emerald-400'}`}>
+                                  {remaining.expired ? 'Expirado' : `${remaining.days}d ${remaining.hours}h`}
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => setRenewingStore(store)}
+                                className="w-full py-1 rounded-md bg-white/5 hover:bg-white/10 text-[9px] font-bold text-white/50 hover:text-white transition-all flex items-center justify-center gap-1"
+                              >
+                                <Calendar size={10} className="text-purple-400" />
+                                Renovar
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Credentials */}
+                          <div className="space-y-1.5">
+                            {store.owner_email && (
+                              <div className="flex items-center gap-1.5">
+                                <Activity size={9} className="text-purple-400 shrink-0" />
+                                <span className="text-[9px] text-purple-300 truncate">{store.owner_email}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1.5">
+                              <Lock size={9} className="text-white/30 shrink-0" />
+                              <span className="text-[9px] text-white/40 font-mono">{store.password || '••••'}</span>
+                            </div>
+                          </div>
+
+                          {/* Actions Row */}
+                          <div className="flex items-center gap-2 pt-1">
+                            <button
+                              onClick={() => handleCopyLink(store.slug)}
+                              className={`flex-1 py-1.5 rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition-all ${
+                                copiedSlug === store.slug
+                                  ? 'bg-emerald-500/20 text-emerald-300'
+                                  : 'bg-white/5 text-white/50 hover:bg-white/10'
+                              }`}
+                            >
+                              {copiedSlug === store.slug ? <CheckCircle size={10} /> : <Copy size={10} />}
+                              {copiedSlug === store.slug ? 'Copiado' : 'Link'}
+                            </button>
+                            <a
+                              href={`/#/${store.slug}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`flex-1 py-1.5 rounded-lg bg-gradient-to-r ${accent.from} ${accent.to} text-white text-[9px] font-bold flex items-center justify-center gap-1 opacity-80 hover:opacity-100 transition-all active:scale-95`}
+                            >
+                              Abrir <ChevronRight size={10} />
+                            </a>
+                          </div>
+
+                          {/* Delete */}
+                          <button
+                            onClick={() => setDeleteTarget(store)}
+                            className="w-full py-1 rounded-lg text-[9px] text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all flex items-center justify-center gap-1"
+                          >
+                            <Trash2 size={10} />
+                            Excluir
+                          </button>
+                        </div>
+                      </motion.div>
                     )}
-
-                    <div className="flex items-center gap-2 mt-1">
-                      <Lock size={12} className="text-white/20" />
-                      <input
-                        type={visibleSecrets[store.id] ? "text" : "password"}
-                        defaultValue={store.password}
-                        onBlur={(e) => {
-                          if (e.target.value !== store.password) {
-                            handleUpdateStorePassword(store.id, e.target.value);
-                          }
-                        }}
-                        className="bg-transparent border-b border-white/5 hover:border-white/20 text-[10px] text-white/40 outline-none w-full focus:text-white/80 transition-all font-mono"
-                        placeholder="Senha"
-                        title="Alterar Senha de Login"
-                        readOnly={!visibleSecrets[store.id]}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-3 border-t border-white/[0.07]">
-                    <button
-                      onClick={() => setDeleteTarget(store)}
-                      className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                      title="Excluir Loja"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-
-                    <a
-                      href={`/#/${store.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`flex items-center gap-2 px-4 py-1.5 rounded-xl bg-gradient-to-r ${accent.from} ${accent.to} text-white text-xs font-bold shadow-lg opacity-80 hover:opacity-100 transition-all active:scale-95`}
-                    >
-                      Abrir Loja <ChevronRight size={14} />
-                    </a>
-                  </div>
+                  </AnimatePresence>
                 </div>
               </motion.div>
             );
@@ -551,14 +551,14 @@ export const PlatformAdminPanel = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: stores.length * 0.06 }}
+            transition={{ delay: stores.length * 0.04 }}
             onClick={() => setShowCreateModal(true)}
-            className="border-2 border-dashed border-white/10 rounded-3xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer min-h-[200px] hover:border-purple-500/50 hover:bg-purple-500/5 transition-all group"
+            className="border-2 border-dashed border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer min-h-[140px] hover:border-purple-500/50 hover:bg-purple-500/5 transition-all group"
           >
-            <div className="w-14 h-14 bg-white/5 group-hover:bg-purple-500/20 rounded-full flex items-center justify-center text-white/30 group-hover:text-purple-300 transition-all">
-              <Plus size={28} />
+            <div className="w-10 h-10 bg-white/5 group-hover:bg-purple-500/20 rounded-full flex items-center justify-center text-white/30 group-hover:text-purple-300 transition-all">
+              <Plus size={22} />
             </div>
-            <p className="font-bold text-white/30 group-hover:text-purple-300 transition-colors text-sm">Criar Nova Loja</p>
+            <p className="font-bold text-white/30 group-hover:text-purple-300 transition-colors text-xs">Nova Loja</p>
           </motion.div>
         </div>
       </div>
@@ -735,14 +735,14 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 z-50"
       onClick={onClose}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden"
+        className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}

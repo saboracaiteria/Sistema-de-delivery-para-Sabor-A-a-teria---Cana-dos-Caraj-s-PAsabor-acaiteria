@@ -10,6 +10,7 @@ DO $$
 DECLARE
     tbl TEXT;
     tables TEXT[] := ARRAY[
+        'stores',
         'categories',
         'products',
         'product_groups',
