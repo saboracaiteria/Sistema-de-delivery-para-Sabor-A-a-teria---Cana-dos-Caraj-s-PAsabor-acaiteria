@@ -2273,6 +2273,7 @@ const CheckoutPage = () => {
   const total = Math.max(0, subtotal - discount) + (deliveryMethod === DeliveryMethod.DELIVERY ? settings.deliveryFee : 0);
 
   const storeName = settings.storeName || store?.name || 'Loja';
+  const isAcaiteria = store?.slug?.toLowerCase().includes('acaiteria') || storeName.toLowerCase().includes('acaiteria') || storeName.toLowerCase().includes('açaiteria');
 
   const buildItemsText = () => {
     return cart.filter(i => i.quantity > 0).map(i => {
@@ -2539,19 +2540,23 @@ const CheckoutPage = () => {
           <span className="font-bold text-xl">{formatCurrency(total)}</span>
         </div>
 
-        {/* 3 Action Buttons */}
+        {/* Action Buttons */}
         <div className="mt-4 space-y-3">
           <button onClick={handleSendOrder} className="w-full bg-[#4caf50] text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#43a047] transition-colors shadow-md">
             <span className="bg-white/20 p-1 rounded-full"><Phone size={16} /></span> ENVIAR PEDIDO
           </button>
 
-          <button onClick={handleSendQuoteWhatsApp} className="w-full bg-[#25D366] text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#1da851] transition-colors shadow-md">
-            <span className="bg-white/20 p-1 rounded-full"><MessageSquare size={16} /></span> SOLICITAR ORÇAMENTO (WhatsApp)
-          </button>
+          {!isAcaiteria && (
+            <>
+              <button onClick={handleSendQuoteWhatsApp} className="w-full bg-[#25D366] text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#1da851] transition-colors shadow-md">
+                <span className="bg-white/20 p-1 rounded-full"><MessageSquare size={16} /></span> SOLICITAR ORÇAMENTO (WhatsApp)
+              </button>
 
-          <button onClick={handleDownloadQuotePDF} className="w-full bg-[#e53935] text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#c62828] transition-colors shadow-md">
-            <span className="bg-white/20 p-1 rounded-full"><FileText size={16} /></span> BAIXAR ORÇAMENTO (PDF)
-          </button>
+              <button onClick={handleDownloadQuotePDF} className="w-full bg-[#e53935] text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#c62828] transition-colors shadow-md">
+                <span className="bg-white/20 p-1 rounded-full"><FileText size={16} /></span> BAIXAR ORÇAMENTO (PDF)
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
