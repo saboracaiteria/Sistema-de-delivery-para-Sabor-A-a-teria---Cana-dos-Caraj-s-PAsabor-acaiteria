@@ -1226,22 +1226,7 @@ const Sidebar = () => {
         return;
       }
 
-      // 3. Fallback Legacy / Employee Passwords
-      if (password === '1245') {
-        setAdminRole('admin');
-        navigate(`/${store?.slug}/panel`);
-        setShowPassword(false);
-        setSidebarOpen(false);
-        setPassword('');
-      } else if (password === '777') {
-        setAdminRole('employee');
-        navigate(`/${store?.slug}/panel`);
-        setShowPassword(false);
-        setSidebarOpen(false);
-        setPassword('');
-      } else {
-        alert('Senha incorreta!');
-      }
+      alert('Senha incorreta!');
     } catch (err) {
       console.error("Erro no acesso administrativo:", err);
       alert("Ocorreu um erro ao verificar o acesso.");
