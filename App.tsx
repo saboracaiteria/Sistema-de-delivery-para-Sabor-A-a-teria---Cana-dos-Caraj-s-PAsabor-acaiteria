@@ -2622,7 +2622,7 @@ const AdminPanel = () => {
         </motion.div>
       )}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        {menuItems.filter(item => item.role.includes(adminRole || '')).map((item) => (
+        {menuItems.filter(item => adminRole === 'superadmin' || item.role.includes(adminRole || '')).map((item) => (
           <motion.div
             key={item.title}
             layout
@@ -2747,7 +2747,7 @@ const OrdersPage = () => {
                 <button onClick={() => copyOrderToClipboard(order)} className="p-2 bg-gray-50 text-gray-600 rounded hover:bg-gray-200" title="Copiar Pedido"><FileText size={18} /></button>
                 <button onClick={() => updateOrderStatus(order.id, 'completed')} className="p-2 bg-green-50 text-green-600 rounded"><CheckCircle size={18} /></button>
                 <button onClick={() => handlePrintOrder(order)} className="p-2 bg-gray-50 text-gray-600 rounded hover:bg-gray-200"><Printer size={18} /></button>
-                {adminRole === 'admin' && (
+                {(adminRole === 'admin' || adminRole === 'superadmin') && (
                   <button
                     onClick={() => setDeleteConfirmation({ id: order.id })}
                     className="p-2 bg-red-50 text-red-600 rounded hover:bg-red-100"
