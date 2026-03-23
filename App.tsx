@@ -1209,7 +1209,7 @@ const Sidebar = () => {
       // 2. Check Super Admin Password
       if (password === SUPER_ADMIN_PASSWORD) {
         setAdminRole('superadmin');
-        navigate('/platform');
+        navigate(store?.slug ? `/${store.slug}/panel` : '/platform');
         setShowPassword(false);
         setSidebarOpen(false);
         setPassword('');
