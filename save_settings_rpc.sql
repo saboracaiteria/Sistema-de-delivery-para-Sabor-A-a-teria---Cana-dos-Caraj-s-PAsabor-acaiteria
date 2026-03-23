@@ -75,7 +75,7 @@ BEGIN
         whatsapp_number, store_status, delivery_fee, delivery_only,
         opening_hours, theme_colors, closed_message, open_message,
         delivery_time, pickup_time, delivery_close_time,
-        instagram_url, business_address, copyright_text, updated_at
+        instagram_url, business_address, copyright_text, checkout_review_message, updated_at
     ) VALUES (
         p_store_id,
         v_store_name,
@@ -96,6 +96,7 @@ BEGIN
         (p_settings ->> 'instagram_url'),
         (p_settings ->> 'business_address'),
         (p_settings ->> 'copyright_text'),
+        (p_settings ->> 'checkout_review_message'),
         NOW()
     )
     ON CONFLICT (store_id) DO UPDATE SET
@@ -117,6 +118,7 @@ BEGIN
         instagram_url     = COALESCE(EXCLUDED.instagram_url, settings.instagram_url),
         business_address  = COALESCE(EXCLUDED.business_address, settings.business_address),
         copyright_text    = COALESCE(EXCLUDED.copyright_text, settings.copyright_text),
+        checkout_review_message = COALESCE(EXCLUDED.checkout_review_message, settings.checkout_review_message),
         updated_at        = NOW();
 END;
 $$;

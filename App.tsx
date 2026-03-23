@@ -552,7 +552,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         deliveryCloseTime: data.delivery_close_time || '21:00',
         instagramUrl: data.instagram_url,
         businessAddress: data.business_address,
-        copyrightText: data.copyright_text
+        copyrightText: data.copyright_text,
+        checkoutReviewMessage: data.checkout_review_message
       });
     }
   };
@@ -960,6 +961,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     if (s.instagramUrl !== undefined) dbSettings.instagram_url = s.instagramUrl;
     if (s.businessAddress !== undefined) dbSettings.business_address = s.businessAddress;
     if (s.copyrightText !== undefined) dbSettings.copyright_text = s.copyrightText;
+    if (s.checkoutReviewMessage !== undefined) dbSettings.checkout_review_message = s.checkoutReviewMessage;
 
     // Se dbSettings tiver apenas store_id e nenhum outro campo para atualizar, e s não for vazio, algo está errado
     // Mas se s estiver vazio (ex: Save button), queremos salvar o estado ATUAL.
@@ -983,7 +985,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         delivery_close_time: settings.deliveryCloseTime,
         instagram_url: settings.instagramUrl,
         business_address: settings.businessAddress,
-        copyright_text: settings.copyrightText
+        copyright_text: settings.copyrightText,
+        checkout_review_message: settings.checkoutReviewMessage
       });
     }
 
@@ -2530,7 +2533,7 @@ const CheckoutPage = () => {
         <div className="mt-4 bg-yellow-500/20 border border-yellow-500/40 rounded-lg p-3 flex items-start gap-2">
           <AlertCircle size={18} className="text-yellow-400 mt-0.5 flex-shrink-0" />
           <p className="text-yellow-100 text-xs">
-            Seu pedido será revisado pela loja. Você poderá receber um <strong>desconto especial</strong> na confirmação!
+            {settings.checkoutReviewMessage || 'Seu pedido será revisado pela loja. Você poderá receber um desconto especial na confirmação!'}
           </p>
         </div>
 
@@ -3835,6 +3838,19 @@ const SettingsPage = () => {
                 value={localSettings.copyrightText || ''}
                 onChange={(e) => setLocalSettings(prev => ({ ...prev, copyrightText: e.target.value }))}
                 placeholder="Ex: © 2025-2026 Obba Açaí"
+                className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Mensagem de Revisão de Pedido (Checkout)
+              </label>
+              <textarea
+                value={localSettings.checkoutReviewMessage || ''}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, checkoutReviewMessage: e.target.value }))}
+                placeholder="Opcional. Ex: Seu pedido será revisado pela loja. Você poderá receber um desconto especial na confirmação!"
+                rows={2}
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
             </div>

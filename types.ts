@@ -176,6 +176,7 @@ export interface GlobalSettings {
   copyrightText?: string;
   noteTitle?: string;
   notePlaceholder?: string;
+  checkoutReviewMessage?: string;
 }
 
 export interface VisitorStat {
