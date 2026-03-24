@@ -10,9 +10,8 @@ export const Footer = () => {
       <div className="max-w-4xl mx-auto">
         {/* Instagram Link */}
         <div className="flex justify-center mb-3">
-          {settings.instagramUrl ? (
           <a
-            href={settings.instagramUrl}
+            href={settings.instagramUrl || "https://instagram.com/"}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white px-4 py-2 rounded-full font-bold hover:opacity-90 transition-opacity shadow-lg text-sm"
@@ -22,7 +21,6 @@ export const Footer = () => {
             </svg>
             Siga-nos no Instagram
           </a>
-          ) : null}
         </div>
 
         {/* Location & Year */}
