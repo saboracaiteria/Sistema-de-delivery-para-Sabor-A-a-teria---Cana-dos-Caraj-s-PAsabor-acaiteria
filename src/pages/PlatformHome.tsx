@@ -39,7 +39,7 @@ export const PlatformHome = () => {
   const goModern = () => {
     localStorage.setItem('preferredUI', 'modern');
     window.dispatchEvent(new CustomEvent('changeUIMode', { detail: 'modern' }));
-    navigate('/sabor-acaiteria');
+    navigate('/sabor-acaiteria/modern');
   };
 
   const goLegacy = () => {
@@ -98,7 +98,7 @@ export const PlatformHome = () => {
           </span>
         </div>
         <button
-          onClick={() => navigate('/login')}
+          onClick={() => navigate('/admin')}
           className="px-5 py-2.5 bg-white/5 backdrop-blur text-white/80 hover:text-white font-bold rounded-full border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-sm"
         >
           Área do Lojista
@@ -278,8 +278,14 @@ export const PlatformHome = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 py-8 text-center text-white/25 text-sm font-medium relative z-10">
-        <p>© 2026 Plataforma de Delivery · Desenvolvido por @_nildoxz</p>
+      <footer className="border-t border-white/5 py-8 text-center text-white/25 text-sm font-medium relative z-10 flex flex-col items-center gap-4">
+        <p>© 2026 Plataforma de Delivery · Canaã Delivery OS</p>
+        <button 
+          onClick={() => navigate('/platform')}
+          className="text-[10px] uppercase tracking-widest opacity-30 hover:opacity-100 transition-opacity"
+        >
+          Gerenciar Plataforma
+        </button>
       </footer>
     </div>
   );

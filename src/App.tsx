@@ -41,7 +41,9 @@ const AppContent = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const isPlatformHome = location.pathname === '/';
   const isAdminRoute = location.pathname.includes('/panel') || location.pathname.startsWith('/platform') || location.pathname.startsWith('/admin') || location.pathname.startsWith('/setup');
+  const isStoreSpecificRoute = !isPlatformHome && !isAdminRoute;
   const [showExitModal, setShowExitModal] = useState(false);
 
   useEffect(() => {
@@ -93,7 +95,7 @@ const AppContent = () => {
         onClose={() => setShowExitModal(false)}
         onConfirm={handleConfirmExit}
       />
-      {!isAdminRoute && <Header />}
+      {isStoreSpecificRoute && <Header />}
 
       <Routes>
         {/* === Rotas da Plataforma (Nível Superior) === */}
@@ -147,8 +149,8 @@ const AppContent = () => {
         <Route path="/panel/*" element={<AdminPanel />} />
       </Routes>
 
-      {!isAdminRoute && <Sidebar />}
-      {!isAdminRoute && <FloatingCartButton />}
+      {isStoreSpecificRoute && <Sidebar />}
+      {isStoreSpecificRoute && <FloatingCartButton />}
     </div>
   );
 };
