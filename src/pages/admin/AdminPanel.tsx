@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { FileText, Settings, BarChart2, List, Folder, ToggleLeft, Tag, Palette, Package, Printer, LogOut } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 
 export const AdminPanel: React.FC = () => {
   const { adminRole, setAdminRole } = useApp();
   const navigate = useNavigate();
+  const { slug } = useParams<{ slug: string }>();
 
   useEffect(() => {
     if (!adminRole) navigate('/');
@@ -26,9 +27,9 @@ export const AdminPanel: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
-      <div className="flex justify-between items-center mb-6 text-2xl font-bold text-gray-800">
-        <div>Admin</div>
-        <button onClick={() => { setAdminRole(null); navigate('/'); }} className="text-red-600 flex items-center gap-2 font-bold p-2 hover:bg-red-50 rounded-lg transition-colors">
+    <div className="flex justify-between items-center mb-6 text-2xl font-bold text-gray-800">
+        <div>Painel Administrativo</div>
+        <button onClick={() => { setAdminRole(null); navigate(`/${slug}`); }} className="text-red-600 flex items-center gap-2 font-bold p-2 hover:bg-red-50 rounded-lg transition-colors">
           <LogOut size={20} /> Sair
         </button>
       </div>
@@ -36,7 +37,7 @@ export const AdminPanel: React.FC = () => {
         {menuItems.filter(item => item.role.includes(adminRole || '')).map((item) => (
           <div
             key={item.title}
-            onClick={() => navigate(item.path)}
+            onClick={() => navigate(`/${slug}${item.path}`)}
             className="bg-white p-4 rounded-xl shadow-sm flex flex-col items-center justify-center gap-2 hover:shadow-md transition-all duration-300 hover:scale-[1.02] cursor-pointer min-h-[100px]"
           >
             <div className="text-gray-600">{item.icon}</div>

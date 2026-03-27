@@ -41,7 +41,7 @@ const AppContent = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const isAdminRoute = location.pathname.startsWith('/panel');
+  const isAdminRoute = location.pathname.includes('/panel') || location.pathname.startsWith('/platform') || location.pathname.startsWith('/admin') || location.pathname.startsWith('/setup');
   const [showExitModal, setShowExitModal] = useState(false);
 
   useEffect(() => {

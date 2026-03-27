@@ -1,12 +1,13 @@
-import React, { useState, createContext, useContext, useEffect } from 'react';
+import React, { useState, createContext, useContext, useEffect, useMemo } from 'react';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { supabase, isConfigured } from '../supabaseClient';
 import { 
   Category, Product, ProductGroup, CartItem, 
   GlobalSettings, Role, Coupon, OrderRecord, 
-  OrderStatus 
+  OrderStatus, Store
 } from '../types/types';
 import { Preferences } from '@capacitor/preferences';
-import { LOGO_URL, WHATSAPP_NUMBER, mockCategories, mockGroups, mockProducts, mockCoupons, mockSettings } from '../mockData';
+import { mockCategories, mockGroups, mockProducts, mockCoupons, mockSettings } from '../mockData';
 import { calculateStoreStatus } from '../utils/storeStatus';
 
 // Custom Hooks for Persistence
@@ -93,6 +94,7 @@ interface AppContextType {
   isSidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   loading: boolean;
+  store: Store | null;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -112,6 +114,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [adminRole, setAdminRole, roleLoaded] = usePersistedState<Role>('adminRole', null);
   const [appliedCoupon, setAppliedCoupon, couponLoaded] = usePersistedState<Coupon | null>('appliedCoupon', null);
   const [loading, setLoading] = useState(true);
+  const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [store, setStore] = useState<Store | null>(null);
 
   const isStorageLoaded = cartLoaded && roleLoaded && couponLoaded;
 
@@ -139,10 +145,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Initial data fetch
   useEffect(() => {
     const init = async () => {
+      // If we are not in a store route (e.g. /, /admin, /platform), we don't need a store context
+      const isPlatformRoute = ['/', '/admin', '/platform', '/setup'].includes(location.pathname);
+      
+      if (isPlatformRoute) {
+        setLoading(false);
+        return;
+      }
+
+      if (!slug) {
+        setLoading(false);
+        return;
+      }
+
       try {
+        setLoading(true);
         if (isConfigured) {
+          // 1. Fetch Store by Slug
+          const { data: storeData, error: storeError } = await supabase
+            .from('stores')
+            .select('*')
+            .eq('slug', slug)
+            .single();
+
+          if (storeError || !storeData) {
+            console.error('Store not found:', slug);
+            setLoading(false);
+            return;
+          }
+
+          setStore(storeData);
+
+          // 2. Fetch everything filtered by store_id
           await Promise.all([
-            fetchProducts(), fetchCategories(), fetchGroups(), fetchCoupons(), fetchOrders(), fetchSettings()
+            fetchProducts(storeData.id),
+            fetchCategories(storeData.id),
+            fetchGroups(storeData.id),
+            fetchCoupons(storeData.id),
+            fetchOrders(storeData.id),
+            fetchSettings(storeData.id)
           ]);
         } else {
           setProducts(mockProducts);
@@ -161,53 +202,80 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (isStorageLoaded) {
       init();
     }
-  }, [isStorageLoaded]);
+  }, [isStorageLoaded, slug, location.pathname]);
 
   // Real-time subscriptions
   useEffect(() => {
-    if (!isConfigured) return;
+    if (!isConfigured || !store) return;
 
     const channels = [
-      supabase.channel('public:products').on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => fetchProducts()).subscribe(),
-      supabase.channel('public:categories').on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => fetchCategories()).subscribe(),
-      supabase.channel('public:settings').on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, () => fetchSettings()).subscribe(),
-      // Add other channels as needed...
+      supabase.channel('public:products').on('postgres_changes', { event: '*', schema: 'public', table: 'products', filter: `store_id=eq.${store.id}` }, () => fetchProducts(store.id)).subscribe(),
+      supabase.channel('public:categories').on('postgres_changes', { event: '*', schema: 'public', table: 'categories', filter: `store_id=eq.${store.id}` }, () => fetchCategories(store.id)).subscribe(),
+      supabase.channel('public:settings').on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `store_id=eq.${store.id}` }, () => fetchSettings(store.id)).subscribe(),
     ];
 
     return () => {
       channels.forEach(channel => supabase.removeChannel(channel));
     };
-  }, []);
+  }, [store]);
 
   // Fetch functions (Internal)
-  const fetchProducts = async () => {
-    const { data } = await supabase.from('products').select('*, product_group_relations(group_id)').order('display_order', { ascending: true });
-    if (data) setProducts(data.map((p: any) => ({ ...p, id: p.id, groupIds: p.product_group_relations?.map((r: any) => r.group_id) || [] })));
+  const fetchProducts = async (storeId: string) => {
+    const { data } = await supabase
+      .from('products')
+      .select('*, product_group_relations(group_id)')
+      .eq('store_id', storeId)
+      .order('display_order', { ascending: true });
+    
+    if (data) setProducts(data.map((p: any) => ({ 
+      ...p, 
+      id: p.id, 
+      groupIds: p.product_group_relations?.map((r: any) => r.group_id) || [] 
+    })));
   };
 
-  const fetchCategories = async () => {
-    const { data } = await supabase.from('categories').select('*').order('display_order', { ascending: true });
+  const fetchCategories = async (storeId: string) => {
+    const { data } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('store_id', storeId)
+      .order('display_order', { ascending: true });
     if (data) setCategories(data);
   };
 
-  const fetchGroups = async () => {
-    const { data } = await supabase.from('product_groups').select('*, options:product_options(*)');
+  const fetchGroups = async (storeId: string) => {
+    const { data } = await supabase
+      .from('product_groups')
+      .select('*, options:product_options(*)')
+      .eq('store_id', storeId);
     if (data) setGroups(data);
   };
 
-  const fetchCoupons = async () => {
-    const { data } = await supabase.from('coupons').select('*');
+  const fetchCoupons = async (storeId: string) => {
+    const { data } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('store_id', storeId);
     if (data) setCoupons(data);
   };
 
-  const fetchOrders = async () => {
-    const { data } = await supabase.from('orders').select('*').order('date', { ascending: false });
+  const fetchOrders = async (storeId: string) => {
+    const { data } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('store_id', storeId)
+      .order('date', { ascending: false });
     if (data) setOrders(data);
   };
 
-  const fetchSettings = async () => {
-    const { data } = await supabase.from('settings').select('*').single();
+  const fetchSettings = async (storeId: string) => {
+    const { data } = await supabase
+      .from('settings')
+      .select('*')
+      .eq('store_id', storeId)
+      .single();
     if (data) setSettings(data);
+    else setSettings(mockSettings);
   };
 
   // Actions
@@ -264,7 +332,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addGroup, updateGroup, deleteGroup, addCoupon, updateCoupon, deleteCoupon,
     updateSettings, setAdminRole, addOrder, updateOrderStatus, deleteOrder,
     copyOrderToClipboard, checkStoreStatus: () => isStoreOpen ? 'open' : 'closed',
-    isStoreOpen, isSidebarOpen, setSidebarOpen, loading
+    isStoreOpen, isSidebarOpen, setSidebarOpen, loading, store
   };
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
