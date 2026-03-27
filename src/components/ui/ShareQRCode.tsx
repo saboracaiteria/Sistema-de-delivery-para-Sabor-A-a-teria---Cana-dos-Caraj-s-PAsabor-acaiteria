@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode, X, Share2, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useApp } from './App';
+import { useApp } from '../../contexts/AppContext';
 
 export const ShareQRCode = ({ variant = 'default' }: { variant?: 'default' | 'modern' }) => {
     const [isOpen, setIsOpen] = useState(false);

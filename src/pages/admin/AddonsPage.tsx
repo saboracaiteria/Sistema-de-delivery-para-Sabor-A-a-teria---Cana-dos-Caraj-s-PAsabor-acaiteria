@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, Trash2, Edit, ChevronDown, ChevronUp, CheckCircle, X, ToggleRight, ToggleLeft } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { ProductGroup, ProductOption } from '../../types/types';
-import { ConfirmModal } from '../../ConfirmModal';
+import { ConfirmModal } from '../../components/modals/ConfirmModal';
 import { supabase } from '../../supabaseClient';
 
 export const AddonsPage: React.FC = () => {

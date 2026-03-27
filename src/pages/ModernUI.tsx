@@ -297,7 +297,7 @@ export const ModernFloatingCart = () => {
 };
 
 // Storefront Container
-export const ModernHomePage = () => {
+export const ModernUI = () => {
     const { categories, products, settings, isStoreOpen, searchTerm } = useApp();
 
     // Memoize categorized products to avoid filtering on every render

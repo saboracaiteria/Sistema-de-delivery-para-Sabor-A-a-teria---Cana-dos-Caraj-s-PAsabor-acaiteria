@@ -4,7 +4,7 @@ import { ChevronLeft, FileText, CheckCircle, Printer, Trash2, X } from 'lucide-r
 import { useApp } from '../../contexts/AppContext';
 import { usePrinter } from '../../PrinterContext';
 import { OrderRecord, DeliveryMethod } from '../../types/types';
-import { ConfirmModal } from '../../ConfirmModal';
+import { ConfirmModal } from '../../components/modals/ConfirmModal';
 
 export const OrdersPage: React.FC = () => {
   const { orders, updateOrderStatus, groups, deleteOrder, adminRole, copyOrderToClipboard } = useApp();
@@ -44,18 +44,18 @@ export const OrdersPage: React.FC = () => {
       "[C]<b>OBBA ACAI DELIVERY</b>\n" +
       "[L]\n" +
       `[L]Pedido: #${order.id}\n` +
-      `[L]Data: ${new Date(order.date).toLocaleString()}\n" +
+      `[L]Data: ${new Date(order.date).toLocaleString()}\n` +
       "[L]--------------------------------\n" +
       `[L]Cliente: ${order.customerName}\n` +
-      `[L]Tel: ${order.whatsapp}\n" +
-      `[L]End: ${order.address || 'Retirada'}\n" +
+      `[L]Tel: ${order.whatsapp}\n` +
+      `[L]End: ${order.address || 'Retirada'}\n` +
       "[L]--------------------------------\n" +
       "[L]<b>ITENS</b>\n" +
       itemsText + "\n" +
       "[L]--------------------------------\n" +
-      `[L]Pagamento: ${order.paymentMethod}\n" +
-      `[L]Entrega: ${order.method === DeliveryMethod.DELIVERY ? 'Entrega' : 'Retirada'}\n" +
-      `[R]<b>TOTAL: ${formatCurrency(order.total)}</b>\n" +
+      `[L]Pagamento: ${order.paymentMethod}\n` +
+      `[L]Entrega: ${order.method === DeliveryMethod.DELIVERY ? 'Entrega' : 'Retirada'}\n` +
+      `[R]<b>TOTAL: ${formatCurrency(order.total)}</b>\n` +
       "[L]\n[L]\n[L]\n";
 
     await printText(receipt);

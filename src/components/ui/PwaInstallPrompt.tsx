@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Share, PlusSquare, X, Smartphone } from 'lucide-react';
-import { usePwaInstall } from './usePwaInstall';
+import { usePwaInstall } from '../../usePwaInstall';
 
 export const PwaInstallPrompt = ({ variant = 'default' }: { variant?: 'default' | 'modern' }) => {
     const { isReadyToInstall, isIOS, isStandalone, handleInstallClick } = usePwaInstall();

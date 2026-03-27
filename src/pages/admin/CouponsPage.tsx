@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, Trash2, Edit, ToggleLeft } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { Coupon } from '../../types/types';
-import { ConfirmModal } from '../../ConfirmModal';
+import { ConfirmModal } from '../../components/modals/ConfirmModal';
 
 export const CouponsPage: React.FC = () => {
   const { coupons, addCoupon, updateCoupon, deleteCoupon } = useApp();
