@@ -1,31 +1,26 @@
 
 
 import React, { useState, createContext, useContext, useEffect, useMemo, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { HashRouter, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   ShoppingCart, Menu, X, ChevronRight, Minus, Plus, Trash2,
   MapPin, Phone, CreditCard, Banknote, Clock, Search,
   ChevronLeft, ChevronDown, ChevronUp, Edit, FileText,
   Settings, BarChart2, List, Folder, LogOut, CheckCircle,
-  Printer, Tag, ToggleLeft, ToggleRight, Upload, Info, ArrowLeft, AlertCircle, Camera, Loader2,
-  Link as LinkIcon, Lock as LockIcon, Palette, Package, MessageSquare, LayoutTemplate, Share2, Check, Store as StoreIcon
+  Printer, Tag, ToggleLeft, ToggleRight, Upload, Info, ArrowLeft, AlertCircle,
+  Lock as LockIcon, Palette, Package, MessageSquare
 } from 'lucide-react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Preferences } from '@capacitor/preferences';
 import { usePrinter } from './PrinterContext';
-import { usePersistedState } from './usePersistedState';
-import { formatCurrency, calculateStoreStatus, fileToBase64 } from './storeUtils';
-import { Footer } from './Footer';
 import {
   CATEGORIES, PRODUCTS, GROUPS, WHATSAPP_NUMBER, LOGO_URL,
-  PAYMENT_METHODS, INITIAL_COUPONS, MOCK_ORDERS, SUPER_ADMIN_EMAILS, SUPER_ADMIN_PASSWORD
+  PAYMENT_METHODS, INITIAL_COUPONS, MOCK_ORDERS
 } from './constants';
 import {
   Category, Product, ProductGroup, CartItem, ProductOption,
   GlobalSettings, Role, Coupon, OrderRecord, OrderStatus, DeliveryMethod, OpeningHour
 } from './types';
-import type { Store as StoreType } from './types';
 import { CategoriesPage } from './CategoriesPage';
 import { ProductsPage } from './ProductsPage';
 import { ReportsPage } from './ReportsPage';
@@ -33,9 +28,7 @@ import { PrinterProvider } from './PrinterContext';
 import { PrinterSettingsPage } from './PrinterSettingsPage';
 import { ImageCropModal } from './ImageCropModal';
 import { InventoryPage } from './InventoryPage';
-import { SetupPage } from './SetupPage';
 import { ConfirmModal } from './ConfirmModal';
-import { Hero } from './Hero';
 import { supabase, isConfigured } from './supabaseClient';
 import {
   mockCategories,
@@ -44,56 +37,1098 @@ import {
   mockSettings,
   mockCoupons
 } from './mockData';
-import { ModernHomePage } from './ModernUI';
-import { LoginPage } from './LoginPage';
-import { PlatformHome } from './PlatformHome';
-import { PlatformAdminPanel } from './PlatformAdminPanel';
-
-// @ts-ignore - Virtual module provided by vite-plugin-pwa
-import { registerSW } from 'virtual:pwa-register';
-
-// Auto-update Service Worker
-const updateSW = registerSW({
-  onNeedRefresh() {
-    console.log('Nova versão detectada! Recarregando...');
-    updateSW(true); // Forces the new SW to take over and reloads the page
-  },
-  onOfflineReady() {
-    console.log('App pronto para uso offline.');
-  },
-});
 
 
 
 
-// --- Custom Hooks (Modularized to usePersistedState.ts) ---
+// --- Helper Functions ---
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+};
 
-// --- UI Components (Modularized to Footer.tsx) ---
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+};
 
-import { AppProvider, useApp } from './contexts/AppContext';
-export { useApp, AppProvider };
+// --- Custom Hooks ---
+
+const usePersistedState = <T,>(key: string, initialValue: T) => {
+  const [state, setState] = useState<T>(initialValue);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load initial state
+  useEffect(() => {
+    const loadState = async () => {
+      try {
+        const { value } = await Preferences.get({ key });
+        if (value) {
+          setState(JSON.parse(value));
+        }
+      } catch (error) {
+        console.error(`Error loading ${key} from Preferences:`, error);
+      } finally {
+        setIsLoaded(true);
+      }
+    };
+    loadState();
+  }, [key]);
+
+  // Save state on change (only after initial load)
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const saveState = async () => {
+      try {
+        await Preferences.set({ key, value: JSON.stringify(state) });
+      } catch (error) {
+        console.error(`Error saving ${key} to Preferences:`, error);
+        // Basic check for storage issues (though Preferences handles this differently than localStorage)
+      }
+    };
+    saveState();
+  }, [key, state, isLoaded]);
+
+  return [state, setState, isLoaded] as const;
+};
+
+// --- Footer Component ---
+const Footer = () => {
+  const { settings } = useApp();
+
+  return (
+    <footer className="relative overflow-hidden mt-12">
+      {/* Gradient background */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(135deg, #1a0533 0%, #2d0d5a 50%, #1a0533 100%)'
+        }}
+      />
+      {/* Decorative circles */}
+      <div className="absolute top-0 right-0 w-48 h-48 rounded-full opacity-5" style={{ background: 'var(--color-header-bg)', transform: 'translate(30%, -30%)' }} />
+      <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full opacity-5" style={{ background: 'var(--color-button-primary)', transform: 'translate(-30%, 30%)' }} />
+
+      <div className="relative z-10 text-white py-8 px-4">
+        <div className="max-w-md mx-auto">
+          {/* Store emoji + name */}
+          <div className="text-center mb-5">
+            <span className="text-3xl">🍇</span>
+            <p className="font-heading font-bold text-lg mt-1 text-purple-200">
+              {settings.storeName || 'Sabor Açaíteria'}
+            </p>
+          </div>
+
+          {/* Instagram Link */}
+          <div className="flex justify-center mb-5">
+            <a
+              href={settings.instagramUrl || "https://www.instagram.com/obba_acai_/"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2.5 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 text-white px-7 py-3 rounded-full font-semibold text-sm hover:opacity-90 active:scale-95 transition-all shadow-lg btn-press"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+              </svg>
+              Siga no Instagram
+            </a>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-white/10 my-4" />
+
+          {/* Location & Copyright */}
+          <div className="text-center space-y-1">
+            <p className="text-purple-300 text-sm flex items-center justify-center gap-1.5">
+              <MapPin size={13} />
+              {settings.businessAddress || 'Canaã dos Carajás - PA'}
+            </p>
+            <p className="text-purple-400/70 text-xs">
+              {settings.copyrightText || '© 2025-2026 Sabor Açaíteria'}
+            </p>
+          </div>
+
+          {/* Developer Credit */}
+          <div className="text-center mt-4">
+            <p className="text-xs text-white/30">
+              Desenvolvido com 💜 por{' '}
+              <a
+                href="https://www.instagram.com/_nildoxz/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-300 font-semibold hover:text-white transition-colors"
+              >
+                @_nildoxz
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+// --- Context ---
+
+interface AppContextType {
+  products: Product[];
+  categories: Category[];
+  groups: ProductGroup[];
+  cart: CartItem[];
+  settings: GlobalSettings;
+  coupons: Coupon[];
+  orders: OrderRecord[];
+  adminRole: Role;
+  appliedCoupon: Coupon | null;
+  applyCoupon: (code: string) => { success: boolean; message: string };
+  removeCoupon: () => void;
+
+  addToCart: (item: CartItem) => void;
+  removeFromCart: (cartId: string) => void;
+  updateCartQuantity: (cartId: string, quantity: number) => void;
+  updateCartNote: (cartId: string, note: string) => void;
+  clearCart: () => void;
+
+  addProduct: (product: Product) => void;
+  updateProduct: (product: Product) => void;
+  deleteProduct: (id: string) => void;
+  reorderProducts: (categoryId: string, products: Product[]) => void;
+
+  addCategory: (category: Category) => void;
+  updateCategory: (category: Category) => void;
+  deleteCategory: (id: string) => void;
+
+  addGroup: (group: ProductGroup) => void;
+  updateGroup: (group: ProductGroup) => void;
+  deleteGroup: (id: string) => void;
+
+  addCoupon: (coupon: Coupon) => void;
+  updateCoupon: (coupon: Coupon) => void;
+  deleteCoupon: (id: string) => void;
+
+  updateSettings: (newSettings: Partial<GlobalSettings>) => void;
+  setAdminRole: (role: Role) => void;
+  addOrder: (order: OrderRecord) => void;
+  updateOrderStatus: (id: string, status: OrderStatus) => void;
+  deleteOrder: (id: string) => void;
+  copyOrderToClipboard: (order: OrderRecord) => void;
+
+  checkStoreStatus: () => 'open' | 'closed';
+  isStoreOpen: boolean;
+  isSidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+  loading: boolean;
+}
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Dados locais (apenas carrinho e estado da UI)
+  const [cart, setCart, cartLoaded] = usePersistedState<CartItem[]>('cart', []);
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [adminRole, setAdminRole, roleLoaded] = usePersistedState<Role>('adminRole', null);
+  const [appliedCoupon, setAppliedCoupon, couponLoaded] = usePersistedState<Coupon | null>('appliedCoupon', null);
+  const [loading, setLoading] = useState(true);
+
+  const isStorageLoaded = cartLoaded && roleLoaded && couponLoaded;
+
+  // Dados do Supabase
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [groups, setGroups] = useState<ProductGroup[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [settings, setSettings] = useState<GlobalSettings>({
+    storeName: 'Obba Açaí',
+    logoUrl: LOGO_URL,
+    logoShape: 'circle',
+    bannerUrl: '',
+    whatsappNumber: WHATSAPP_NUMBER,
+    storeStatus: 'auto',
+    deliveryFee: 5.00,
+    deliveryOnly: false,
+    openingHours: []
+  });
+
+  // Reactive Store Status
+  const [isStoreOpen, setIsStoreOpen] = useState(false);
+
+  // Helper function for store status logic (Pure)
+  const calculateStoreStatus = (currentSettings: GlobalSettings): boolean => {
+    if (!currentSettings || !currentSettings.openingHours || !Array.isArray(currentSettings.openingHours)) {
+      return false;
+    }
+
+    if (currentSettings.storeStatus === 'open') return true;
+    if (currentSettings.storeStatus === 'closed') return false;
+
+    // Auto Mode
+    const now = new Date();
+    const day = now.getDay();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+
+    // 1. Check Today's Schedule
+    const todayConfig = currentSettings.openingHours.find(h => h.dayOfWeek === day);
+    if (todayConfig && todayConfig.enabled && todayConfig.open && todayConfig.close) {
+      const [oh, om] = todayConfig.open.split(':').map(Number);
+      const [ch, cm] = todayConfig.close.split(':').map(Number);
+
+      if (!isNaN(oh) && !isNaN(om) && !isNaN(ch) && !isNaN(cm)) {
+        const openTime = oh * 60 + om;
+        const closeTime = ch * 60 + cm;
+
+        if (closeTime < openTime) {
+          // Crosses midnight (e.g. 18:00 - 02:00)
+          // Open if we are AFTER open time (evening) OR BEFORE close time (early morning of next day logic handled below? No, "Today" covers 18:00-23:59)
+          // Actually, for "Today" 18:00-02:00, if it's 20:00, it's > 18:00.
+          // If it's 01:00, that is technically "Tomorrow" in day-of-week terms.
+          // So for "Today's" config, we only match if time >= openTime (until midnight).
+          // OR if time <= closeTime? No, 01:00 on "Tuesday" config means Wednesday morning.
+          // But `day` is Tuesday. 01:00 on Tuesday is Tuesday morning.
+          // So if today is Tuesday, and Tuesday config is 18:00-02:00.
+          // 01:00 Tuesday is BEFORE 18:00. It's likely part of Monday's shift.
+          // So for "Today's" config (Tuesday), we are open if time >= 18:00.
+          if (currentTime >= openTime) return true;
+        } else {
+          // Normal day (e.g. 08:00 - 20:00)
+          if (currentTime >= openTime && currentTime <= closeTime) return true;
+        }
+      }
+    }
+
+    // 2. Check Yesterday's Schedule (Early Morning Handling)
+    const yesterdayDay = day === 0 ? 6 : day - 1;
+    const yesterdayConfig = currentSettings.openingHours.find(h => h.dayOfWeek === yesterdayDay);
+    if (yesterdayConfig && yesterdayConfig.enabled && yesterdayConfig.open && yesterdayConfig.close) {
+      const [oh, om] = yesterdayConfig.open.split(':').map(Number);
+      const [ch, cm] = yesterdayConfig.close.split(':').map(Number);
+
+      if (!isNaN(oh) && !isNaN(om) && !isNaN(ch) && !isNaN(cm)) {
+        const openTime = oh * 60 + om;
+        const closeTime = ch * 60 + cm;
+
+        // Only matters if yesterday crossed midnight
+        if (closeTime < openTime) {
+          // We are in the "early morning" part of yesterday's shift
+          // e.g. Yesterday (Mon) 18:00 - 02:00. Today (Tue) 01:00.
+          // We are open if currentTime <= closeTime
+          if (currentTime <= closeTime) return true;
+        }
+      }
+    }
+
+    return false;
+  };
+
+  // Timer Effect
+  useEffect(() => {
+    const updateStatus = () => {
+      const status = calculateStoreStatus(settings);
+      setIsStoreOpen(status);
+    };
+
+    updateStatus(); // Initial check
+    const interval = setInterval(updateStatus, 30000); // Check every 30s
+
+    return () => clearInterval(interval);
+  }, [settings]); // Re-run when settings change
 
 
+  useEffect(() => {
+    const init = async () => {
+      try {
+        await fetchData();
+      } catch (error) {
+        console.error('Erro fatal ao carregar dados:', error);
+      } finally {
+        setLoading(false);
+        console.log('App loaded', new Date().toISOString());
+      }
+    };
+    if (isStorageLoaded) {
+      init();
+    }
+  }, [isStorageLoaded]);
+
+  // Visitor Tracking
+  useEffect(() => {
+    const trackVisitor = async () => {
+      // Check if already visited this session
+      if (sessionStorage.getItem('visited_today')) return;
+
+      try {
+        if (!isConfigured) return; // Don't track if offline/mock
+
+        const { error } = await supabase.rpc('increment_visitor_count');
+
+        if (!error) {
+          sessionStorage.setItem('visited_today', 'true');
+          console.log("Visitor tracked");
+        } else {
+          console.error("Error tracking visitor:", error);
+        }
+      } catch (err) {
+        console.error("Error in visitor tracking:", err);
+      }
+    };
+
+    // Only track if configured and not already tracked
+    trackVisitor();
+  }, []); // Run once on mount
+
+
+
+  // Configurar subscriptions para atualizações em tempo real
+  useEffect(() => {
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    let previousOrderCount = orders.length;
+
+    const handleNewOrder = async () => {
+      await fetchOrders();
+
+      // Check if a new order was added (count increased)
+      if (orders.length > previousOrderCount && 'Notification' in window && Notification.permission === 'granted') {
+        // Only show notification if page is not visible
+        if (document.hidden) {
+          new Notification('Novo Pedido! 🔔', {
+            body: 'Um novo pedido foi recebido. Clique para visualizar.',
+            icon: settings.logoUrl || '/logo.png',
+            tag: 'new-order',
+            requireInteraction: true
+          });
+        }
+      }
+      previousOrderCount = orders.length;
+    };
+
+    const channels = [
+      supabase.channel('public:products').on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => fetchProducts()).subscribe(),
+      supabase.channel('public:categories').on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => fetchCategories()).subscribe(),
+      supabase.channel('public:groups').on('postgres_changes', { event: '*', schema: 'public', table: 'product_groups' }, () => fetchGroups()).subscribe(),
+      supabase.channel('public:options').on('postgres_changes', { event: '*', schema: 'public', table: 'product_options' }, () => fetchGroups()).subscribe(), // Recarrega grupos se opções mudarem
+      supabase.channel('public:coupons').on('postgres_changes', { event: '*', schema: 'public', table: 'coupons' }, () => fetchCoupons()).subscribe(),
+      supabase.channel('public:orders').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, handleNewOrder).subscribe(),
+      supabase.channel('public:settings').on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, () => fetchSettings()).subscribe(),
+    ];
+
+    return () => {
+      channels.forEach(channel => supabase.removeChannel(channel));
+    };
+  }, [orders.length]);
+
+  // --- Funções de Fetch ---
+
+  const fetchData = async () => {
+    try {
+      if (isConfigured) {
+        // Online Mode: Fetch from Supabase
+        await Promise.all([
+          fetchProducts().catch(e => console.error('Erro products:', e)),
+          fetchCategories().catch(e => console.error('Erro categories:', e)),
+          fetchGroups().catch(e => console.error('Erro groups:', e)),
+          fetchCoupons().catch(e => console.error('Erro coupons:', e)),
+          fetchOrders().catch(e => console.error('Erro orders:', e)),
+          fetchSettings().catch(e => console.error('Erro settings:', e))
+        ]);
+      } else {
+        // Offline Mode: Load mock data (Sabor Açaíteria)
+        console.warn("⚠️ MODO OFFLINE: Carregando dados mock da Sabor Açaíteria...");
+        setProducts(mockProducts);
+        setCategories(mockCategories);
+        setGroups(mockGroups);
+        setCoupons(mockCoupons);
+        setOrders([]);
+        setSettings(mockSettings);
+        console.log("✅ Dados mock carregados com sucesso!");
+        console.log(`   📦 ${mockProducts.length} produtos | 📂 ${mockCategories.length} categorias | 🎁 ${mockCoupons.length} cupons`);
+      }
+    } catch (e) {
+      console.error('Erro no Promise.all:', e);
+    }
+  };
+
+
+  const fetchProducts = async () => {
+    const { data } = await supabase.from('products').select(`
+      *,
+      product_group_relations (group_id)
+    `).order('display_order', { ascending: true });
+
+    if (data) {
+      // Mapear para o formato interno (adicionar groupIds e displayOrder)
+      const mappedProducts: Product[] = data.map(p => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        price: p.price,
+        image: p.image,
+        categoryId: p.category_id,
+        groupIds: p.product_group_relations?.map((r: any) => r.group_id) || [],
+        displayOrder: p.display_order ?? 0,
+        active: p.active ?? true
+      }));
+      setProducts(mappedProducts);
+    }
+  };
+
+  const fetchCategories = async () => {
+    const { data } = await supabase.from('categories').select('*').order('display_order', { ascending: true });
+    if (data) {
+      const mappedCategories: Category[] = data.map(c => ({
+        id: c.id,
+        title: c.title,
+        icon: c.icon,
+        displayOrder: c.display_order ?? 0,
+        active: c.active ?? true
+      }));
+      setCategories(mappedCategories);
+    }
+  };
+
+  const fetchGroups = async () => {
+    const { data } = await supabase.from('product_groups').select(`
+      *,
+      options:product_options(*)
+    `);
+
+    if (data) {
+      // Mapear opções para garantir ordem ou formato se necessário
+      const mappedGroups: ProductGroup[] = data.map(g => ({
+        id: g.id,
+        title: g.title,
+        min: g.min,
+        max: g.max,
+        options: (g.options || []).map((o: any) => ({
+          id: o.id,
+          name: o.name,
+          price: o.price,
+          description: o.description,
+          active: o.active ?? true
+        })),
+        active: g.active ?? true
+      }));
+      setGroups(mappedGroups);
+    }
+  };
+
+  const fetchCoupons = async () => {
+    const { data } = await supabase.from('coupons').select('*');
+    if (data) {
+      const mappedCoupons: Coupon[] = data.map(c => ({
+        id: c.id,
+        code: c.code,
+        type: c.type,
+        value: c.value,
+        active: c.active,
+        usageCount: c.usage_count,
+        minOrderValue: c.min_order_value
+      }));
+      setCoupons(mappedCoupons);
+    }
+  };
+
+  const fetchOrders = async () => {
+    const { data } = await supabase.from('orders').select('*').order('date', { ascending: false });
+    if (data) {
+      // Mapear campos snake_case para camelCase
+      const mappedOrders: OrderRecord[] = data.map(o => ({
+        id: o.id,
+        date: o.date,
+        customerName: o.customer_name,
+        whatsapp: o.whatsapp,
+        method: o.method,
+        address: o.address,
+        paymentMethod: o.payment_method,
+        total: o.total,
+        itemsSummary: o.items_summary,
+        fullDetails: o.full_details,
+        status: o.status
+      }));
+      setOrders(mappedOrders);
+    }
+  };
+
+  const fetchSettings = async () => {
+    const { data } = await supabase.from('settings').select('*').single();
+    if (data) {
+      setSettings({
+        storeName: data.store_name,
+        logoUrl: data.logo_url,
+        logoShape: data.logo_shape || 'circle',
+        bannerUrl: data.banner_url,
+        whatsappNumber: data.whatsapp_number,
+        storeStatus: data.store_status,
+        deliveryFee: data.delivery_fee,
+        deliveryOnly: data.delivery_only,
+        openingHours: data.opening_hours,
+        themeColors: data.theme_colors,
+        closedMessage: data.closed_message || '🔴 Loja Fechada',
+        openMessage: data.open_message || '🟢 Aberto até às 23:00',
+        deliveryTime: data.delivery_time || '40min à 1h',
+        pickupTime: data.pickup_time || '20min à 45min',
+        deliveryCloseTime: data.delivery_close_time || '21:00',
+        instagramUrl: data.instagram_url,
+        businessAddress: data.business_address,
+        copyrightText: data.copyright_text
+      });
+    }
+  };
+
+  // Aplicar tema
+  useEffect(() => {
+    if (settings.themeColors) {
+      const root = document.documentElement;
+      const colors = settings.themeColors as any;
+
+      if (colors.headerBg) root.style.setProperty('--color-header-bg', colors.headerBg);
+      if (colors.headerText) root.style.setProperty('--color-header-text', colors.headerText);
+      if (colors.background) root.style.setProperty('--color-background', colors.background);
+      if (colors.cardBg) root.style.setProperty('--color-card-bg', colors.cardBg);
+      if (colors.cardText) root.style.setProperty('--color-card-text', colors.cardText);
+      if (colors.buttonPrimary) root.style.setProperty('--color-button-primary', colors.buttonPrimary);
+      if (colors.buttonText) root.style.setProperty('--color-button-text', colors.buttonText);
+      if (colors.textPrimary) root.style.setProperty('--color-text-primary', colors.textPrimary);
+      if (colors.textSecondary) root.style.setProperty('--color-text-secondary', colors.textSecondary);
+    }
+  }, [settings.themeColors]);
+
+  // --- Funções de Mutação (CRUD) ---
+
+  const addToCart = (item: CartItem) => {
+    setCart(prev => [...prev, item]);
+  };
+
+  const removeFromCart = (cartId: string) => {
+    setCart(prev => prev.filter(item => item.cartId !== cartId));
+  };
+
+  const updateCartQuantity = (cartId: string, quantity: number) => {
+    setCart(prev => {
+      if (quantity <= 0) return prev.filter(item => item.cartId !== cartId);
+      return prev.map(item => item.cartId === cartId ? { ...item, quantity } : item);
+    });
+  };
+
+  const updateCartNote = (cartId: string, note: string) => {
+    setCart(prev => prev.map(item => item.cartId === cartId ? { ...item, note } : item));
+  };
+
+  const clearCart = () => setCart([]);
+
+  const addProduct = async (p: Product) => {
+    if (!isConfigured) {
+      console.warn("OFFLINE: Product added locally.");
+      const mockId = Date.now().toString();
+      const newProduct = { ...p, id: mockId };
+      setProducts(prev => [...prev, newProduct]);
+      return;
+    }
+
+    // 1. Inserir produto
+    const { data: productData, error } = await supabase.from('products').insert([{
+      name: p.name,
+      description: p.description,
+      price: p.price,
+      image: p.image,
+      category_id: p.categoryId
+    }]).select().single();
+
+    if (error || !productData) {
+      console.error('Erro ao adicionar produto:', error);
+      return;
+    }
+
+    // 2. Inserir relações de grupo
+    if (p.groupIds && p.groupIds.length > 0) {
+      const relations = p.groupIds.map(gid => ({
+        product_id: productData.id,
+        group_id: gid
+      }));
+      await supabase.from('product_group_relations').insert(relations);
+    }
+  };
+
+  const updateProduct = async (p: Product) => {
+    // 0. Update Local State Immediately (Optimistic)
+    setProducts(prev => prev.map(prod => prod.id === p.id ? p : prod));
+
+    // 1. Atualizar produto
+    await supabase.from('products').update({
+      name: p.name,
+      description: p.description,
+      price: p.price,
+      image: p.image,
+      category_id: p.categoryId,
+      active: p.active // Include active status
+    }).eq('id', p.id);
+
+    // 2. Atualizar relações (remover todas e adicionar novas)
+    // Nota: Em produção idealmente faria diff, mas delete+insert é mais simples
+    await supabase.from('product_group_relations').delete().eq('product_id', p.id);
+
+    if (p.groupIds && p.groupIds.length > 0) {
+      const relations = p.groupIds.map(gid => ({
+        product_id: p.id,
+        group_id: gid
+      }));
+      await supabase.from('product_group_relations').insert(relations);
+    }
+  };
+
+  const deleteProduct = async (id: string) => {
+    setProducts(prev => prev.filter(p => p.id !== id)); // Optimistic delete
+    await supabase.from('products').delete().eq('id', id);
+  };
+
+  const reorderProducts = async (categoryId: string, reorderedProducts: Product[]) => {
+    // Optimistic update: update local state immediately
+    setProducts(prev => {
+      const otherProducts = prev.filter(p => p.categoryId !== categoryId);
+      return [...otherProducts, ...reorderedProducts];
+    });
+
+    // Update each product's display_order in Supabase
+    for (const product of reorderedProducts) {
+      await supabase.from('products').update({
+        display_order: product.displayOrder
+      }).eq('id', product.id);
+    }
+  };
+
+  const addCategory = async (c: Category) => {
+    if (!isConfigured) {
+      console.warn("OFFLINE: Category added locally.");
+      const newCat = { ...c, id: Date.now().toString() };
+      setCategories(prev => [...prev, newCat]);
+      return;
+    }
+    // Wait for ID from DB for insert usually, so manual optimistic update is harder without ID.
+    // relying on realtime for add is okay.
+    await supabase.from('categories').insert([{ title: c.title, icon: c.icon }]);
+  };
+
+  const updateCategory = async (c: Category) => {
+    setCategories(prev => prev.map(cat => cat.id === c.id ? c : cat)); // Optimistic
+    await supabase.from('categories').update({
+      title: c.title,
+      icon: c.icon,
+      active: c.active // Include active status
+    }).eq('id', c.id);
+  };
+
+  const deleteCategory = async (id: string) => {
+    setCategories(prev => prev.filter(c => c.id !== id)); // Optimistic
+    await supabase.from('categories').delete().eq('id', id);
+  };
+
+  const addGroup = async (g: ProductGroup) => {
+    if (!isConfigured) {
+      console.warn("OFFLINE: Group added locally.");
+      const newGroup = { ...g, id: Date.now().toString() };
+      setGroups(prev => [...prev, newGroup]);
+      return;
+    }
+
+    // 1. Inserir grupo
+    const { data: groupData, error } = await supabase.from('product_groups').insert([{
+      title: g.title,
+      min: g.min,
+      max: g.max
+    }]).select().single();
+
+    if (error || !groupData) return;
+
+    // 2. Inserir opções
+    if (g.options && g.options.length > 0) {
+      const options = g.options.map(o => ({
+        group_id: groupData.id,
+        name: o.name,
+        price: o.price,
+        description: o.description
+      }));
+      await supabase.from('product_options').insert(options);
+    }
+  };
+
+  const updateGroup = async (g: ProductGroup) => {
+    setGroups(prev => prev.map(grp => grp.id === g.id ? g : grp)); // Optimistic
+
+    // 1. Atualizar grupo
+    await supabase.from('product_groups').update({
+      title: g.title,
+      min: g.min,
+      max: g.max,
+      active: g.active // Include active status
+    }).eq('id', g.id);
+
+    // 2. Atualizar opções (estratégia simples: delete all + insert all)
+    // CUIDADO: Isso muda os IDs das opções. Se pedidos referenciarem opções por ID, isso quebraria histórico.
+    // Como pedidos salvam snapshot (fullDetails), não deve ser problema crítico agora.
+    await supabase.from('product_options').delete().eq('group_id', g.id);
+
+    if (g.options && g.options.length > 0) {
+      const options = g.options.map(o => ({
+        group_id: g.id,
+        name: o.name,
+        price: o.price,
+        description: o.description,
+        active: o.active // Persist option active status too
+      }));
+      await supabase.from('product_options').insert(options);
+    }
+  };
+
+  const deleteGroup = async (id: string) => {
+    setGroups(prev => prev.filter(g => g.id !== id)); // Optimistic
+    await supabase.from('product_groups').delete().eq('id', id);
+  };
+
+  const addCoupon = async (c: Coupon) => {
+    if (!isConfigured) {
+      console.warn("OFFLINE: Coupon added locally.");
+      const newCoupon = { ...c, id: Date.now().toString() };
+      setCoupons(prev => [...prev, newCoupon]);
+      return;
+    }
+
+    const { data, error } = await supabase.from('coupons').insert([{
+      code: c.code,
+      type: c.type,
+      value: c.value,
+      active: c.active,
+      usage_count: c.usageCount,
+      min_order_value: c.minOrderValue
+    }]);
+
+    if (error) {
+      console.error('Erro ao adicionar cupom:', error);
+      throw error;
+    }
+    // Realtime subscription will call fetchCoupons() automatically
+  };
+
+  const updateCoupon = async (c: Coupon) => {
+    await supabase.from('coupons').update({
+      code: c.code,
+      type: c.type,
+      value: c.value,
+      active: c.active,
+      usage_count: c.usageCount,
+      min_order_value: c.minOrderValue
+    }).eq('id', c.id);
+    // Realtime subscription will call fetchCoupons() automatically
+  };
+
+  const deleteCoupon = async (id: string) => {
+    await supabase.from('coupons').delete().eq('id', id);
+    // Realtime subscription will call fetchCoupons() automatically
+  };
+
+  const updateSettings = async (s: Partial<GlobalSettings>) => {
+    // Optimistic Update: Update local state immediately
+    setSettings(prev => ({ ...prev, ...s }));
+
+    if (!isConfigured) return;
+
+    // Mapear camelCase para snake_case
+    const dbSettings: any = {};
+    if (s.storeName !== undefined) dbSettings.store_name = s.storeName;
+    if (s.logoUrl !== undefined) dbSettings.logo_url = s.logoUrl;
+    if (s.logoShape !== undefined) dbSettings.logo_shape = s.logoShape;
+    if (s.bannerUrl !== undefined) dbSettings.banner_url = s.bannerUrl;
+    if (s.whatsappNumber !== undefined) dbSettings.whatsapp_number = s.whatsappNumber;
+    if (s.storeStatus !== undefined) dbSettings.store_status = s.storeStatus;
+    if (s.deliveryFee !== undefined) dbSettings.delivery_fee = s.deliveryFee;
+    if (s.deliveryOnly !== undefined) dbSettings.delivery_only = s.deliveryOnly;
+    if (s.openingHours !== undefined) dbSettings.opening_hours = s.openingHours;
+    if (s.themeColors !== undefined) dbSettings.theme_colors = s.themeColors;
+    if (s.closedMessage !== undefined) dbSettings.closed_message = s.closedMessage;
+    if (s.openMessage !== undefined) dbSettings.open_message = s.openMessage;
+    if (s.deliveryTime !== undefined) dbSettings.delivery_time = s.deliveryTime;
+    if (s.pickupTime !== undefined) dbSettings.pickup_time = s.pickupTime;
+    if (s.deliveryCloseTime !== undefined) dbSettings.delivery_close_time = s.deliveryCloseTime;
+    if (s.instagramUrl !== undefined) dbSettings.instagram_url = s.instagramUrl;
+    if (s.businessAddress !== undefined) dbSettings.business_address = s.businessAddress;
+    if (s.copyrightText !== undefined) dbSettings.copyright_text = s.copyrightText;
+
+    await supabase.from('settings').update(dbSettings).eq('id', 1);
+  };
+
+  const addOrder = async (o: OrderRecord) => {
+    if (!isConfigured) {
+      console.warn("OFFLINE: Order added locally.");
+      setOrders(prev => [o, ...prev]);
+      return;
+    }
+
+    await supabase.from('orders').insert([{
+      date: o.date,
+      customer_name: o.customerName,
+      whatsapp: o.whatsapp,
+      method: o.method,
+      address: o.address,
+      payment_method: o.paymentMethod,
+      total: o.total,
+      items_summary: o.itemsSummary,
+      full_details: o.fullDetails,
+      status: o.status
+    }]);
+  };
+
+  const updateOrderStatus = async (id: string, status: OrderStatus) => {
+    // Optimistic update
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+    await supabase.from('orders').update({ status }).eq('id', id);
+  };
+
+  const deleteOrder = async (id: string) => {
+    console.log('Deletando pedido:', id);
+
+    const { error } = await supabase.from('orders').delete().eq('id', id);
+
+    if (error) {
+      console.error('Erro ao deletar pedido:', error);
+      alert(`Erro ao deletar pedido: ${error.message}`);
+      return;
+    }
+
+    // Only update local state if delete was successful
+    setOrders(prev => prev.filter(o => o.id !== id));
+    console.log('Pedido deletado com sucesso');
+  };
+
+  const copyOrderToClipboard = (order: OrderRecord) => {
+    // Format order details similar to WhatsApp message
+    const itemsText = order.fullDetails.map(i => {
+      let txt = `${i.quantity}x ${i.product.name}`;
+
+      // Get option names from groups
+      const selectedOptionsText: string[] = [];
+      Object.entries(i.selectedOptions).forEach(([optionId, qty]) => {
+        if ((qty as number) > 0) {
+          for (const group of groups) {
+            const option = group.options.find(opt => opt.id === optionId);
+            if (option) {
+              selectedOptionsText.push(`${option.name} ${qty}x`);
+              break;
+            }
+          }
+        }
+      });
+
+      if (selectedOptionsText.length > 0) {
+        txt += `\n   (${selectedOptionsText.join(', ')})`;
+      }
+
+      if (i.note) txt += `\n   Obs: ${i.note}`;
+      return txt;
+    }).join('\n');
+
+    const text = `*Pedido #${order.id}*\n` +
+      `Cliente: ${order.customerName}\n` +
+      `Tel: ${order.whatsapp}\n` +
+      `Tipo: ${order.method}\n` +
+      `Endereço: ${order.address}\n` +
+      `Pagamento: ${order.paymentMethod}\n\n` +
+      `Itens:\n${itemsText}\n\n` +
+      `*Total: ${formatCurrency(order.total)}*`;
+
+    navigator.clipboard.writeText(text).then(() => {
+      alert('Pedido copiado para área de transferência!');
+    });
+  };
+
+  const applyCoupon = (code: string) => {
+    const coupon = coupons.find(c => c.code === code.toUpperCase() && c.active);
+    if (!coupon) {
+      return { success: false, message: 'Cupom inválido ou expirado' };
+    }
+
+    // Check minimum order value
+    const subtotal = cart.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0);
+    if (coupon.minOrderValue && subtotal < coupon.minOrderValue) {
+      return { success: false, message: `Valor mínimo para este cupom: ${formatCurrency(coupon.minOrderValue)}` };
+    }
+
+    setAppliedCoupon(coupon);
+    return { success: true, message: 'Cupom aplicado com sucesso!' };
+  };
+
+  const removeCoupon = () => setAppliedCoupon(null);
+
+
+
+  return (
+    <AppContext.Provider value={{
+      products, categories, groups, cart, settings, coupons, orders, adminRole, isSidebarOpen,
+      addToCart, removeFromCart, updateCartQuantity, updateCartNote, clearCart,
+      addProduct, updateProduct, deleteProduct, reorderProducts,
+      addCategory, updateCategory, deleteCategory,
+      addGroup, updateGroup, deleteGroup,
+      addCoupon, updateCoupon, deleteCoupon,
+      updateSettings, setAdminRole, addOrder,
+      updateOrderStatus,
+      deleteOrder,
+      copyOrderToClipboard,
+      checkStoreStatus: () => isStoreOpen ? 'open' : 'closed',
+      isStoreOpen,
+      setSidebarOpen,
+      appliedCoupon, applyCoupon, removeCoupon,
+      loading
+    }}>
+      {children}
+    </AppContext.Provider>
+  );
+};
+
+const useApp = () => {
+  const context = useContext(AppContext);
+  if (!context) throw new Error("useApp must be used within AppProvider");
+  return context;
+};
 
 // --- Components ---
 
-import { Sidebar } from './components/Sidebar';
-const Header = () => {
-  const { setSidebarOpen } = useApp();
+const Sidebar = () => {
+  const { isSidebarOpen, setSidebarOpen, categories, setAdminRole } = useApp();
+  const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+
+  const handleAdminAccess = () => {
+    if (password === '1245') {
+      setAdminRole('admin');
+      navigate('/panel');
+      setShowPassword(false);
+      setSidebarOpen(false);
+      setPassword('');
+    } else if (password === '777') {
+      setAdminRole('employee');
+      navigate('/panel');
+      setShowPassword(false);
+      setSidebarOpen(false);
+      setPassword('');
+    } else {
+      alert('Senha incorreta!');
+    }
+  };
+
   return (
-    <div
-      className="h-16 flex items-center justify-between px-4 shadow-md sticky top-0 z-40 transition-colors duration-300"
-      style={{ backgroundColor: 'var(--color-header-bg, #4E0797)' }}
+    <>
+      {isSidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setSidebarOpen(false)} />
+      )}
+      <div className={`fixed top-0 left-0 h-full w-64 bg-white shadow-2xl z-[70] transform transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div
+          className="p-4 text-white font-bold text-lg flex justify-between items-center transition-colors duration-300"
+          style={{
+            backgroundColor: 'var(--color-header-bg, #4E0797)',
+            color: 'var(--color-header-text, #ffffff)'
+          }}
+        >
+          <span>Menu</span>
+          <button onClick={() => setSidebarOpen(false)}><X style={{ color: 'var(--color-header-text, #ffffff)' }} /></button>
+        </div>
+        <div className="py-2">
+          <button onClick={() => { navigate('/'); setSidebarOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-100 border-l-4 border-transparent hover:border-brand-purple font-medium text-gray-700">
+            Início
+          </button>
+          <div className="border-t border-gray-100 my-2" />
+          {categories.map(cat => (
+            <button key={cat.id} onClick={() => {
+              navigate('/');
+              setTimeout(() => document.getElementById(`cat-${cat.id}`)?.scrollIntoView({ behavior: 'smooth' }), 100);
+              setSidebarOpen(false);
+            }} className="w-full text-left px-4 py-3 hover:bg-gray-100 text-gray-600 flex items-center gap-2">
+              <span>{cat.icon}</span> {cat.title}
+            </button>
+          ))}
+          <div className="border-t border-gray-100 my-2" />
+          <button onClick={() => setShowPassword(true)} className="w-full text-left px-4 py-3 hover:bg-gray-100 text-gray-600 flex items-center justify-center gap-2">
+            <LockIcon size={24} />
+          </button>
+        </div>
+      </div>
+
+      {showPassword && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 className="text-xl font-bold mb-4 text-center">Acesso Restrito</h3>
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Digite a senha"
+              className="w-full p-3 border rounded-lg mb-4 text-center text-lg bg-gray-50 outline-none focus:ring-2 focus:ring-brand-purple"
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setShowPassword(false)} className="flex-1 py-3 bg-gray-200 rounded-lg font-bold text-gray-700">Cancelar</button>
+              <button onClick={handleAdminAccess} className="flex-1 py-3 bg-brand-purple text-white rounded-lg font-bold">Entrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+const Header = () => {
+  const { setSidebarOpen, settings, cart } = useApp();
+  const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const navigate = useNavigate();
+
+  return (
+    <header
+      className="h-16 flex items-center justify-between px-4 sticky top-0 z-40 header-glass transition-all duration-300"
+      style={{
+        backgroundColor: 'var(--color-header-bg, #4E0797)',
+        boxShadow: '0 2px 20px rgba(0,0,0,0.25)'
+      }}
     >
-      <div className="max-w-sm mx-auto w-full flex items-center justify-between">
-        <button onClick={() => setSidebarOpen(true)} className="text-white p-1">
-          <Menu size={28} style={{ color: 'var(--color-header-text, #ffffff)' }} />
+      <div className="max-w-lg mx-auto w-full flex items-center justify-between">
+        {/* Menu button */}
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 active:bg-white/20 transition-colors btn-press"
+          aria-label="Abrir menu"
+        >
+          <Menu size={24} style={{ color: 'var(--color-header-text, #ffffff)' }} />
         </button>
-        <button className="text-white p-1">
-          <Search size={28} style={{ color: 'var(--color-header-text, #ffffff)' }} />
+
+        {/* Store name - centered */}
+        <div className="flex flex-col items-center">
+          <span
+            className="font-heading font-bold text-lg leading-tight tracking-wide"
+            style={{ color: 'var(--color-header-text, #ffffff)', fontFamily: 'Poppins, sans-serif' }}
+          >
+            {settings.storeName || 'Açaíteria'}
+          </span>
+        </div>
+
+        {/* Cart icon shortcut */}
+        <button
+          onClick={() => navigate('/cart')}
+          className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 active:bg-white/20 transition-colors btn-press relative"
+          aria-label="Ver carrinho"
+        >
+          <ShoppingCart size={22} style={{ color: 'var(--color-header-text, #ffffff)' }} />
+          {cartCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-400 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              {cartCount}
+            </span>
+          )}
         </button>
       </div>
-    </div>
+    </header>
   );
 };
 
@@ -127,55 +1162,69 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
 
   return (
     <>
-      <motion.div
-        layout
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        whileHover={{
-          y: -8,
-          scale: 1.03,
-          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)"
-        }}
-        whileTap={{ scale: 0.95 }}
-        className={`relative flex-shrink-0 w-[140px] bg-white rounded-xl shadow-sm border border-gray-100 mr-3 mb-3 overflow-hidden cursor-pointer`}
+      {/* Premium Product Card */}
+      <div
+        className={`product-card flex-shrink-0 w-[172px] bg-white rounded-2xl shadow-card overflow-hidden cursor-pointer mr-3 mb-2 border border-gray-100/80 ${
+          !isStoreOpen ? 'opacity-60 grayscale' : ''
+        }`}
         onClick={handleAdd}
+        role="button"
+        aria-label={`Adicionar ${product.name} ao carrinho`}
       >
-        <div className="h-[110px] w-full overflow-hidden relative group">
-          <motion.img
+        {/* Image with zoom effect */}
+        <div className="img-zoom h-[138px] w-full relative">
+          <img
             src={product.image}
             alt={product.name}
             className="w-full h-full object-cover"
-            whileHover={{ scale: 1.1 }}
-            transition={{ duration: 0.4 }}
+            loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-2">
-            <span className="text-white text-[10px] font-bold bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/30">
-              Adicionar
+          {/* Price overlay badge */}
+          <div className="absolute bottom-0 left-0 right-0 px-2.5 py-1.5 bg-gradient-to-t from-black/60 to-transparent">
+            <span className="text-white font-heading font-bold text-sm drop-shadow">
+              R$ {product.price.toFixed(2)}
             </span>
           </div>
-        </div>
-        <div className="p-2 flex flex-col h-[95px]">
-          <h3 className="font-bold text-gray-800 text-[11px] leading-tight mb-1 line-clamp-2 h-7">{product.name}</h3>
-          <p className="text-[9px] text-gray-500 line-clamp-2 mb-auto leading-relaxed">{product.description}</p>
-          <div className="flex items-center justify-between mt-1 pt-1 border-t border-gray-50">
-            <span className="font-extrabold text-gray-900 text-xs">R$ {product.price.toFixed(2)}</span>
-            <div className={`p-1 rounded-full ${hasOptions ? 'bg-gray-100 text-gray-600' : 'bg-red-50 text-red-500'}`}>
-              {hasOptions ? <Settings size={12} /> : <Plus size={12} />}
-            </div>
+          {/* Add indicator */}
+          <div className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center shadow-md" style={{ backgroundColor: 'var(--color-button-primary)' }}>
+            <Plus size={14} className="text-white" />
           </div>
         </div>
-      </motion.div>
+
+        {/* Content */}
+        <div className="p-2.5">
+          <h3 className="font-semibold text-gray-800 text-[12.5px] leading-snug line-clamp-2 mb-1">
+            {product.name}
+          </h3>
+          {product.description && (
+            <p className="text-[10px] text-gray-400 line-clamp-2 leading-relaxed">
+              {product.description}
+            </p>
+          )}
+          {hasOptions && (
+            <div className="mt-2 flex items-center gap-1">
+              <span className="text-[9px] text-purple-500 font-medium bg-purple-50 px-1.5 py-0.5 rounded-full">
+                Personalizar
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {isModalOpen && <ProductModal product={product} onClose={() => setIsModalOpen(false)} />}
 
       {/* Closed Store Toast */}
-      {
-        showClosedToast && (
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[200] bg-red-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 animate-bounce">
-            <AlertCircle size={20} />
-            <span className="font-bold">Loja Fechada!</span>
+      {showClosedToast && (
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[200] bg-gray-900/90 text-white px-6 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 animate-scale-in backdrop-blur-sm">
+          <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+            <AlertCircle size={18} />
           </div>
-        )
-      }
+          <div>
+            <p className="font-bold text-sm">Loja Fechada</p>
+            <p className="text-xs text-white/70">Pedidos não disponíveis agora</p>
+          </div>
+        </div>
+      )}
     </>
   );
 };
@@ -249,22 +1298,12 @@ const ProductCarousel: React.FC<{ products: Product[] }> = ({ products }) => {
   );
 };
 
-export const ProductModal = ({ product, onClose }: { product: Product; onClose: () => void }) => {
-  const { groups, addToCart, settings } = useApp();
+const ProductModal = ({ product, onClose }: { product: Product; onClose: () => void }) => {
+  const { groups, addToCart } = useApp();
   const [selectedOptions, setSelectedOptions] = useState<Record<string, number>>({});
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isZoomed, setIsZoomed] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setMousePos({ x, y });
-  };
 
   const productGroups = useMemo(() => {
     if (!product.groupIds) return [];
@@ -279,43 +1318,26 @@ export const ProductModal = ({ product, onClose }: { product: Product; onClose: 
   }, [product, groups]);
 
   const calculateTotal = () => {
-    let baseTotal = product.price;
-    let optionsTotal = 0;
-    let sizeQuantity = 0;
-
+    let total = product.price;
     productGroups.forEach(group => {
-      const isSizeGroup = group.title.toLowerCase().includes('tamanho');
-
       group.options.forEach(opt => {
         const qty = selectedOptions[opt.id] || 0;
-        if (qty > 0) {
-          if (isSizeGroup) {
-            sizeQuantity += qty;
-          }
-          if (opt.price) {
-            optionsTotal += opt.price * qty;
-          }
+        if (qty > 0 && opt.price) {
+          total += opt.price * qty;
         }
       });
     });
-
-    // If size options were chosen, the base product price applies to each size chosen.
-    // Otherwise, it applies just once.
-    const effectiveBaseTotal = (sizeQuantity > 0 ? sizeQuantity : 1) * baseTotal;
-
-    return (effectiveBaseTotal + optionsTotal) * quantity;
+    return total * quantity;
   };
 
   const handleOptionChange = (groupId: string, optionId: string, delta: number, max: number) => {
     const currentQty = selectedOptions[optionId] || 0;
     const group = groups.find(g => g.id === groupId);
     if (!group) return;
-
-    const isSizeGroup = group.title.toLowerCase().includes('tamanho');
     const currentGroupTotal = group.options.reduce((sum, opt) => sum + (selectedOptions[opt.id] || 0), 0);
 
-    // Check max limit only when adding, but ignore max for Size groups to allow multiple choices
-    if (delta > 0 && currentGroupTotal >= group.max && !isSizeGroup) return;
+    // Check max limit only when adding
+    if (delta > 0 && currentGroupTotal >= group.max) return;
 
     const newQty = Math.max(0, currentQty + delta);
     setSelectedOptions(prev => ({ ...prev, [optionId]: newQty }));
@@ -328,65 +1350,6 @@ export const ProductModal = ({ product, onClose }: { product: Product; onClose: 
 
   const handleConfirm = () => {
     if (!isValid) return;
-
-    // Find the Size group if it exists
-    const sizeGroup = productGroups.find(g => g.title.toLowerCase().includes('tamanho'));
-
-    if (sizeGroup) {
-      // Get all selected size options
-      const selectedSizeOptions = sizeGroup.options.filter(opt => (selectedOptions[opt.id] || 0) > 0);
-
-      if (selectedSizeOptions.length > 0) {
-        // If the user selected multiple sizes, create a separate cart item for EACH size combination
-        // Note: this will multiply the standard options across all chosen sizes
-        selectedSizeOptions.forEach((sizeOpt) => {
-          const sizeQty = selectedOptions[sizeOpt.id];
-
-          // Re-calculate price for this specific size
-          let specificItemPrice = product.price;
-          if (sizeOpt.price) specificItemPrice += sizeOpt.price;
-
-          // Add prices of other selected non-size options
-          productGroups.forEach(g => {
-            if (g.id !== sizeGroup.id) {
-              g.options.forEach(opt => {
-                const optQty = selectedOptions[opt.id] || 0;
-                if (optQty > 0 && opt.price) {
-                  specificItemPrice += opt.price * optQty; // In a true split, you might spread these differently, but here we add them to the unit price
-                }
-              });
-            }
-          });
-
-          // Create a specific selection object for this split item
-          const specificSelectedOptions = { ...selectedOptions };
-          // Remove all sizes from this specific selection
-          sizeGroup.options.forEach(opt => {
-            specificSelectedOptions[opt.id] = 0;
-          });
-          // Add back only THIS size with quantity 1 (so we don't multiply size qty incorrectly in cart UI if it expects 1 size per item)
-          // Actually, cart UI handles multiple quantities of the option. Let's send the correct qty.
-          specificSelectedOptions[sizeOpt.id] = 1;
-
-          // Multiply the base quantity chosen in the footer by the quantity chosen for this specific size
-          const totalQtyForThisSize = quantity * sizeQty;
-
-          addToCart({
-            cartId: Date.now().toString() + '-' + Math.random().toString(36).substring(7),
-            product,
-            quantity: totalQtyForThisSize,
-            selectedOptions: specificSelectedOptions,
-            note,
-            totalPrice: specificItemPrice
-          });
-        });
-
-        onClose();
-        return;
-      }
-    }
-
-    // Default behavior if no size group or no size selected
     addToCart({
       cartId: Date.now().toString(),
       product,
@@ -399,58 +1362,31 @@ export const ProductModal = ({ product, onClose }: { product: Product; onClose: 
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-md h-[95vh] sm:h-auto sm:max-h-[90vh] rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden animate-slide-up shadow-2xl">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-white w-full max-w-md h-[95vh] sm:h-auto sm:max-h-[90vh] rounded-t-2xl sm:rounded-2xl flex flex-col overflow-hidden animate-slide-up">
         {/* Header */}
         <div
-          className="p-5 flex items-center justify-between text-white shrink-0 transition-colors duration-300 relative"
+          className="p-4 flex items-center justify-between text-white shrink-0 transition-colors duration-300"
           style={{
             backgroundColor: 'var(--color-header-bg, #4E0797)',
             color: 'var(--color-header-text, #ffffff)'
           }}
         >
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors"><ArrowLeft size={24} style={{ color: 'var(--color-header-text, #ffffff)' }} /></button>
-          <h2 className="text-xl font-black uppercase tracking-wide flex-1 text-center px-4">{product.name}</h2>
-          <div className="w-10" /> {/* Spacer for centering */}
+          <button onClick={onClose}><ArrowLeft size={24} style={{ color: 'var(--color-header-text, #ffffff)' }} /></button>
+          <h2 className="text-lg font-bold uppercase">{product.name}</h2>
+          <div className="w-6" /> {/* Spacer for centering */}
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-gray-50/50 pb-8">
-          {/* Product Info with Image & Zoom */}
-          <div className="bg-white p-5 mb-2 shadow-sm">
-            <div className="relative group cursor-zoom-in overflow-hidden rounded-2xl aspect-square md:max-h-96 mx-auto mb-4 border border-gray-100 bg-gray-50 flex items-center justify-center">
-              <motion.img 
-                src={product.image} 
-                className="w-full h-full object-contain transition-transform duration-200 ease-out"
-                onMouseMove={handleMouseMove}
-                onMouseEnter={() => setIsZoomed(true)}
-                onMouseLeave={() => setIsZoomed(false)}
-                onClick={() => setIsFullscreen(true)}
-                style={{
-                  transform: isZoomed ? 'scale(2.5)' : 'scale(1)',
-                  transformOrigin: `${mousePos.x}% ${mousePos.y}%`
-                }}
-              />
-              
-              {/* Zoom hint for PC */}
-              <div className="absolute top-3 right-3 p-2 bg-black/40 backdrop-blur-sm rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
-                <Search size={16} />
-              </div>
-              
-              {/* Fullscreen hint for Mobile */}
-              <div className="absolute bottom-3 right-3 p-2 bg-black/40 backdrop-blur-sm rounded-lg text-white md:hidden animate-pulse">
-                <Info size={14} className="inline mr-1" /> Toque para ampliar
-              </div>
-            </div>
-
-            <p className="text-gray-600 text-sm leading-relaxed mb-4">{product.description}</p>
-            <div className="flex items-center justify-between bg-purple-50 p-4 rounded-xl border border-purple-100">
-              <span className="text-gray-500 font-bold uppercase tracking-wider text-xs">Preço Unitário</span>
-              <span className="text-2xl font-black text-purple-700">R$ {product.price.toFixed(2)}</span>
-            </div>
-          </div>
+        <div className="flex-1 overflow-y-auto bg-gray-50">
+          {/* Product Info */}
+          {/* <div className="bg-white p-4 mb-2">
+            <img src={product.image} className="w-full h-48 object-cover rounded-lg mb-3" />
+            <p className="text-gray-600 text-sm">{product.description}</p>
+            <p className="text-xl font-bold text-green-600 mt-2">R$ {product.price.toFixed(2)}</p>
+          </div> */}
 
           {/* Groups */}
-          <div className="p-5 space-y-8">
+          <div className="p-4 space-y-6">
             {productGroups.map(group => {
               const currentTotal = group.options.reduce((sum, opt) => sum + (selectedOptions[opt.id] || 0), 0);
               const filteredOptions = group.options.filter(opt =>
@@ -459,24 +1395,25 @@ export const ProductModal = ({ product, onClose }: { product: Product; onClose: 
               );
 
               return (
-                <div key={group.id} className="animate-fade-in">
-                  <div className="text-center mb-5">
-                    <h3 className="text-2xl font-black text-gray-800 tracking-tight">{group.title}</h3>
-                    <div className="flex justify-center gap-2 mt-2">
-                      <span className="text-xs font-bold px-3 py-1 bg-gray-100 text-gray-600 rounded-full">Mín: {group.min}</span>
-                      <span className="text-xs font-bold px-3 py-1 bg-gray-100 text-gray-600 rounded-full">Máx: {group.max}</span>
+                <div key={group.id}>
+                  <div className="text-center mb-4">
+                    <h3 className="text-xl font-bold text-gray-800">{group.title}</h3>
+                    <div className="flex justify-center gap-4 text-sm text-gray-600 mt-1">
+                      <span>Minimo: {group.min}</span>
+                      <span>Máximo: {group.max}</span>
                     </div>
+                    <p className="text-sm text-gray-600">Valor Adicional: R$ 0.00</p>
                   </div>
 
                   {/* Search Bar */}
-                  <div className="relative mb-5 group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-500 transition-colors" size={20} />
+                  <div className="relative mb-4">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                     <input
                       type="text"
-                      placeholder="Pesquisar..."
+                      placeholder="Digite para pesquisar..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3.5 bg-gray-100 rounded-xl border-2 border-transparent focus:border-purple-500 focus:bg-white transition-all outline-none font-medium placeholder:text-gray-400"
+                      className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none"
                     />
                   </div>
 
@@ -484,40 +1421,33 @@ export const ProductModal = ({ product, onClose }: { product: Product; onClose: 
                     {filteredOptions.map(opt => {
                       const qty = selectedOptions[opt.id] || 0;
                       return (
-                        <div key={opt.id} className={`bg-white p-4 rounded-2xl shadow-sm border-2 ${qty > 0 ? 'border-purple-500 bg-purple-50/30' : 'border-gray-100'} transition-all duration-300 ease-out hover:shadow-md cursor-pointer relative overflow-hidden`}>
-                          <div className="flex justify-between items-center gap-4">
-                            <div className="flex-1 min-w-0">
-                              <h4 className={`font-bold text-base ${qty > 0 ? 'text-purple-900' : 'text-gray-800'}`}>{opt.name}</h4>
+                        <div key={opt.id} className={`bg-white p-4 rounded-lg shadow-sm border ${qty > 0 ? 'border-purple-500 ring-1 ring-purple-500' : 'border-gray-200'} transition-all duration-300 ease-out hover:shadow-md hover:scale-[1.01] hover:bg-gray-50 cursor-pointer`}>
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1 pr-4">
+                              <h4 className="font-bold text-gray-800">{opt.name}</h4>
                               {opt.description && (
-                                <p className="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">{opt.description}</p>
+                                <p className="text-sm text-gray-500 mt-1 leading-tight">{opt.description}</p>
                               )}
-                              <div className={`mt-2 inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold ${opt.price || (group.title.toLowerCase().includes('tamanho') && product.price > 0) ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                                {opt.price
-                                  ? (group.title.toLowerCase().includes('tamanho')
-                                    ? `R$ ${(product.price + opt.price).toFixed(2).replace('.', ',')}`
-                                    : `+ R$ ${opt.price.toFixed(2).replace('.', ',')}`)
-                                  : (group.title.toLowerCase().includes('tamanho') && product.price > 0)
-                                    ? `R$ ${product.price.toFixed(2).replace('.', ',')}`
-                                    : 'Grátis'}
+                              <div className="mt-2 inline-block px-3 py-1 rounded-full border border-gray-300 text-sm font-medium text-gray-700">
+                                + R$ {opt.price ? opt.price.toFixed(2).replace('.', ',') : '0,00'}
                               </div>
                             </div>
 
-
-                            <div className="flex items-center gap-3 bg-white px-2 py-1.5 rounded-xl border border-gray-100 shadow-sm shrink-0">
+                            <div className="flex items-center gap-3 self-center">
                               <button
-                                onClick={(e) => { e.stopPropagation(); handleOptionChange(group.id, opt.id, -1, group.max); }}
-                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${qty > 0 ? 'bg-red-50 text-red-600 hover:bg-red-100 active:scale-95' : 'bg-gray-50 text-gray-300'}`}
+                                onClick={() => handleOptionChange(group.id, opt.id, -1, group.max)}
+                                className={`w-8 h-8 rounded flex items-center justify-center transition-all duration-200 ${qty > 0 ? 'text-red-500 hover:bg-red-50 active:scale-90' : 'text-gray-300'}`}
                                 disabled={qty === 0}
                               >
-                                <Minus size={18} strokeWidth={3} />
+                                <Minus size={20} />
                               </button>
-                              <span className="font-black text-base w-5 text-center text-gray-800">{qty}</span>
+                              <span className="font-bold text-lg w-6 text-center">{qty}</span>
                               <button
-                                onClick={(e) => { e.stopPropagation(); handleOptionChange(group.id, opt.id, 1, group.max); }}
-                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${(currentTotal < group.max || group.title.toLowerCase().includes('tamanho')) ? 'bg-green-50 text-green-600 hover:bg-green-100 active:scale-95' : 'bg-gray-50 text-gray-300'}`}
-                                disabled={currentTotal >= group.max && !group.title.toLowerCase().includes('tamanho')}
+                                onClick={() => handleOptionChange(group.id, opt.id, 1, group.max)}
+                                className={`w-8 h-8 rounded flex items-center justify-center transition-all duration-200 ${currentTotal < group.max ? 'text-green-600 hover:bg-green-50 active:scale-90' : 'text-gray-300'}`}
+                                disabled={currentTotal >= group.max}
                               >
-                                <Plus size={18} strokeWidth={3} />
+                                <Plus size={20} />
                               </button>
                             </div>
                           </div>
@@ -529,16 +1459,13 @@ export const ProductModal = ({ product, onClose }: { product: Product; onClose: 
               );
             })}
 
-            <div className="pt-6">
-              <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                <Edit size={18} className="text-gray-400" />
-                {settings?.noteTitle || "Observações"}
-              </h3>
+            <div className="space-y-2 pt-4 border-t border-gray-200">
+              <h3 className="font-bold text-gray-800">Observações</h3>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder={settings?.notePlaceholder || "Ex: Detalhes sobre a entrega, cor, tamanho, etc..."}
-                className="w-full p-4 bg-gray-100 rounded-xl border-2 border-transparent focus:border-purple-500 focus:bg-white transition-all outline-none text-sm font-medium resize-none"
+                placeholder="Ex: Sem cebola, caprichar no molho..."
+                className="w-full p-3 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none text-sm"
                 rows={3}
               />
             </div>
@@ -546,73 +1473,16 @@ export const ProductModal = ({ product, onClose }: { product: Product; onClose: 
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-white border-t border-gray-100 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-10 shrink-0 flex items-center gap-3">
-          <div className="flex items-center bg-gray-100 p-1.5 rounded-xl border border-gray-200 shadow-inner">
-            <button
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className={`w-11 h-11 rounded-lg flex items-center justify-center transition-all duration-200 ${quantity > 1 ? 'bg-white text-gray-800 shadow-[0_2px_4px_rgba(0,0,0,0.05)] hover:bg-gray-50 active:scale-95' : 'text-gray-400'}`}
-              disabled={quantity <= 1}
-            >
-              <Minus size={20} strokeWidth={3} />
-            </button>
-            <span className="font-black text-lg w-8 text-center text-gray-800">{quantity}</span>
-            <button
-              onClick={() => setQuantity(quantity + 1)}
-              className="w-11 h-11 rounded-lg flex items-center justify-center transition-all duration-200 bg-white text-gray-800 shadow-[0_2px_4px_rgba(0,0,0,0.05)] hover:bg-gray-50 active:scale-95"
-            >
-              <Plus size={20} strokeWidth={3} />
-            </button>
-          </div>
-
+        <div className="p-4 bg-white border-t border-gray-200 shadow-[0_-5px_10px_rgba(0,0,0,0.05)]">
           <button
             disabled={!isValid}
             onClick={handleConfirm}
-            className="flex-1 h-14 bg-[#D32F2F] disabled:bg-gray-300 disabled:text-gray-500 text-white font-black rounded-xl text-sm sm:text-lg hover:bg-[#B71C1C] transition-all active:scale-[0.98] uppercase tracking-wide shadow-lg disabled:shadow-none flex items-center justify-center gap-2"
+            className="w-full h-12 bg-[#D32F2F] disabled:bg-gray-400 text-white font-bold rounded text-lg hover:bg-[#B71C1C] transition-colors uppercase tracking-wide"
           >
-            {isValid ? (
-              <span className="flex items-center justify-between w-full px-4">
-                <span>ADICIONAR</span>
-                <span>R$ {calculateTotal().toFixed(2).replace('.', ',')}</span>
-              </span>
-            ) : (
-              'OBRIGATÓRIOS'
-            )}
+            CONTINUAR
           </button>
         </div>
       </div>
-
-      {/* Fullscreen Image Overlay */}
-      <AnimatePresence>
-        {isFullscreen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
-            onClick={(e) => { e.stopPropagation(); setIsFullscreen(false); }}
-          >
-            <motion.button
-              className="absolute top-6 right-6 p-3 bg-white/20 hover:bg-white/30 rounded-full text-white z-[210]"
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setIsFullscreen(false)}
-            >
-              <X size={32} />
-            </motion.button>
-            
-            <motion.img
-              src={product.image}
-              className="max-w-full max-h-full object-contain shadow-2xl"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-            />
-            
-            <div className="absolute bottom-8 left-0 right-0 text-center text-white/60 text-sm font-medium pointer-events-none">
-              Dica: Use gestos de pinça para aproximar no celular
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
@@ -620,70 +1490,170 @@ export const ProductModal = ({ product, onClose }: { product: Product; onClose: 
 // --- Pages ---
 
 const HomePage = () => {
-  const { categories, products, settings, isStoreOpen, searchTerm } = useApp();
+  const { categories, products, settings, isStoreOpen } = useApp();
   const status = isStoreOpen ? 'open' : 'closed';
+  const activeCategories = categories.filter(cat => cat.active !== false);
 
   return (
-    <div className="bg-[#f6f6f6] min-h-screen">
-      {/* Cover Image with Overlapping Logo */}
-      <div className="px-4 pt-1">
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background)' }}>
+      {/* === HERO SECTION === */}
+      <div className="relative">
+        {/* Banner */}
+        {settings.bannerUrl ? (
+          <div className="w-full h-52 md:h-64 overflow-hidden relative">
+            <img
+              src={settings.bannerUrl}
+              alt="Banner da loja"
+              className="w-full h-full object-cover"
+            />
+            {/* Dark overlay gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          </div>
+        ) : (
+          /* Placeholder gradient banner */
+          <div
+            className="w-full h-36 relative"
+            style={{ background: 'linear-gradient(135deg, var(--color-header-bg) 0%, #7c3aed 100%)' }}
+          >
+            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 80%, white 1px, transparent 0), radial-gradient(circle at 80% 20%, white 1px, transparent 0), radial-gradient(circle at 50% 50%, white 0.5px, transparent 0)', backgroundSize: '40px 40px' }} />
+          </div>
+        )}
 
-        {/* Status Message */}
-        <div className="text-center mb-1">
-          <p className="text-xs font-medium text-gray-500">
-            {isStoreOpen
-              ? settings.openMessage || "Aberto agora"
-              : settings.closedMessage || "Fechado no momento"
-            }
-          </p>
+        {/* Logo overlapping hero */}
+        <div className={`${settings.bannerUrl ? 'absolute -bottom-14' : 'absolute -bottom-14'} left-0 right-0 flex justify-center`}>
+          <div
+            className={`p-1.5 shadow-xl ${settings.logoShape === 'circle' ? 'rounded-full' : 'rounded-2xl'}`}
+            style={{ background: 'white' }}
+          >
+            <img
+              src={settings.logoUrl}
+              alt={settings.storeName || 'Logo'}
+              className={`w-28 h-28 object-cover ${
+                settings.logoShape === 'circle' ? 'rounded-full' : 'rounded-xl'
+              }`}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Spacer for logo overlap */}
+      <div className="h-16" />
+
+      {/* === STORE INFO CARD === */}
+      <div className="px-4 mt-2">
+        <div className="bg-white rounded-2xl shadow-card p-4 mb-4">
+          {/* Store name + status */}
+          <div className="text-center mb-3">
+            <h1 className="font-heading font-bold text-xl text-gray-800">
+              {settings.storeName || 'Sabor Açaíteria'}
+            </h1>
+          </div>
+
+          {/* Status Badge */}
+          <div className="flex flex-col items-center gap-2 mb-3">
+            {status === 'closed' ? (
+              <span className="status-closed inline-flex items-center gap-2 bg-red-600 text-white px-6 py-2 rounded-full font-semibold text-sm tracking-wide">
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                {settings.closedMessage || 'Loja Fechada'}
+              </span>
+            ) : (
+              <span className="status-open inline-flex items-center gap-2 bg-emerald-500 text-white px-6 py-2 rounded-full font-semibold text-sm tracking-wide">
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                {settings.openMessage || 'Aberto Agora'}
+              </span>
+            )}
+            {settings.deliveryOnly && status === 'open' && (
+              <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 px-4 py-1.5 rounded-full font-medium text-xs">
+                📦 Somente retirada
+              </span>
+            )}
+          </div>
+
+          {/* Delivery Info Row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gray-50 rounded-xl p-3 text-center">
+              <div className="flex items-center justify-center gap-1 text-gray-500 text-xs mb-1">
+                <Clock size={12} />
+                <span>Entrega</span>
+              </div>
+              <p className="font-semibold text-gray-800 text-sm">{settings.deliveryTime || '40min–1h'}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 text-center">
+              <div className="flex items-center justify-center gap-1 text-gray-500 text-xs mb-1">
+                <Clock size={12} />
+                <span>Retirada</span>
+              </div>
+              <p className="font-semibold text-gray-800 text-sm">{settings.pickupTime || '20–45min'}</p>
+            </div>
+          </div>
+
+          {/* Delivery cutoff warning */}
+          <div className="mt-3 flex items-center gap-2 bg-red-50 border border-red-100 rounded-xl px-3 py-2.5">
+            <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
+            <p className="text-red-600 text-xs font-medium">
+              Entregas encerram às <strong>{settings.deliveryCloseTime || '21:00'}h</strong>
+            </p>
+          </div>
         </div>
 
-        {/* Hours Link */}
-        <div className="flex justify-center items-center gap-1 text-gray-600 mb-2">
-          <Info size={16} />
-          <span className="font-bold text-sm">Horários</span>
-        </div>
+        {/* === CATEGORY NAVIGATION CHIPS === */}
+        {activeCategories.length > 1 && (
+          <div className="flex overflow-x-auto no-scrollbar gap-2 mb-5 pb-0.5">
+            {activeCategories.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() =>
+                  document.getElementById(`cat-${cat.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }
+                className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-600 text-sm font-medium hover:border-purple-300 hover:text-purple-600 transition-colors shadow-sm active:scale-95 btn-press"
+              >
+                <span>{cat.icon}</span>
+                <span>{cat.title}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
-        {/* Warning Alert */}
-        <div className="border border-red-200 bg-red-50 text-red-600 px-4 py-3 rounded-md mb-4 text-center text-sm font-medium">
-          Entregas somente até as {settings.deliveryCloseTime || '21:00'}hrs!
-        </div>
-
-        {/* Categories */}
-        <div className="space-y-2">
-          {categories.filter(cat => cat.active !== false).map(cat => {
-            const catProducts = products.filter(p => 
-              p.categoryId === cat.id && 
-              p.active !== false &&
-              (searchTerm === '' || p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.description?.toLowerCase().includes(searchTerm.toLowerCase()))
-            );
+        {/* === PRODUCT CATEGORIES === */}
+        <div className="space-y-7 pb-32">
+          {activeCategories.map(cat => {
+            const catProducts = products.filter(p => p.categoryId === cat.id && p.active !== false);
             return (
-              <div key={cat.id} id={`cat-${cat.id}`}>
-                <h2 className="text-lg font-bold text-gray-700 mb-3 pl-1 flex items-center gap-2">
-                  {cat.title} {cat.icon}
-                </h2>
-                {/* Horizontal scrolling container */}
+              <section key={cat.id} id={`cat-${cat.id}`} className="animate-fade-in">
+                {/* Section Header */}
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-2xl">{cat.icon}</span>
+                  <h2 className="font-heading font-bold text-lg text-gray-800">
+                    {cat.title}
+                  </h2>
+                  <span className="ml-auto text-xs text-gray-400 font-medium bg-gray-100 px-2 py-0.5 rounded-full">
+                    {catProducts.length} itens
+                  </span>
+                </div>
+
                 {catProducts.length === 0 ? (
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg py-8 px-4 text-center">
-                    <p className="text-gray-400 text-sm italic">
-                      Nenhum produto disponível no momento
-                    </p>
+                  <div className="bg-white border border-gray-100 rounded-2xl py-10 px-4 text-center shadow-card">
+                    <span className="text-3xl mb-2 block">🍽️</span>
+                    <p className="text-gray-400 text-sm">Nenhum produto disponível agora</p>
                   </div>
                 ) : (
                   <ProductCarousel products={catProducts} />
                 )}
-              </div>
+              </section>
             );
           })}
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 };
 
 const FloatingCartButton = () => {
-  const { store, cart } = useApp();
+  const { cart } = useApp();
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const cartTotal = cart.reduce((acc, item) => acc + item.totalPrice * item.quantity, 0);
   const navigate = useNavigate();
 
   // Animation state
@@ -693,7 +1663,7 @@ const FloatingCartButton = () => {
   useEffect(() => {
     if (cartCount > prevCount.current) {
       setAnimate(true);
-      const timer = setTimeout(() => setAnimate(false), 300);
+      const timer = setTimeout(() => setAnimate(false), 400);
       return () => clearTimeout(timer);
     }
     prevCount.current = cartCount;
@@ -703,120 +1673,568 @@ const FloatingCartButton = () => {
 
   return (
     <button
-      onClick={() => navigate(`/${store?.slug}/cart`)}
-      className={`fixed bottom-6 right-6 w-16 h-16 bg-brand-red text-white rounded-full shadow-lg flex items-center justify-center z-50 hover:opacity-90 transition-all ${animate ? 'scale-125' : 'scale-100'}`}
+      onClick={() => navigate('/cart')}
+      className={`fixed bottom-6 left-4 right-4 max-w-md mx-auto z-50 btn-press ${
+        animate ? 'scale-105' : 'scale-100'
+      } transition-transform duration-300`}
+      aria-label="Ver carrinho"
     >
-      <ShoppingCart size={28} />
-      <span className="absolute -top-1 -right-1 w-6 h-6 bg-white text-brand-red font-bold rounded-full flex items-center justify-center text-xs shadow-md border border-gray-100">
-        {cartCount}
-      </span>
+      <div
+        className="flex items-center justify-between px-5 py-3.5 rounded-2xl text-white shadow-float"
+        style={{ backgroundColor: 'var(--color-button-primary)' }}
+      >
+        {/* Left: item count badge */}
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center">
+            <ShoppingCart size={18} className="text-white" />
+          </div>
+          <span className="font-bold text-sm">{cartCount} {cartCount === 1 ? 'item' : 'itens'}</span>
+        </div>
+
+        {/* Center label */}
+        <span className="font-heading font-bold text-sm tracking-wide">VER CARRINHO</span>
+
+        {/* Right: subtotal */}
+        <span className="font-bold text-sm">
+          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cartTotal)}
+        </span>
+      </div>
     </button>
   );
 };
 
-import { CartPage } from './components/CartPage';
-import { CheckoutPage } from './components/CheckoutPage';
-const AdminPanel = () => {
-  const { adminRole, setAdminRole, store } = useApp();
+const CartPage = () => {
+  const { cart, updateCartQuantity, removeFromCart, updateCartNote, settings, checkStoreStatus, appliedCoupon, applyCoupon, removeCoupon, groups, isStoreOpen } = useApp();
   const navigate = useNavigate();
-  const [copiedLink, setCopiedLink] = useState<boolean>(false);
+  const [editingNote, setEditingNote] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState('');
+  const [couponCode, setCouponCode] = useState('');
 
-  const handleCopyStoreLink = () => {
-    if (store) {
-      const link = `${window.location.origin}/#/${store.slug}`;
-      navigator.clipboard.writeText(link).then(() => {
-        setCopiedLink(true);
-        setTimeout(() => setCopiedLink(false), 2000);
-      }).catch(err => {
-        console.error('Falha ao copiar:', err);
-        alert('Erro ao copiar link da loja.');
-      });
+  const subtotal = cart.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0);
+  const discount = appliedCoupon ? (appliedCoupon.type === 'percent' ? subtotal * (appliedCoupon.value / 100) : appliedCoupon.value) : 0;
+  const finalTotal = Math.max(0, subtotal - discount);
+
+  const handleApplyCoupon = () => {
+    const result = applyCoupon(couponCode);
+    if (result.success) {
+      setCouponCode('');
+      alert(result.message);
+    } else {
+      alert(result.message);
     }
   };
 
-  useEffect(() => {
-    if (!adminRole) {
-      const slug = store?.slug || localStorage.getItem('currentStoreSlug') || '';
-      navigate(`/${slug}`);
+  const handleEditNote = (cartId: string, currentNote?: string) => {
+    setEditingNote(cartId);
+    setNoteText(currentNote || '');
+  };
+
+  const handleSaveNote = () => {
+    if (editingNote) {
+      updateCartNote(editingNote, noteText);
+      setEditingNote(null);
+      setNoteText('');
     }
+  };
+
+  if (cart.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ backgroundColor: 'var(--color-background)' }}>
+        <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center mb-5">
+          <ShoppingCart size={40} className="text-gray-300" />
+        </div>
+        <h2 className="text-xl font-heading font-bold text-gray-700 mb-2">Carrinho vazio</h2>
+        <p className="text-gray-400 text-sm text-center mb-6">Adicione itens do cardápio para continuar</p>
+        <button
+          onClick={() => navigate('/')}
+          className="px-8 py-3 rounded-2xl text-white font-bold btn-press shadow-lg"
+          style={{ backgroundColor: 'var(--color-button-primary)' }}
+        >
+          Ver Cardápio
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen pb-40" style={{ backgroundColor: 'var(--color-background)' }}>
+      {/* Header */}
+      <div
+        className="sticky top-0 z-10 flex items-center px-4 h-14 header-glass"
+        style={{ backgroundColor: 'var(--color-header-bg)' }}
+      >
+        <button onClick={() => navigate('/')} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/10 btn-press mr-3">
+          <ChevronLeft size={22} className="text-white" />
+        </button>
+        <h1 className="font-heading font-bold text-white text-base">Meu Pedido</h1>
+        <span className="ml-auto text-white/70 text-sm">{cart.length} {cart.length === 1 ? 'item' : 'itens'}</span>
+      </div>
+
+      {/* Cart Items */}
+      <div className="p-4 space-y-3">
+        {cart.map(item => {
+          const selectedOptionsText: string[] = [];
+          Object.entries(item.selectedOptions).forEach(([optionId, qty]) => {
+            if ((qty as number) > 0) {
+              for (const group of groups) {
+                const option = group.options.find(opt => opt.id === optionId);
+                if (option) {
+                  selectedOptionsText.push(`${option.name} (${qty}x)`);
+                  break;
+                }
+              }
+            }
+          });
+
+          return (
+            <div key={item.cartId} className="bg-white rounded-2xl shadow-card overflow-hidden">
+              {/* Product image + info row */}
+              <div className="flex">
+                {item.product.image && (
+                  <div className="w-20 h-20 flex-shrink-0">
+                    <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="flex-1 p-3">
+                  <h3 className="font-semibold text-gray-800 text-sm leading-snug line-clamp-1">{item.product.name}</h3>
+                  <p className="text-emerald-600 font-bold text-sm mt-0.5">
+                    {formatCurrency(item.totalPrice)}
+                  </p>
+                  {selectedOptionsText.length > 0 && (
+                    <p className="text-[10px] text-gray-400 mt-1 line-clamp-2">
+                      {selectedOptionsText.join(' • ')}
+                    </p>
+                  )}
+                  {item.note && (
+                    <p className="text-[10px] text-blue-500 mt-1 italic">“{item.note}”</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions row */}
+              <div className="border-t border-gray-50 px-3 py-2 flex items-center justify-between">
+                {/* Note button */}
+                <button
+                  onClick={() => handleEditNote(item.cartId, item.note)}
+                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-600 transition-colors"
+                >
+                  <Edit size={12} />
+                  <span>{item.note ? 'Editar obs.' : 'Adicionar obs.'}</span>
+                </button>
+
+                {/* Subtotal */}
+                <span className="text-xs text-gray-500 font-medium">
+                  Subtotal: <strong className="text-gray-700">{formatCurrency(item.totalPrice * item.quantity)}</strong>
+                </span>
+
+                {/* Quantity controls */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => updateCartQuantity(item.cartId, item.quantity - 1)}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-red-500 bg-red-50 hover:bg-red-100 btn-press"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span className="font-bold text-gray-800 w-5 text-center text-sm">{item.quantity}</span>
+                  <button
+                    onClick={() => updateCartQuantity(item.cartId, item.quantity + 1)}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-emerald-600 bg-emerald-50 hover:bg-emerald-100 btn-press"
+                  >
+                    <Plus size={14} />
+                  </button>
+                  <button
+                    onClick={() => removeFromCart(item.cartId)}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-red-400 bg-red-50 hover:bg-red-100 btn-press ml-1"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Note Edit Modal */}
+      {editingNote && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl animate-slide-up">
+            <h3 className="text-base font-heading font-bold mb-4 text-gray-800">Observação</h3>
+            <textarea
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              placeholder="Ex: Sem granola, caprichar no leite condensado..."
+              className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 outline-none text-sm bg-gray-50 resize-none"
+              rows={4}
+              autoFocus
+            />
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => { setEditingNote(null); setNoteText(''); }}
+                className="flex-1 py-3 bg-gray-100 rounded-xl font-semibold text-gray-600 hover:bg-gray-200 btn-press"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveNote}
+                className="flex-1 py-3 rounded-xl font-bold text-white btn-press"
+                style={{ backgroundColor: 'var(--color-header-bg)' }}
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cart Footer */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] p-4">
+        <div className="max-w-md mx-auto flex flex-col gap-3">
+          {/* Coupon row */}
+          <div className="flex gap-2">
+            <div className="flex-1 flex items-center gap-2 border border-gray-200 rounded-xl px-3 bg-gray-50">
+              <Tag size={14} className="text-gray-400 flex-shrink-0" />
+              <input
+                value={couponCode}
+                onChange={e => setCouponCode(e.target.value)}
+                placeholder="Cupom de desconto"
+                className="flex-1 py-2.5 text-sm uppercase bg-transparent outline-none text-gray-700"
+              />
+            </div>
+            <button
+              onClick={handleApplyCoupon}
+              className="px-4 rounded-xl font-bold text-sm btn-press"
+              style={{ backgroundColor: 'var(--color-header-bg)', color: 'white' }}
+            >
+              Aplicar
+            </button>
+          </div>
+          {appliedCoupon && (
+            <div className="flex justify-between items-center bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-xl">
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-600">🎉</span>
+                <span className="text-emerald-700 text-sm font-bold">{appliedCoupon.code} aplicado!</span>
+              </div>
+              <button onClick={removeCoupon} className="text-red-400 text-xs font-bold hover:text-red-600">Remover</button>
+            </div>
+          )}
+
+          {/* Order summary */}
+          <div className="space-y-1.5 text-sm">
+            <div className="flex justify-between text-gray-500">
+              <span>Subtotal</span>
+              <span>{formatCurrency(subtotal)}</span>
+            </div>
+            {appliedCoupon && (
+              <div className="flex justify-between text-emerald-600 font-semibold">
+                <span>Desconto</span>
+                <span>- {formatCurrency(discount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-gray-500">
+              <span>Taxa de entrega</span>
+              <span>{formatCurrency(settings.deliveryFee)}</span>
+            </div>
+            <div className="flex justify-between font-heading font-bold text-base text-gray-800 pt-1.5 border-t border-gray-100">
+              <span>Total</span>
+              <span>{formatCurrency(finalTotal)}</span>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate('/')}
+              className="flex-1 py-3 bg-gray-100 text-gray-600 font-semibold rounded-xl text-sm btn-press"
+            >
+              + Adicionar
+            </button>
+            {!isStoreOpen ? (
+              <button
+                disabled
+                className="flex-2 flex-grow-[2] py-3 bg-gray-300 text-white font-bold rounded-xl text-sm cursor-not-allowed"
+              >
+                Loja Fechada
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/checkout')}
+                className="flex-2 flex-grow-[2] py-3 text-white font-bold rounded-xl text-sm btn-press shadow-lg"
+                style={{ backgroundColor: 'var(--color-button-primary)' }}
+              >
+                Finalizar Pedido
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div >
+  );
+};
+
+const CheckoutPage = () => {
+  const { cart, settings, clearCart, addOrder, appliedCoupon, removeCoupon, groups, isStoreOpen } = useApp();
+  const [customerName, setCustomerName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>(DeliveryMethod.DELIVERY);
+  const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS[0]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isStoreOpen) {
+      navigate('/');
+    }
+  }, [isStoreOpen, navigate]);
+
+  const subtotal = cart.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0);
+  const discount = appliedCoupon ? (appliedCoupon.type === 'percent' ? subtotal * (appliedCoupon.value / 100) : appliedCoupon.value) : 0;
+  const total = Math.max(0, subtotal - discount) + (deliveryMethod === DeliveryMethod.DELIVERY ? settings.deliveryFee : 0);
+
+  const handleFinish = () => {
+    if (!customerName) return alert('Preencha o nome');
+    if (deliveryMethod === DeliveryMethod.DELIVERY && !address) return alert('Preencha o endereço');
+
+    const newOrder: OrderRecord = {
+      id: Math.floor(Math.random() * 10000).toString(),
+      date: new Date().toISOString(),
+      customerName,
+      whatsapp: phone,
+      method: deliveryMethod,
+      address,
+      paymentMethod,
+      total,
+      itemsSummary: `${cart.length} itens`,
+      status: 'pending',
+      fullDetails: cart
+    };
+
+    addOrder(newOrder);
+
+    const itemsText = cart.map(i => {
+      let txt = `${i.quantity}x ${i.product.name}`;
+
+      // Get option names from groups
+      const selectedOptionsText: string[] = [];
+      Object.entries(i.selectedOptions).forEach(([optionId, qty]) => {
+        if ((qty as number) > 0) {
+          // Find the option name
+          for (const group of groups) {
+            const option = group.options.find(opt => opt.id === optionId);
+            if (option) {
+              selectedOptionsText.push(`${option.name} ${qty}x`);
+              break;
+            }
+          }
+        }
+      });
+
+      if (selectedOptionsText.length > 0) {
+        txt += `\n   (${selectedOptionsText.join(', ')})`;
+      }
+
+      if (i.note) txt += `\n   Obs: ${i.note}`;
+      return txt;
+    }).join('\n');
+
+    const msg = `*Novo Pedido*\nCliente: ${customerName}\nTel: ${phone}\nTipo: ${deliveryMethod}\nEndereço: ${address}\nPagamento: ${paymentMethod}\n\nItens:\n${itemsText}${appliedCoupon ? `\n\nCupom: ${appliedCoupon.code} (-${formatCurrency(discount)})` : ''}\n\n*Total: ${formatCurrency(total)}*`;
+
+    const url = `https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+    clearCart();
+    removeCoupon();
+    navigate('/');
+  };
+
+  return (
+    <div
+      className="min-h-screen pb-10"
+      style={{ background: 'linear-gradient(160deg, #f0f0f5 0%, #e8e5f5 100%)' }}
+    >
+      {/* Header */}
+      <div
+        className="sticky top-0 z-10 flex items-center px-4 h-14 header-glass"
+        style={{ backgroundColor: 'var(--color-header-bg)' }}
+      >
+        <button onClick={() => navigate('/cart')} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/10 btn-press mr-3">
+          <ChevronLeft size={22} className="text-white" />
+        </button>
+        <h1 className="font-heading font-bold text-white text-base">Finalizar Pedido</h1>
+      </div>
+
+      <div className="p-4 space-y-4 max-w-md mx-auto">
+        {/* Personal info card */}
+        <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+          <div className="px-4 pt-4 pb-1">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Seus dados</p>
+          </div>
+          <div className="px-4 pb-4 space-y-3">
+            <div className="relative">
+              <input
+                className="w-full py-3 px-4 border border-gray-200 rounded-xl bg-gray-50 text-gray-800 text-sm outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                placeholder="Nome completo *"
+                value={customerName}
+                onChange={e => setCustomerName(e.target.value)}
+              />
+            </div>
+            <div className="relative">
+              <input
+                className="w-full py-3 px-4 border border-gray-200 rounded-xl bg-gray-50 text-gray-800 text-sm outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                placeholder="WhatsApp (opcional)"
+                type="tel"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Delivery method card */}
+        <div className="bg-white rounded-2xl shadow-card p-4">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Método de entrega</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setDeliveryMethod(DeliveryMethod.DELIVERY)}
+              className={`py-3 px-4 rounded-xl border-2 text-sm font-semibold transition-all btn-press flex flex-col items-center gap-1 ${
+                deliveryMethod === DeliveryMethod.DELIVERY
+                  ? 'border-purple-500 bg-purple-50 text-purple-700'
+                  : 'border-gray-200 bg-gray-50 text-gray-500'
+              }`}
+            >
+              <span className="text-lg">🚲</span>
+              <span>Entregar</span>
+            </button>
+            <button
+              onClick={() => setDeliveryMethod(DeliveryMethod.PICKUP)}
+              className={`py-3 px-4 rounded-xl border-2 text-sm font-semibold transition-all btn-press flex flex-col items-center gap-1 ${
+                deliveryMethod === DeliveryMethod.PICKUP
+                  ? 'border-purple-500 bg-purple-50 text-purple-700'
+                  : 'border-gray-200 bg-gray-50 text-gray-500'
+              }`}
+            >
+              <span className="text-lg">🛋️</span>
+              <span>Retirar</span>
+            </button>
+          </div>
+
+          {/* Delivery address fields */}
+          {deliveryMethod === DeliveryMethod.DELIVERY && (
+            <div className="mt-3 space-y-2">
+              <select className="w-full py-3 px-4 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 text-sm outline-none focus:ring-2 focus:ring-purple-400">
+                <option>Canaã dos Carajás</option>
+              </select>
+              <input className="w-full py-3 px-4 border border-gray-200 rounded-xl bg-gray-50 text-gray-800 text-sm outline-none focus:ring-2 focus:ring-purple-400" placeholder="Bairro" />
+              <input
+                className="w-full py-3 px-4 border border-gray-200 rounded-xl bg-gray-50 text-gray-800 text-sm outline-none focus:ring-2 focus:ring-purple-400"
+                placeholder="Rua / Logradouro *"
+                value={address}
+                onChange={e => setAddress(e.target.value)}
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <input className="w-full py-3 px-4 border border-gray-200 rounded-xl bg-gray-50 text-gray-800 text-sm outline-none focus:ring-2 focus:ring-purple-400" placeholder="Número" />
+                <input className="w-full py-3 px-4 border border-gray-200 rounded-xl bg-gray-50 text-gray-800 text-sm outline-none focus:ring-2 focus:ring-purple-400" placeholder="Referência" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Payment method */}
+        <div className="bg-white rounded-2xl shadow-card p-4">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Pagamento</p>
+          <select
+            className="w-full py-3 px-4 border border-gray-200 rounded-xl bg-gray-50 text-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-400"
+            value={paymentMethod}
+            onChange={e => setPaymentMethod(e.target.value)}
+          >
+            {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+        </div>
+
+        {/* Total summary */}
+        <div className="bg-white rounded-2xl shadow-card p-4">
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between text-gray-500">
+              <span>Subtotal</span>
+              <span>{formatCurrency(subtotal)}</span>
+            </div>
+            {appliedCoupon && (
+              <div className="flex justify-between text-emerald-600 font-semibold">
+                <span>Desconto ({appliedCoupon.code})</span>
+                <span>- {formatCurrency(discount)}</span>
+              </div>
+            )}
+            {deliveryMethod === DeliveryMethod.DELIVERY && (
+              <div className="flex justify-between text-gray-500">
+                <span>Taxa de entrega</span>
+                <span>{formatCurrency(settings.deliveryFee)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-heading font-bold text-lg text-gray-800 pt-2 border-t border-gray-100">
+              <span>Total</span>
+              <span>{formatCurrency(total)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Send button */}
+        <button
+          onClick={handleFinish}
+          className="w-full py-4 rounded-2xl text-white font-heading font-bold text-base flex items-center justify-center gap-3 btn-press shadow-lg"
+          style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)' }}
+        >
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.025.507 3.931 1.395 5.602L.057 23.882a.5.5 0 0 0 .611.611l6.28-1.338A11.94 11.94 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.782 9.782 0 0 1-5.136-1.461l-.368-.219-3.816.814.829-3.704-.24-.382A9.782 9.782 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
+          </svg>
+          Enviar via WhatsApp
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// --- Admin Panel (Full Features) ---
+
+const AdminPanel = () => {
+  const { adminRole, setAdminRole } = useApp();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!adminRole) navigate('/');
   }, [adminRole, navigate]);
 
   const menuItems = [
-    { title: 'Pedidos', icon: <FileText size={32} />, path: `/${store?.slug}/panel/orders`, role: ['admin', 'employee'] },
-    { title: 'Configurações', icon: <Settings size={32} />, path: `/${store?.slug}/panel/settings`, role: ['admin'] },
-    { title: 'Relatório', icon: <BarChart2 size={32} />, path: `/${store?.slug}/panel/reports`, role: ['admin'] },
-    { title: 'Categorias', icon: <List size={32} />, path: `/${store?.slug}/panel/categories`, role: ['admin'] },
-    { title: 'Produtos', icon: <Folder size={32} />, path: `/${store?.slug}/panel/products`, role: ['admin'] },
-    { title: 'Adicionais', icon: <ToggleLeft size={32} />, path: `/${store?.slug}/panel/addons`, role: ['admin'] },
-    { title: 'Cupons', icon: <Tag size={32} />, path: `/${store?.slug}/panel/coupons`, role: ['admin'] },
-    { title: 'Cores do Site', icon: <Palette size={32} />, path: `/${store?.slug}/panel/theme`, role: ['admin'] },
-    { title: 'Estoque', icon: <Package size={32} />, path: `/${store?.slug}/panel/inventory`, role: ['admin'] },
-    { title: 'Impressora', icon: <Printer size={32} />, path: `/${store?.slug}/panel/printer`, role: ['admin', 'employee'] },
+    { title: 'Pedidos', icon: <FileText size={32} />, path: '/panel/orders', role: ['admin', 'employee'] },
+    { title: 'Configurações', icon: <Settings size={32} />, path: '/panel/settings', role: ['admin'] },
+    { title: 'Relatório', icon: <BarChart2 size={32} />, path: '/panel/reports', role: ['admin'] },
+    { title: 'Categorias', icon: <List size={32} />, path: '/panel/categories', role: ['admin'] },
+    { title: 'Produtos', icon: <Folder size={32} />, path: '/panel/products', role: ['admin'] },
+    { title: 'Adicionais', icon: <ToggleLeft size={32} />, path: '/panel/addons', role: ['admin'] },
+    { title: 'Cupons', icon: <Tag size={32} />, path: '/panel/coupons', role: ['admin'] },
+    { title: 'Cores do Site', icon: <Palette size={32} />, path: '/panel/theme', role: ['admin'] },
+    { title: 'Estoque', icon: <Package size={32} />, path: '/panel/inventory', role: ['admin'] },
+    { title: 'Impressora', icon: <Printer size={32} />, path: '/panel/printer', role: ['admin', 'employee'] },
   ];
 
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="flex justify-between items-center mb-6">
-        <div className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-orange-600 tracking-tight">
-          Painel do Lojista
-        </div>
-        <button onClick={() => { const slug = store?.slug || localStorage.getItem('currentStoreSlug') || ''; setAdminRole(null); navigate(`/${slug}`); }} className="text-red-600 flex items-center gap-2 font-bold p-2 hover:bg-red-50 rounded-lg transition-colors">
+        <div></div>
+        <button onClick={() => { setAdminRole(null); navigate('/'); }} className="text-red-600 flex items-center gap-2 font-bold p-2 hover:bg-red-50 rounded-lg transition-colors">
           <LogOut size={20} /> Sair
         </button>
       </div>
-
-      {/* Store Link Card */}
-      {store && (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-purple-600 to-purple-800 rounded-2xl p-6 shadow-lg mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-white"
-        >
-          <div>
-            <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
-              <StoreIcon size={20} /> Seu Link de Divulgação
-            </h2>
-            <p className="text-purple-200 text-sm">Compartilhe este link com seus clientes para receber pedidos.</p>
-          </div>
-          <div className="flex items-center gap-2 bg-black/20 p-1.5 rounded-full w-full sm:w-auto">
-            <input 
-              type="text" 
-              readOnly 
-              value={`${window.location.origin}/#/${store.slug}`}
-              className="bg-transparent text-white font-medium text-sm outline-none px-3 w-full sm:w-64"
-            />
-            <button
-              onClick={handleCopyStoreLink}
-              className={`p-2 rounded-full transition-colors flex shrink-0 ${copiedLink ? 'bg-green-500 text-white' : 'bg-white text-purple-700 hover:bg-purple-100'}`}
-              title="Copiar Link"
-            >
-              {copiedLink ? <CheckCircle size={18} /> : <Share2 size={18} />}
-            </button>
-          </div>
-        </motion.div>
-      )}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        {menuItems.filter(item => adminRole === 'superadmin' || item.role.includes(adminRole || '')).map((item) => (
-          <motion.div
+        {menuItems.filter(item => item.role.includes(adminRole || '')).map((item) => (
+          <div
             key={item.title}
-            layout
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{
-              y: -5,
-              scale: 1.05,
-              boxShadow: "0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)"
-            }}
-            whileTap={{ scale: 0.95 }}
             onClick={() => navigate(item.path)}
-            className="bg-white p-6 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-3 cursor-pointer min-h-[140px] border border-gray-50 relative overflow-hidden group"
+            className="bg-white p-4 rounded-xl shadow-sm flex flex-col items-center justify-center gap-2 hover:shadow-md transition-all duration-300 hover:scale-[1.02] cursor-pointer min-h-[100px]"
           >
-            <div className="text-purple-600 bg-purple-50 p-4 rounded-full group-hover:bg-purple-600 group-hover:text-white transition-colors duration-300">
-              {React.cloneElement(item.icon, { size: 32 })}
-            </div>
-            <span className="font-bold text-gray-700 text-sm text-center">{item.title}</span>
-          </motion.div>
+            <div className="text-gray-600">{React.cloneElement(item.icon, { size: 24 })}</div>
+            <span className="font-medium text-gray-700 text-sm text-center">{item.title}</span>
+          </div>
         ))}
       </div>
     </div>
@@ -824,7 +2242,7 @@ const AdminPanel = () => {
 };
 
 const OrdersPage = () => {
-  const { orders, updateOrderStatus, updateOrderDiscount, groups, store, deleteOrder, adminRole, copyOrderToClipboard } = useApp();
+  const { orders, updateOrderStatus, groups } = useApp();
   const navigate = useNavigate();
   const { printText, connectedDevice } = usePrinter();
 
@@ -872,8 +2290,7 @@ const OrdersPage = () => {
       "[L]--------------------------------\n" +
       `[L]Pagamento: ${order.paymentMethod}\n` +
       `[L]Entrega: ${order.method === DeliveryMethod.DELIVERY ? 'Entrega' : 'Retirada'}\n` +
-      (order.discountPercent ? `[R]Desconto (${order.discountPercent}%): - ${formatCurrency(order.total * (order.discountPercent / 100))}\n` : "") +
-      `[R]<b>TOTAL FINAL: ${formatCurrency(order.total * (1 - (order.discountPercent || 0) / 100))}</b>\n` +
+      `[R]<b>TOTAL: ${formatCurrency(order.total)}</b>\n` +
       "[L]\n[L]\n[L]\n";
 
     await printText(receipt);
@@ -881,11 +2298,12 @@ const OrdersPage = () => {
 
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string } | null>(null);
+  const { deleteOrder, adminRole, copyOrderToClipboard } = useApp();
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate(`/${store?.slug}/panel`)}><ChevronLeft /></button>
+        <button onClick={() => navigate('/panel')}><ChevronLeft /></button>
         <h1 className="text-xl font-bold">Pedidos</h1>
       </div>
       <div className="space-y-4">
@@ -896,33 +2314,21 @@ const OrdersPage = () => {
                 <span className="font-bold text-lg">#{order.id}</span>
                 <p className="text-sm text-gray-500">{new Date(order.date).toLocaleString()}</p>
               </div>
-              <div className="flex flex-col items-end gap-1">
-                {order.isQuote && <span className="px-2 py-1 bg-blue-500 text-white rounded text-[10px] font-black uppercase tracking-wider shadow-sm animate-pulse">ORÇAMENTO</span>}
-                <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                  order.status === 'completed' ? 'bg-green-100 text-green-700' :
-                    'bg-blue-100 text-blue-700'
-                  }`}>{order.status}</span>
-              </div>
+              <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                order.status === 'completed' ? 'bg-green-100 text-green-700' :
+                  'bg-blue-100 text-blue-700'
+                }`}>{order.status}</span>
             </div>
             <p className="font-medium">{order.customerName}</p>
             <p className="text-sm text-gray-600 mt-1">{order.itemsSummary}</p>
             <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
-              <div className="flex flex-col">
-                {order.discountPercent ? (
-                   <>
-                     <span className="text-xs text-red-500 line-through">{formatCurrency(order.total)}</span>
-                     <span className="font-bold text-green-600">{formatCurrency(order.total * (1 - order.discountPercent / 100))}</span>
-                   </>
-                ) : (
-                   <span className="font-bold">{formatCurrency(order.total)}</span>
-                )}
-              </div>
+              <span className="font-bold">{formatCurrency(order.total)}</span>
               <div className="flex gap-2">
                 <button onClick={() => setSelectedOrder(order)} className="p-2 bg-blue-50 text-blue-600 rounded text-xs font-bold">Ver Detalhes</button>
                 <button onClick={() => copyOrderToClipboard(order)} className="p-2 bg-gray-50 text-gray-600 rounded hover:bg-gray-200" title="Copiar Pedido"><FileText size={18} /></button>
                 <button onClick={() => updateOrderStatus(order.id, 'completed')} className="p-2 bg-green-50 text-green-600 rounded"><CheckCircle size={18} /></button>
                 <button onClick={() => handlePrintOrder(order)} className="p-2 bg-gray-50 text-gray-600 rounded hover:bg-gray-200"><Printer size={18} /></button>
-                {(adminRole === 'admin' || adminRole === 'superadmin') && (
+                {adminRole === 'admin' && (
                   <button
                     onClick={() => setDeleteConfirmation({ id: order.id })}
                     className="p-2 bg-red-50 text-red-600 rounded hover:bg-red-100"
@@ -992,38 +2398,9 @@ const OrdersPage = () => {
                 </div>
               </div>
 
-              <div className="pt-4 border-t space-y-2">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-bold text-gray-600">Desconto Especial (%)</span>
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="number" 
-                      min="0" 
-                      max="100" 
-                      value={selectedOrder.discountPercent || 0} 
-                      onChange={(e) => updateOrderDiscount(selectedOrder.id, Number(e.target.value))}
-                      className="w-20 border rounded p-1 text-center font-bold text-green-600"
-                    />
-                    <span className="font-bold text-green-600">%</span>
-                  </div>
-                </div>
-
-                <div className="flex justify-between text-sm text-gray-500">
-                  <span>Subtotal do Pedido</span>
-                  <span>{formatCurrency(selectedOrder.total)}</span>
-                </div>
-                
-                {selectedOrder.discountPercent ? (
-                  <div className="flex justify-between text-green-600 font-bold italic">
-                    <span>Desconto Aplicado (-{selectedOrder.discountPercent}%)</span>
-                    <span>- {formatCurrency(selectedOrder.total * (selectedOrder.discountPercent / 100))}</span>
-                  </div>
-                ) : null}
-
-                <div className="flex justify-between items-center pt-2 border-t font-black text-xl text-purple-700">
-                  <span>TOTAL FINAL</span>
-                  <span>{formatCurrency(selectedOrder.total * (1 - (selectedOrder.discountPercent || 0) / 100))}</span>
-                </div>
+              <div className="flex justify-between items-center pt-4 border-t font-bold text-lg">
+                <span>Total</span>
+                <span>{formatCurrency(selectedOrder.total)}</span>
               </div>
             </div>
 
@@ -1059,11 +2436,10 @@ const OrdersPage = () => {
 };
 
 const CouponsPage = () => {
-  const { coupons, addCoupon, updateCoupon, deleteCoupon, store } = useApp();
+  const { coupons, addCoupon, updateCoupon, deleteCoupon } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Partial<Coupon>>({});
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; code: string } | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleSave = async () => {
@@ -1081,8 +2457,8 @@ const CouponsPage = () => {
         await addCoupon({ ...newCoupon, active: true, usageCount: 0 } as Coupon);
       }
       setIsModalOpen(false);
-      // No reload needed, state is updated in addCoupon/updateCoupon
-      // and confirmed by realtime subscription if configured.
+      // Force reload to show new coupon
+      window.location.reload();
     } catch (error) {
       console.error('Erro ao salvar cupom:', error);
       alert('Erro ao salvar cupom. Verifique se o código já existe.');
@@ -1093,25 +2469,15 @@ const CouponsPage = () => {
     if (deleteConfirmation) {
       await deleteCoupon(deleteConfirmation.id);
       setDeleteConfirmation(null);
+      window.location.reload();
     }
-  };
-
-  const handleCopyLink = (code: string, id: string) => {
-    const link = `${window.location.origin}/#/${store?.slug}?cupom=${code}`;
-    navigator.clipboard.writeText(link).then(() => {
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    }).catch(err => {
-      console.error('Falha ao copiar:', err);
-      alert('Erro ao copiar link.');
-    });
   };
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(`/${store?.slug}/panel`)}><ChevronLeft /></button>
+          <button onClick={() => navigate('/panel')}><ChevronLeft /></button>
           <h1 className="text-xl font-bold">Cupons</h1>
         </div>
         <button onClick={() => { setEditingCoupon({ type: 'percent' }); setIsModalOpen(true); }} className="bg-purple-600 text-white p-2 rounded-full"><Plus /></button>
@@ -1125,19 +2491,12 @@ const CouponsPage = () => {
               <p className="text-sm text-gray-500">{c.type === 'percent' ? `${c.value}% OFF` : `R$ ${c.value} OFF`}</p>
               {c.minOrderValue && <p className="text-xs text-gray-400">Pedido mín: R$ {c.minOrderValue.toFixed(2)}</p>}
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                onClick={() => handleCopyLink(c.code, c.id)}
-                className={`p-1.5 sm:p-2 rounded-lg transition-colors ${copiedId === c.id ? 'bg-green-100 text-green-600' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
-                title="Copiar Link de Compartilhamento"
-              >
-                {copiedId === c.id ? <Check size={18} /> : <Share2 size={18} />}
-              </button>
+            <div className="flex items-center gap-3">
               <button onClick={() => updateCoupon({ ...c, active: !c.active })} className={`transition-colors ${c.active ? 'text-green-500' : 'text-gray-300'}`}>
                 <ToggleLeft size={28} className={`transition-transform ${c.active ? 'rotate-180' : ''}`} />
               </button>
-              <button onClick={() => { setEditingCoupon(c); setIsModalOpen(true); }} className="text-gray-400 p-1.5"><Edit size={18} /></button>
-              <button onClick={() => setDeleteConfirmation({ id: c.id, code: c.code })} className="text-red-400 p-1.5"><Trash2 size={18} /></button>
+              <button onClick={() => { setEditingCoupon(c); setIsModalOpen(true); }} className="text-gray-400"><Edit size={18} /></button>
+              <button onClick={() => setDeleteConfirmation({ id: c.id, code: c.code })} className="text-red-400"><Trash2 size={18} /></button>
             </div>
           </div>
         ))}
@@ -1187,7 +2546,7 @@ const CouponsPage = () => {
 };
 
 const AddonsPage = () => {
-  const { groups, addGroup, updateGroup, deleteGroup, store } = useApp();
+  const { groups, addGroup, updateGroup, deleteGroup } = useApp();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<ProductGroup | null>(null);
@@ -1351,7 +2710,7 @@ const AddonsPage = () => {
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(`/${store?.slug}/panel`)}><ChevronLeft /></button>
+          <button onClick={() => navigate('/panel')}><ChevronLeft /></button>
           <h1 className="text-xl font-bold">Adicionais / Combos</h1>
         </div>
         <button
@@ -1701,43 +3060,22 @@ const AddonsPage = () => {
 };
 
 const SettingsPage = () => {
-  const { store, settings, updateSettings, isStoreOpen } = useApp();
+  const { settings, updateSettings, isStoreOpen } = useApp();
   const navigate = useNavigate();
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [showLinkInput, setShowLinkInput] = useState<{ field: 'logoUrl' | 'bannerUrl', visible: boolean }>({ field: 'logoUrl', visible: false });
-  const [tempImageUrl, setTempImageUrl] = useState('');
   const [cropModalData, setCropModalData] = useState<{ imageUrl: string; field: 'logoUrl' | 'bannerUrl'; aspectRatio: number } | null>(null);
 
-  // Local state for all settings to avoid redundant DB calls on every keystroke
-  const [localSettings, setLocalSettings] = useState<GlobalSettings>(settings);
-
-  // Sync local state when global settings change (e.g. on load)
-  // Use ref to prevent the circular update loop:
-  // updateSettings → setSettings (global) → useEffect → setLocalSettings → re-render
-  const isFirstLoad = React.useRef(true);
-  useEffect(() => {
-    if (isFirstLoad.current) {
-      setLocalSettings(settings);
-      isFirstLoad.current = false;
-    }
-  }, [settings.storeId]); // Only sync on store change, not every settings update
-
-  const handleSave = async () => {
-    try {
-      await updateSettings(localSettings); 
-      setShowSaveConfirm(true);
-      setTimeout(() => setShowSaveConfirm(false), 3000);
-    } catch (err) {
-      // Error handled in updateSettings
-    }
+  const handleSave = () => {
+    setShowSaveConfirm(true);
+    setTimeout(() => setShowSaveConfirm(false), 2000);
   };
 
   const uploadImageToSupabase = async (file: File): Promise<string | null> => {
     try {
       setIsUploading(true);
       const fileExt = file.name.split('.').pop();
-      const fileName = `store-assets/${store?.id || 'default'}/${crypto.randomUUID()}.${fileExt}`;
+      const fileName = `store-assets/${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -1769,8 +3107,6 @@ const SettingsPage = () => {
       const aspectRatio = field === 'logoUrl' ? 1 : 16 / 9;
       setCropModalData({ imageUrl, field, aspectRatio });
     }
-    // Limpar o input para permitir selecionar a mesma imagem se necessário
-    e.target.value = '';
   };
 
   const handleCropComplete = async (croppedFile: File) => {
@@ -1778,28 +3114,18 @@ const SettingsPage = () => {
 
     const publicUrl = await uploadImageToSupabase(croppedFile);
     if (publicUrl) {
-      try {
-        // Always include store_name to avoid NOT NULL constraint
-        await updateSettings({ 
-          [cropModalData.field]: publicUrl,
-          storeName: localSettings.storeName || settings.storeName || store?.name
-        });
-        setShowSaveConfirm(true);
-        setTimeout(() => setShowSaveConfirm(false), 3000);
-      } catch (err) {
-        console.error("Erro ao salvar imagem recortada:", err);
-      }
+      updateSettings({ [cropModalData.field]: publicUrl });
     }
     setCropModalData(null);
   };
 
   const handleHourChange = (dayOfWeek: number, field: 'open' | 'close' | 'enabled', value: string | boolean) => {
-    const updatedHours = localSettings.openingHours.map(h =>
+    const updatedHours = settings.openingHours.map(h =>
       h.dayOfWeek === dayOfWeek
         ? { ...h, [field]: value }
         : h
     );
-    setLocalSettings(prev => ({ ...prev, openingHours: updatedHours }));
+    updateSettings({ openingHours: updatedHours });
   };
 
   const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -1807,7 +3133,7 @@ const SettingsPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-4 pb-20">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate(`/${store?.slug}/panel`)}><ChevronLeft /></button>
+        <button onClick={() => navigate('/panel')}><ChevronLeft /></button>
         <h1 className="text-xl font-bold">Configurações</h1>
       </div>
 
@@ -1820,28 +3146,28 @@ const SettingsPage = () => {
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-2">
               <button
-                onClick={() => setLocalSettings(prev => ({ ...prev, storeStatus: 'open' }))}
-                className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${localSettings.storeStatus === 'open' ? 'bg-green-50 border-green-500 text-green-700 ring-1 ring-green-500' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                onClick={() => updateSettings({ storeStatus: 'open' })}
+                className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${settings.storeStatus === 'open' ? 'bg-green-50 border-green-500 text-green-700 ring-1 ring-green-500' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
               >
-                <div className={`w-3 h-3 rounded-full ${localSettings.storeStatus === 'open' ? 'bg-green-500' : 'bg-gray-300'}`} />
+                <div className={`w-3 h-3 rounded-full ${settings.storeStatus === 'open' ? 'bg-green-500' : 'bg-gray-300'}`} />
                 <span className="text-xs font-bold">ABERTO</span>
                 <span className="text-[10px] opacity-75">(Forçar)</span>
               </button>
 
               <button
-                onClick={() => setLocalSettings(prev => ({ ...prev, storeStatus: 'closed' }))}
-                className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${localSettings.storeStatus === 'closed' ? 'bg-red-50 border-red-500 text-red-700 ring-1 ring-red-500' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                onClick={() => updateSettings({ storeStatus: 'closed' })}
+                className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${settings.storeStatus === 'closed' ? 'bg-red-50 border-red-500 text-red-700 ring-1 ring-red-500' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
               >
-                <div className={`w-3 h-3 rounded-full ${localSettings.storeStatus === 'closed' ? 'bg-red-500' : 'bg-gray-300'}`} />
+                <div className={`w-3 h-3 rounded-full ${settings.storeStatus === 'closed' ? 'bg-red-500' : 'bg-gray-300'}`} />
                 <span className="text-xs font-bold">FECHADO</span>
                 <span className="text-[10px] opacity-75">(Forçar)</span>
               </button>
 
               <button
-                onClick={() => setLocalSettings(prev => ({ ...prev, storeStatus: 'auto' }))}
-                className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${localSettings.storeStatus === 'auto' || !localSettings.storeStatus ? 'bg-blue-50 border-blue-500 text-blue-700 ring-1 ring-blue-500' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                onClick={() => updateSettings({ storeStatus: 'auto' })}
+                className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${settings.storeStatus === 'auto' || !settings.storeStatus ? 'bg-blue-50 border-blue-500 text-blue-700 ring-1 ring-blue-500' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
               >
-                <div className={`w-3 h-3 rounded-full ${localSettings.storeStatus === 'auto' || !localSettings.storeStatus ? 'bg-blue-500' : 'bg-gray-300'}`} />
+                <div className={`w-3 h-3 rounded-full ${settings.storeStatus === 'auto' || !settings.storeStatus ? 'bg-blue-500' : 'bg-gray-300'}`} />
                 <span className="text-xs font-bold">AUTO</span>
                 <span className="text-[10px] opacity-75">(Horários)</span>
               </button>
@@ -1870,8 +3196,8 @@ const SettingsPage = () => {
               </label>
               <input
                 type="text"
-                value={localSettings.openMessage || ''}
-                onChange={(e) => setLocalSettings(prev => ({ ...prev, openMessage: e.target.value }))}
+                value={settings.openMessage || ''}
+                onChange={(e) => updateSettings({ openMessage: e.target.value })}
                 placeholder="Ex: 🟢 Aberto até às 23:00"
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
@@ -1884,8 +3210,8 @@ const SettingsPage = () => {
               </label>
               <input
                 type="text"
-                value={localSettings.closedMessage || ''}
-                onChange={(e) => setLocalSettings(prev => ({ ...prev, closedMessage: e.target.value }))}
+                value={settings.closedMessage || ''}
+                onChange={(e) => updateSettings({ closedMessage: e.target.value })}
                 placeholder="Ex: 🔴 Loja Fechada"
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
@@ -1914,8 +3240,8 @@ const SettingsPage = () => {
               </label>
               <input
                 type="text"
-                value={localSettings.deliveryTime || ''}
-                onChange={(e) => setLocalSettings(prev => ({ ...prev, deliveryTime: e.target.value }))}
+                value={settings.deliveryTime || ''}
+                onChange={(e) => updateSettings({ deliveryTime: e.target.value })}
                 placeholder="Ex: 40min à 1h"
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
@@ -1927,8 +3253,8 @@ const SettingsPage = () => {
               </label>
               <input
                 type="text"
-                value={localSettings.pickupTime || ''}
-                onChange={(e) => setLocalSettings(prev => ({ ...prev, pickupTime: e.target.value }))}
+                value={settings.pickupTime || ''}
+                onChange={(e) => updateSettings({ pickupTime: e.target.value })}
                 placeholder="Ex: 20min à 45min"
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
@@ -1940,8 +3266,8 @@ const SettingsPage = () => {
               </label>
               <input
                 type="text"
-                value={localSettings.deliveryCloseTime || ''}
-                onChange={(e) => setLocalSettings(prev => ({ ...prev, deliveryCloseTime: e.target.value }))}
+                value={settings.deliveryCloseTime || ''}
+                onChange={(e) => updateSettings({ deliveryCloseTime: e.target.value })}
                 placeholder="Ex: 21:00"
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
@@ -1969,8 +3295,8 @@ const SettingsPage = () => {
               </label>
               <input
                 type="text"
-                value={localSettings.instagramUrl || ''}
-                onChange={(e) => setLocalSettings(prev => ({ ...prev, instagramUrl: e.target.value }))}
+                value={settings.instagramUrl || ''}
+                onChange={(e) => updateSettings({ instagramUrl: e.target.value })}
                 placeholder="https://www.instagram.com/seu_perfil"
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
@@ -1982,9 +3308,9 @@ const SettingsPage = () => {
               </label>
               <input
                 type="text"
-                value={localSettings.businessAddress || ''}
-                onChange={(e) => setLocalSettings(prev => ({ ...prev, businessAddress: e.target.value }))}
-                placeholder="Ex: Sua Cidade - UF"
+                value={settings.businessAddress || ''}
+                onChange={(e) => updateSettings({ businessAddress: e.target.value })}
+                placeholder="Ex: Canaã dos Carajás - PA"
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
             </div>
@@ -1995,22 +3321,9 @@ const SettingsPage = () => {
               </label>
               <input
                 type="text"
-                value={localSettings.copyrightText || ''}
-                onChange={(e) => setLocalSettings(prev => ({ ...prev, copyrightText: e.target.value }))}
+                value={settings.copyrightText || ''}
+                onChange={(e) => updateSettings({ copyrightText: e.target.value })}
                 placeholder="Ex: © 2025-2026 Obba Açaí"
-                className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Mensagem de Revisão de Pedido (Checkout)
-              </label>
-              <textarea
-                value={localSettings.checkoutReviewMessage || ''}
-                onChange={(e) => setLocalSettings(prev => ({ ...prev, checkoutReviewMessage: e.target.value }))}
-                placeholder="Opcional. Ex: Seu pedido será revisado pela loja. Você poderá receber um desconto especial na confirmação!"
-                rows={2}
                 className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
             </div>
@@ -2036,12 +3349,12 @@ const SettingsPage = () => {
                 <p className="text-xs text-gray-500">Desativar entregas (somente pickup)</p>
               </div>
               <button
-                onClick={() => setLocalSettings(prev => ({ ...prev, deliveryOnly: !prev.deliveryOnly }))}
-                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${localSettings.deliveryOnly ? 'bg-orange-500' : 'bg-gray-300'
+                onClick={() => updateSettings({ deliveryOnly: !settings.deliveryOnly })}
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${settings.deliveryOnly ? 'bg-orange-500' : 'bg-gray-300'
                   }`}
               >
                 <span
-                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${localSettings.deliveryOnly ? 'translate-x-7' : 'translate-x-1'
+                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${settings.deliveryOnly ? 'translate-x-7' : 'translate-x-1'
                     }`}
                 />
               </button>
@@ -2067,7 +3380,7 @@ const SettingsPage = () => {
           </h3>
           <p className="text-xs text-gray-500 mb-4">Configure os horários automáticos de abertura e fechamento</p>
           <div className="space-y-3">
-            {(localSettings.openingHours || []).map((hour) => (
+            {settings.openingHours.map((hour) => (
               <div key={hour.dayOfWeek} className="border border-gray-200 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-gray-800">{dayNames[hour.dayOfWeek]}</span>
@@ -2127,24 +3440,24 @@ const SettingsPage = () => {
             <label className="block text-xs font-medium text-gray-600 mb-2">Formato do Logo</label>
             <div className="grid grid-cols-2 gap-2">
               <button
-                onClick={() => setLocalSettings(prev => ({ ...prev, logoShape: 'circle' }))}
-                className={`p-3 rounded-lg border-2 flex flex-col items-center gap-2 transition-all ${localSettings.logoShape === 'circle'
+                onClick={() => updateSettings({ logoShape: 'circle' })}
+                className={`p-3 rounded-lg border-2 flex flex-col items-center gap-2 transition-all ${settings.logoShape === 'circle'
                   ? 'bg-purple-50 border-purple-500 text-purple-700'
                   : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                   }`}
               >
-                <div className={`w-12 h-12 rounded-full border-2 ${localSettings.logoShape === 'circle' ? 'border-purple-500' : 'border-gray-300'
+                <div className={`w-12 h-12 rounded-full border-2 ${settings.logoShape === 'circle' ? 'border-purple-500' : 'border-gray-300'
                   }`} />
                 <span className="text-xs font-bold">Círculo</span>
               </button>
               <button
-                onClick={() => setLocalSettings(prev => ({ ...prev, logoShape: 'rectangle' }))}
-                className={`p-3 rounded-lg border-2 flex flex-col items-center gap-2 transition-all ${localSettings.logoShape === 'rectangle'
+                onClick={() => updateSettings({ logoShape: 'rectangle' })}
+                className={`p-3 rounded-lg border-2 flex flex-col items-center gap-2 transition-all ${settings.logoShape === 'rectangle'
                   ? 'bg-purple-50 border-purple-500 text-purple-700'
                   : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                   }`}
               >
-                <div className={`w-12 h-12 rounded-lg border-2 ${localSettings.logoShape === 'rectangle' ? 'border-purple-500' : 'border-gray-300'
+                <div className={`w-12 h-12 rounded-lg border-2 ${settings.logoShape === 'rectangle' ? 'border-purple-500' : 'border-gray-300'
                   }`} />
                 <span className="text-xs font-bold">Retângulo</span>
               </button>
@@ -2153,11 +3466,11 @@ const SettingsPage = () => {
 
           <div className="flex items-center gap-4">
             <div className="relative">
-              <img src={localSettings.logoUrl} className={`w-20 h-20 object-cover border ${localSettings.logoShape === 'circle' ? 'rounded-full' : 'rounded-lg'}`} alt="Logo" />
+              <img src={settings.logoUrl} className={`w-20 h-20 object-cover border ${settings.logoShape === 'circle' ? 'rounded-full' : 'rounded-lg'}`} alt="Logo" />
               <button
                 onClick={() => {
                   if (confirm('Remover logo da loja?')) {
-                    setLocalSettings(prev => ({ ...prev, logoUrl: '' }));
+                    updateSettings({ logoUrl: '' });
                   }
                 }}
                 className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-colors"
@@ -2166,67 +3479,24 @@ const SettingsPage = () => {
                 <Trash2 size={12} />
               </button>
             </div>
-            <label
-              htmlFor="logo-file"
-              className={`flex-1 cursor-pointer bg-gray-50 hover:bg-gray-100 p-3 rounded border border-dashed flex items-center justify-center gap-2 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
+            <label className={`flex-1 cursor-pointer bg-gray-50 hover:bg-gray-100 p-3 rounded border border-dashed flex items-center justify-center gap-2 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
               <Upload size={18} /> <span className="text-sm">{isUploading ? 'Enviando...' : 'Alterar Logo'}</span>
-              <input type="file" id="logo-file" accept="image/*" hidden onChange={e => handleImage(e, 'logoUrl')} disabled={isUploading} />
+              <input type="file" accept="image/*" hidden onChange={e => handleImage(e, 'logoUrl')} disabled={isUploading} />
             </label>
-            <label
-              htmlFor="logo-camera"
-              className={`p-3 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded border border-dashed flex items-center justify-center ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              title="Tirar Foto"
-            >
-              <Camera size={18} />
-              <input type="file" id="logo-camera" accept="image/*" capture="environment" hidden onChange={e => handleImage(e, 'logoUrl')} disabled={isUploading} />
-            </label>
-            <button
-              onClick={() => {
-                setShowLinkInput({ field: 'logoUrl', visible: !showLinkInput.visible || showLinkInput.field !== 'logoUrl' });
-                setTempImageUrl('');
-              }}
-              className="p-3 bg-gray-50 hover:bg-gray-100 rounded border border-dashed text-gray-600"
-              title="Usar Link"
-            >
-              <LinkIcon size={18} />
-            </button>
           </div>
-
-          {showLinkInput.visible && showLinkInput.field === 'logoUrl' && (
-            <div className="mt-3 flex gap-2">
-              <input
-                className="flex-1 border p-2 rounded text-sm"
-                placeholder="Cole o link da logo aqui..."
-                value={tempImageUrl}
-                onChange={e => setTempImageUrl(e.target.value)}
-              />
-              <button
-                onClick={() => {
-                  if (tempImageUrl) {
-                    setLocalSettings(prev => ({ ...prev, logoUrl: tempImageUrl }));
-                    setShowLinkInput({ field: 'logoUrl', visible: false });
-                  }
-                }}
-                className="bg-purple-600 text-white px-3 py-1 rounded text-xs font-bold"
-              >
-                OK
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Cover Photo Upload */}
         <div className="bg-white p-4 rounded-lg shadow-sm">
           <label className="block text-sm font-bold text-gray-700 mb-2">Foto de Capa / Banner</label>
           <div className="space-y-3">
-            {localSettings.bannerUrl && (
+            {settings.bannerUrl && (
               <div className="relative">
-                <img src={localSettings.bannerUrl} className="w-full h-32 rounded object-cover border" alt="Banner" />
+                <img src={settings.bannerUrl} className="w-full h-32 rounded object-cover border" alt="Banner" />
                 <button
                   onClick={() => {
                     if (confirm('Remover foto de capa?')) {
-                      setLocalSettings(prev => ({ ...prev, bannerUrl: '' }));
+                      updateSettings({ bannerUrl: '' });
                     }
                   }}
                   className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg transition-colors"
@@ -2236,55 +3506,10 @@ const SettingsPage = () => {
                 </button>
               </div>
             )}
-            <div className="flex gap-2">
-              <label
-                htmlFor="banner-file"
-                className={`flex-1 cursor-pointer bg-gray-50 hover:bg-gray-100 p-3 rounded border border-dashed flex items-center justify-center gap-2 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <Upload size={18} /> <span className="text-sm">{isUploading ? 'Enviando...' : 'Alterar Foto de Capa'}</span>
-                <input type="file" id="banner-file" accept="image/*" hidden onChange={e => handleImage(e, 'bannerUrl')} disabled={isUploading} />
-              </label>
-              <label
-                htmlFor="banner-camera"
-                className={`p-3 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded border border-dashed flex items-center justify-center ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                title="Tirar Foto"
-              >
-                <Camera size={18} />
-                <input type="file" id="banner-camera" accept="image/*" capture="environment" hidden onChange={e => handleImage(e, 'bannerUrl')} disabled={isUploading} />
-              </label>
-              <button
-                onClick={() => {
-                  setShowLinkInput({ field: 'bannerUrl', visible: !showLinkInput.visible || showLinkInput.field !== 'bannerUrl' });
-                  setTempImageUrl('');
-                }}
-                className="p-3 bg-gray-50 hover:bg-gray-100 rounded border border-dashed text-gray-600"
-                title="Usar Link"
-              >
-                <LinkIcon size={18} />
-              </button>
-            </div>
-
-            {showLinkInput.visible && showLinkInput.field === 'bannerUrl' && (
-              <div className="mt-3 flex gap-2">
-                <input
-                  className="flex-1 border p-2 rounded text-sm"
-                  placeholder="Cole o link da capa aqui..."
-                  value={tempImageUrl}
-                  onChange={e => setTempImageUrl(e.target.value)}
-                />
-                <button
-                  onClick={() => {
-                    if (tempImageUrl) {
-                      setLocalSettings(prev => ({ ...prev, bannerUrl: tempImageUrl }));
-                      setShowLinkInput({ field: 'bannerUrl', visible: false });
-                    }
-                  }}
-                  className="bg-purple-600 text-white px-3 py-1 rounded text-xs font-bold"
-                >
-                  OK
-                </button>
-              </div>
-            )}
+            <label className={`w-full cursor-pointer bg-gray-50 hover:bg-gray-100 p-3 rounded border border-dashed flex items-center justify-center gap-2 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+              <Upload size={18} /> <span className="text-sm">{isUploading ? 'Enviando...' : 'Alterar Foto de Capa'}</span>
+              <input type="file" accept="image/*" hidden onChange={e => handleImage(e, 'bannerUrl')} disabled={isUploading} />
+            </label>
           </div>
         </div>
 
@@ -2293,8 +3518,8 @@ const SettingsPage = () => {
           <label className="block text-sm font-bold text-gray-700 mb-2">Nome da Loja</label>
           <input
             className="w-full border p-2 rounded"
-            value={localSettings.storeName}
-            onChange={e => setLocalSettings(prev => ({ ...prev, storeName: e.target.value }))}
+            value={settings.storeName}
+            onChange={e => updateSettings({ storeName: e.target.value })}
           />
         </div>
 
@@ -2304,8 +3529,8 @@ const SettingsPage = () => {
           <input
             className="w-full border p-2 rounded"
             placeholder="5594999999999"
-            value={localSettings.whatsappNumber}
-            onChange={e => setLocalSettings(prev => ({ ...prev, whatsappNumber: e.target.value }))}
+            value={settings.whatsappNumber}
+            onChange={e => updateSettings({ whatsappNumber: e.target.value })}
           />
           <p className="text-xs text-gray-500 mt-1">Exemplo: 5594992816973</p>
         </div>
@@ -2317,8 +3542,8 @@ const SettingsPage = () => {
             type="number"
             step="0.01"
             className="w-full border p-2 rounded"
-            value={localSettings.deliveryFee}
-            onChange={e => setLocalSettings(prev => ({ ...prev, deliveryFee: parseFloat(e.target.value) }))}
+            value={settings.deliveryFee}
+            onChange={e => updateSettings({ deliveryFee: parseFloat(e.target.value) })}
           />
         </div>
 
@@ -2340,8 +3565,8 @@ const SettingsPage = () => {
 
             <div>TESTE DE ENV VARS:</div>
             <div>
-              URL: {(import.meta as any).env.VITE_SUPABASE_URL ? '✅ OK' : '❌ VAZIO'}<br />
-              KEY: {(import.meta as any).env.VITE_SUPABASE_ANON_KEY ? '✅ OK' : '❌ VAZIO'}
+              URL: {import.meta.env.VITE_SUPABASE_URL ? '✅ OK' : '❌ VAZIO'}<br />
+              KEY: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ OK' : '❌ VAZIO'}
             </div>
           </div>
           <p className="mt-2 text-[10px] text-gray-400">
@@ -2375,7 +3600,7 @@ const SettingsPage = () => {
 
 
 const ThemeSettingsPage = () => {
-  const { settings, updateSettings, store } = useApp();
+  const { settings, updateSettings } = useApp();
   const navigate = useNavigate();
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
@@ -2415,7 +3640,7 @@ const ThemeSettingsPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-4 pb-20">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate(`/${store?.slug}/panel`)}><ChevronLeft /></button>
+        <button onClick={() => navigate('/panel')}><ChevronLeft /></button>
         <h1 className="text-xl font-bold">Cores do Site</h1>
       </div>
 
@@ -2545,84 +3770,17 @@ const ExitModal = ({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose: (
 
 const AppContent = () => {
   const {
-    store, categories, addCategory, updateCategory, deleteCategory,
+    categories, addCategory, updateCategory, deleteCategory,
     products, addProduct, updateProduct, deleteProduct, reorderProducts,
-    groups, orders, loading, isModernUI, setIsModernUI
+    groups, orders, loading
   } = useApp();
 
 
 
   const location = useLocation();
   const navigate = useNavigate();
-  // Determine if it's an admin route
-  const isAdminRoute = location.pathname.includes('/panel') || location.pathname.startsWith('/platform');
-  const isStorefrontRoute = !isAdminRoute && !['/', '/login', '/setup'].includes(location.pathname);
-  const isStoreHome = isStorefrontRoute && !location.pathname.includes('/cart') && !location.pathname.includes('/checkout');
+  const isAdminRoute = location.pathname.startsWith('/panel');
   const [showExitModal, setShowExitModal] = useState(false);
-
-  const { settings } = useApp();
-
-  // Dynamic Document Title and PWA Manifest (Route Aware)
-  useEffect(() => {
-    const isPlatformHome = location.pathname === '/';
-    const isPlatformAdmin = location.pathname.startsWith('/platform');
-
-    if (isPlatformHome) {
-      document.title = "Canaã Delivery OS";
-    } else if (isPlatformAdmin) {
-      document.title = "Canaã Delivery OS - Admin";
-    } else if (isAdminRoute) {
-      document.title = `Painel - ${settings.storeName || 'Delivery'}`;
-    } else if (settings && settings.storeName) {
-      document.title = settings.storeName;
-    } else {
-      document.title = "Sistema de Delivery";
-    }
-
-    // Only update Manifest if NOT on platform home (to keep store identity for PWA)
-    if (!isPlatformHome && settings && settings.storeName) {
-      const manifestNode = document.querySelector('link[rel="manifest"]');
-      if (manifestNode) {
-        const storeId = store?.slug || 'default';
-        const manifestObj = {
-          id: `delivery-app-${storeId}`,
-          name: settings.storeName,
-          short_name: settings.storeName.length > 12 ? settings.storeName.substring(0, 12).trim() : settings.storeName,
-          description: `Delivery Oficial - ${settings.storeName}`,
-          start_url: `${window.location.origin}/#/${storeId}`,
-          scope: `${window.location.origin}/`,
-          display: 'standalone',
-          theme_color: settings.themeColors?.primary || '#8b5cf6',
-          background_color: '#f9fafb',
-          icons: [
-            {
-              src: settings.logoUrl?.startsWith('http') ? settings.logoUrl : `${window.location.origin}${settings.logoUrl || '/pwa-192x192.png'}`,
-              sizes: '192x192',
-              type: 'image/png',
-              purpose: 'any maskable'
-            },
-            {
-              src: settings.logoUrl?.startsWith('http') ? settings.logoUrl : `${window.location.origin}${settings.logoUrl || '/pwa-512x512.png'}`,
-              sizes: '512x512',
-              type: 'image/png',
-              purpose: 'any maskable'
-            }
-          ]
-        };
-
-        const manifestString = JSON.stringify(manifestObj);
-        const blob = new Blob([manifestString], { type: 'application/json' });
-        const manifestURL = URL.createObjectURL(blob);
-        manifestNode.setAttribute('href', manifestURL);
-      }
-    } else if (isPlatformHome) {
-      // Reset to default manifest for Home Page
-      const manifestNode = document.querySelector('link[rel="manifest"]');
-      if (manifestNode) {
-        manifestNode.setAttribute('href', '/manifest.webmanifest');
-      }
-    }
-  }, [isAdminRoute, location.pathname, settings?.storeName, settings?.logoUrl, settings?.themeColors, store]);
 
   useEffect(() => {
     const handleBackButton = async () => {
@@ -2645,91 +3803,60 @@ const AppContent = () => {
 
   if (loading) {
     return (
-      <div 
-        className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden font-outfit z-[99999]"
-        style={{ background: 'linear-gradient(135deg, #0a0118 0%, #130a2e 50%, #1a0a3e 100%)' }}
+      <div
+        className="min-h-screen flex flex-col items-center justify-center"
+        style={{ background: 'linear-gradient(135deg, #2d0d5a 0%, #4E0797 50%, #7c3aed 100%)' }}
       >
-        {/* Ambient glow orbs */}
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-700/20 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-violet-600/10 rounded-full blur-[120px] pointer-events-none" />
+        {/* Decorative background circles */}
+        <div className="absolute w-72 h-72 rounded-full opacity-10 bg-white" style={{ top: '-10%', right: '-15%' }} />
+        <div className="absolute w-48 h-48 rounded-full opacity-10 bg-white" style={{ bottom: '-5%', left: '-10%' }} />
 
-        <div className="relative z-10 flex flex-col items-center">
-          {/* 3D App Icon */}
-          <div className="relative w-20 h-20 mb-6">
-            <div className="absolute inset-0 bg-purple-500/50 rounded-2xl blur-xl animate-pulse" />
-            <div className="relative w-full h-full bg-gradient-to-br from-purple-500 to-violet-700 rounded-2xl flex items-center justify-center shadow-xl border border-white/20">
-              <StoreIcon size={40} className="text-white drop-shadow-md animate-bounce" style={{ animationDuration: '2s' }} />
-            </div>
+        <div className="relative z-10 flex flex-col items-center gap-6">
+          {/* Animated açaí emoji */}
+          <div className="text-7xl animate-bounce" style={{ animationDuration: '1.2s' }}>🍇</div>
+
+          {/* Spinner ring */}
+          <div className="relative w-14 h-14">
+            <div className="absolute inset-0 rounded-full border-4 border-white/20" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-white border-r-transparent border-b-transparent border-l-transparent animate-spin" />
           </div>
-          
-          {/* Loading Dots */}
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-            <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-            <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+
+          {/* Text */}
+          <div className="text-center">
+            <p className="text-white font-heading font-bold text-xl tracking-wide">Carregando...</p>
+            <p className="text-purple-200 text-sm mt-1">Preparando os melhores sabores 🍨</p>
           </div>
-          <p className="text-white/50 font-medium mt-4 text-xs font-bold tracking-[0.2em] uppercase">
-            Iniciando
-          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen ${isModernUI && !isAdminRoute ? 'bg-[#FAFAFA]' : 'bg-gray-50'} md:pb-0`}>
+    <div className="min-h-screen bg-gray-50 md:pb-0">
       <ExitModal
         isOpen={showExitModal}
         onClose={() => setShowExitModal(false)}
         onConfirm={handleConfirmExit}
       />
-      {/* Global Header removed to avoid redundancy with Modern/Classic Hero sections and search bars */}
-
-      {/* Theme Switcher Button */}
-      {isStorefrontRoute && (
-        <button
-          onClick={() => setIsModernUI(!isModernUI)}
-          className={`fixed bottom-24 md:bottom-20 right-4 z-[100] flex items-center gap-2 px-3 py-2 rounded-full shadow-lg transition-all text-xs font-bold font-outfit backdrop-blur-md border ${isModernUI ? 'bg-white/90 text-purple-700 border-purple-100 hover:bg-white' : 'bg-gray-900/90 text-white border-gray-700 hover:bg-gray-900'}`}
-        >
-          <LayoutTemplate size={14} />
-          {isModernUI ? 'Usar Versão Antiga' : 'Versão Moderna'}
-        </button>
-      )}
+      {!isAdminRoute && <Header />}
 
       <Routes>
-        <Route path="/" element={<PlatformHome />} />
-        <Route path="/:storeSlug" element={
-          isModernUI ? (
-            <ModernHomePage />
-          ) : (
-            <>
-              <Hero />
-              <HomePage />
-            </>
-          )
-        } />
-        <Route path="/:storeSlug/cart" element={<CartPage />} />
-        <Route path="/:storeSlug/checkout" element={<CheckoutPage />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
 
-        <Route path="/setup" element={<SetupPage />} />
+        <Route path="/panel" element={<AdminPanel />} />
+        <Route path="/panel/orders" element={<OrdersPage />} />
+        <Route path="/panel/coupons" element={<CouponsPage />} />
+        <Route path="/panel/addons" element={<AddonsPage />} />
+        <Route path="/panel/settings" element={<SettingsPage />} />
+        <Route path="/panel/theme" element={<ThemeSettingsPage />} />
+        <Route path="/panel/inventory" element={<InventoryPage products={products} />} />
+        <Route path="/panel/printer" element={<PrinterSettingsPage />} />
+        <Route path="/panel/theme" element={<ThemeSettingsPage />} />
 
-        <Route path="/platform" element={<PlatformAdminPanel />} />
-
-        {/* Admin Panel Routes with Slug Prefix */}
-        <Route path="/:storeSlug/panel" element={<AdminPanel />} />
-        <Route path="/:storeSlug/panel/orders" element={<OrdersPage />} />
-        <Route path="/:storeSlug/panel/coupons" element={<CouponsPage />} />
-        <Route path="/:storeSlug/panel/addons" element={<AddonsPage />} />
-        <Route path="/:storeSlug/panel/settings" element={<SettingsPage />} />
-        <Route path="/:storeSlug/panel/theme" element={<ThemeSettingsPage />} />
-        <Route path="/:storeSlug/panel/inventory" element={<InventoryPage products={products} />} />
-        <Route path="/:storeSlug/panel/printer" element={<PrinterSettingsPage />} />
-        
-        <Route path="/:storeSlug/panel/categories" element={
+        <Route path="/panel/categories" element={
           <CategoriesPage
-            storeName={store?.name}
-            storeId={store?.id}
             categories={categories}
             addCategory={addCategory}
             updateCategory={updateCategory}
@@ -2737,10 +3864,8 @@ const AppContent = () => {
           />
         } />
 
-        <Route path="/:storeSlug/panel/products" element={
+        <Route path="/panel/products" element={
           <ProductsPage
-            storeName={store?.name}
-            storeId={store?.id}
             products={products}
             categories={categories}
             groups={groups}
@@ -2751,23 +3876,25 @@ const AppContent = () => {
           />
         } />
 
-        <Route path="/:storeSlug/panel/reports" element={
+        <Route path="/panel/reports" element={
           <ReportsPage orders={orders} />
+        } />
+
+        <Route path="/panel/inventory" element={
+          <InventoryPage products={products} />
         } />
       </Routes>
 
-      {isStorefrontRoute && <Sidebar />}
-      {isStorefrontRoute && <FloatingCartButton />}
-      {isStoreHome && <Footer />}
+      {!isAdminRoute && <Sidebar />}
+      {!isAdminRoute && <FloatingCartButton />}
     </div>
   );
 };
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
-  public state: { hasError: boolean, error: Error | null } = { hasError: false, error: null };
-  
   constructor(props: { children: React.ReactNode }) {
     super(props);
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: Error) {
@@ -2797,7 +3924,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
       );
     }
 
-    return (this as any).props.children;
+    return this.props.children;
   }
 }
 

@@ -3,81 +3,244 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Delivery">
-  <meta name="description" content="Sistema de delivery rápido e fácil para Açaiteria. Faça seu pedido agora!" />
-  <title>Sistema de Delivery</title>
-  <link rel="icon" type="image/png" href="/favicon.ico" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Outfit:wght@300;400;500;700;800;900&display=swap"
-    rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+  <!-- SEO & Identity -->
+  <title>Sabor Açaíteria Canaã | Açaí & Delivery</title>
+  <meta name="description" content="Peça seu açaí favorito com delivery rápido em Canaã dos Carajás. Os melhores sabores de açaí com combos exclusivos. Entrega rápida!" />
+  <meta name="keywords" content="açaí, delivery, Canaã dos Carajás, açaíteria, açaí delivery, Pará" />
+  <meta name="author" content="Sabor Açaíteria" />
+  <meta name="theme-color" content="#4E0797" />
+
+  <!-- Open Graph / Social -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Sabor Açaíteria Canaã" />
+  <meta property="og:description" content="Peça seu açaí favorito com delivery rápido em Canaã dos Carajás!" />
+  <meta property="og:locale" content="pt_BR" />
+
+  <!-- PWA -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Sabor Açaí" />
+
+  <!-- Premium Fonts: Inter (body) + Poppins (headings) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet" />
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Roboto', 'sans-serif'],
-            outfit: ['Outfit', 'sans-serif'],
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            heading: ['Poppins', 'system-ui', 'sans-serif'],
           },
           colors: {
             brand: {
               purple: 'var(--color-header-bg)',
               red: 'var(--color-button-primary)',
-              green: '#4caf50',  // Keep static for now unless requested
-              dark: 'var(--color-text-primary)',   // Map dark to text primary? Or footer?
-              bg: 'var(--color-background)',     // Map bg to background
+              green: '#2ecc71',
+              dark: 'var(--color-text-primary)',
+              bg: 'var(--color-background)',
             }
           },
           animation: {
-            'shimmer': 'shimmer 2s infinite',
+            'slide-up': 'slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+            'fade-in': 'fadeIn 0.3s ease-out',
+            'scale-in': 'scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            'pulse-badge': 'pulseBadge 1.5s ease-in-out infinite',
+            'shimmer': 'shimmer 1.8s infinite',
           },
           keyframes: {
+            slideUp: {
+              '0%': { transform: 'translateY(100%)', opacity: '0' },
+              '100%': { transform: 'translateY(0)', opacity: '1' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(8px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            scaleIn: {
+              '0%': { transform: 'scale(0.9)', opacity: '0' },
+              '100%': { transform: 'scale(1)', opacity: '1' },
+            },
+            pulseBadge: {
+              '0%, 100%': { transform: 'scale(1)' },
+              '50%': { transform: 'scale(1.08)' },
+            },
             shimmer: {
-              '100%': { transform: 'translateX(100%)' },
-            }
+              '0%': { backgroundPosition: '-200% 0' },
+              '100%': { backgroundPosition: '200% 0' },
+            },
+          },
+          boxShadow: {
+            'card': '0 2px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04)',
+            'card-hover': '0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)',
+            'float': '0 8px 32px rgba(0,0,0,0.18)',
           }
         }
       }
     }
   </script>
   <style>
-    /* CSS Variables for Theme Customization */
+    /* === CSS Design Tokens === */
     :root {
       --color-header-bg: #4E0797;
       --color-header-text: #ffffff;
-      --color-background: #f6f6f6;
+      --color-background: #f0f0f5;
       --color-card-bg: #ffffff;
-      --color-card-text: #333333;
+      --color-card-text: #1a1a2e;
       --color-button-primary: #e50914;
       --color-button-text: #ffffff;
-      --color-text-primary: #1e1e1e;
-      --color-text-secondary: #666666;
+      --color-text-primary: #1a1a2e;
+      --color-text-secondary: #64748b;
+      --color-accent: #7c3aed;
+      --radius-card: 16px;
+      --transition-base: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Hide scrollbar for horizontal scrolling */
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
+    /* === Global Reset & Base === */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      background-color: var(--color-background);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior-y: none;
     }
 
+    /* === Scrollbar styling === */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #c4b5fd; border-radius: 99px; }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar {
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
 
-    body {
-      background-color: var(--color-background);
+    /* === Product Card hover glass effect === */
+    .product-card {
+      transition: transform var(--transition-base), box-shadow var(--transition-base);
+    }
+    .product-card:hover {
+      transform: translateY(-3px) scale(1.015);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+    }
+    .product-card:active {
+      transform: scale(0.97);
+    }
+
+    /* === Image zoom on hover === */
+    .img-zoom { overflow: hidden; }
+    .img-zoom img {
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .product-card:hover .img-zoom img {
+      transform: scale(1.08);
+    }
+
+    /* === Glassmorphism effect === */
+    .glass {
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    /* === Button press effect === */
+    .btn-press {
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .btn-press:active {
+      transform: scale(0.95);
+    }
+
+    /* === Shimmer loading skeleton === */
+    .skeleton {
+      background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.8s infinite;
+    }
+
+    /* === Category chip active state === */
+    .cat-chip {
+      transition: all var(--transition-base);
+    }
+    .cat-chip.active {
+      background: var(--color-header-bg);
+      color: white;
+      box-shadow: 0 4px 12px rgba(78, 7, 151, 0.3);
+    }
+
+    /* === Floating button pulse ring === */
+    .float-ring::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      background: var(--color-button-primary);
+      opacity: 0.3;
+      animation: pulseBadge 2s ease-in-out infinite;
+    }
+
+    /* === Status badge glow === */
+    .status-open {
+      box-shadow: 0 4px 18px rgba(34, 197, 94, 0.4);
+    }
+    .status-closed {
+      box-shadow: 0 4px 18px rgba(229, 9, 20, 0.35);
+    }
+
+    /* === Header blur on scroll === */
+    .header-glass {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    /* === Option card selected ring === */
+    .option-selected {
+      border-color: var(--color-header-bg);
+      box-shadow: 0 0 0 2px var(--color-header-bg);
+    }
+
+    /* === Section title gradient === */
+    .section-title {
+      background: linear-gradient(135deg, var(--color-text-primary), var(--color-header-bg));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* === Smooth page transitions === */
+    #root > div {
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    /* === Price badge === */
+    .price-badge {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
   </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0"
+  }
+}
+</script>
+
 </head>
 
 <body class="bg-brand-bg text-gray-800 font-sans antialiased">
