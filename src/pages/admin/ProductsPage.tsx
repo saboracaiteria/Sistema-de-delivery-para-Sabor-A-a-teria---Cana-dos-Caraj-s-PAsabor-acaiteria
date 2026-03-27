@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, Edit, Trash2, Upload, Loader2, Save, X, GripVertical, ToggleLeft, ToggleRight, Camera, Link as LinkIcon } from 'lucide-react';
-import { supabase } from './supabaseClient';
-import { useApp } from './App';
-import { ConfirmModal } from './ConfirmModal';
+import { supabase } from '../../supabaseClient';
+import { useApp } from '../../contexts/AppContext';
+import { ConfirmModal } from '../../components/modals/ConfirmModal';
 
 interface Product {
     id: string;

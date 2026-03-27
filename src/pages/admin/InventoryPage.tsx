@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Package, Users, ShoppingCart, Plus, Trash2, Edit, Save, X } from 'lucide-react';
-import { supabase } from './supabaseClient';
-import { Product, Supplier, StockItem, PurchaseRecord } from './types';
-import { useApp } from './App';
-import { ConfirmModal } from './ConfirmModal';
+import { supabase } from '../../supabaseClient';
+import { Product, Supplier, StockItem, PurchaseRecord } from '../../types/types';
+import { useApp } from '../../contexts/AppContext';
+import { ConfirmModal } from '../../components/modals/ConfirmModal';
 import { format } from 'date-fns';
 
 interface InventoryPageProps {

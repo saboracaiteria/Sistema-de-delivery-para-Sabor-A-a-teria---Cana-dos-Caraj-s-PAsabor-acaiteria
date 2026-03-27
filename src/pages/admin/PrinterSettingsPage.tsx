@@ -1,9 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Printer, AlertCircle, Save, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
-import { useApp } from './App';
-
-import { usePrinter } from './PrinterContext';
+import { useApp } from '../../contexts/AppContext';
+import { usePrinter } from '../../PrinterContext';
 
 export const PrinterSettingsPage = () => {
     const { store } = useApp();

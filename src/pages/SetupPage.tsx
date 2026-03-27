@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Database, Save, AlertCircle } from 'lucide-react';
-import { supabase } from './supabaseClient';
+import { supabase } from '../supabaseClient';
 
 export const SetupPage = () => {
     const [url, setUrl] = useState('');

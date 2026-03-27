@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, Edit, Trash2, Save, ArrowUp, ArrowDown, ToggleLeft, ToggleRight } from 'lucide-react';
-import { ConfirmModal } from './ConfirmModal';
-import { supabase } from './supabaseClient';
-import { useApp } from './App';
+import { ConfirmModal } from '../../components/modals/ConfirmModal';
+import { supabase } from '../../supabaseClient';
+import { useApp } from '../../contexts/AppContext';
 
 interface Category {
     id: string;

@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from './supabaseClient';
+import { supabase } from '../supabaseClient';
 import { Store, LogOut, ChevronRight, Activity, Copy, CheckCircle, Plus, X, Palette, LayoutTemplate, Loader2, Trash2, AlertTriangle, Lock, Pencil, Save, Coffee, Box, Eye, EyeOff, Clock, Calendar } from 'lucide-react';
-import { useApp } from './App';
-import type { Store as StoreType } from './types';
-import { SUPER_ADMIN_PASSWORD } from './constants';
-import { applyAcaiteriaTemplate } from './storeTemplateUtils';
+import { useApp } from '../contexts/AppContext';
+import type { Store as StoreType } from '../types/types';
+import { SUPER_ADMIN_PASSWORD } from '../types/constants';
+import { applyAcaiteriaTemplate } from '../storeTemplateUtils';
 
 export const PlatformAdminPanel = () => {
   const { adminRole, setAdminRole } = useApp();

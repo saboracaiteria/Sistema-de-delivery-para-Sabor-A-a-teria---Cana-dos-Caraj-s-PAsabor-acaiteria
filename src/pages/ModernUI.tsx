@@ -2,10 +2,11 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Menu, Info, Plus, Settings as SettingsIcon, Search, ChevronLeft, ChevronRight, X, Minus, Sparkles, AlertCircle, Clock } from 'lucide-react';
-import { useApp, ProductModal } from './App';
-import { Product, ProductGroup } from './types';
-import { PwaInstallPrompt } from './PwaInstallPrompt';
-import { ShareQRCode } from './ShareQRCode';
+import { useApp } from '../contexts/AppContext';
+import { ProductModal } from '../components/modals/ProductModal';
+import { Product, ProductGroup } from '../types/types';
+import { PwaInstallPrompt } from '../components/ui/PwaInstallPrompt';
+import { ShareQRCode } from '../components/ui/ShareQRCode';
 
 
 // Modern Hero Component

@@ -1,8 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, BarChart2, TrendingUp, ShoppingBag, Users, Calendar, Download, RefreshCw, DollarSign, FileText, Users as UsersIcon, Printer } from 'lucide-react';
-import { useApp } from './App';
-import { usePrinter } from './PrinterContext';
+import { useApp } from '../../contexts/AppContext';
+import { usePrinter } from '../../PrinterContext';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend, BarChart, Bar
@@ -11,7 +11,7 @@ import { format, subDays, startOfMonth, endOfMonth, isWithinInterval, parseISO, 
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { supabase } from './supabaseClient';
+import { supabase } from '../../supabaseClient';
 
 interface OrderRecord {
     id: string;

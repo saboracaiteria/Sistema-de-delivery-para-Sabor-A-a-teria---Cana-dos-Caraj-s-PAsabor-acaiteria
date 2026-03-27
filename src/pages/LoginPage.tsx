@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from './supabaseClient';
+import { supabase } from '../supabaseClient';
 import { Lock, Mail, AlertCircle, ArrowRight, Store, ChevronLeft } from 'lucide-react';
-import { useApp } from './App';
-import { SUPER_ADMIN_EMAILS, SUPER_ADMIN_PASSWORD } from './constants';
+import { useApp } from '../contexts/AppContext';
+import { SUPER_ADMIN_EMAILS, SUPER_ADMIN_PASSWORD } from '../types/constants';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
