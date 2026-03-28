@@ -146,7 +146,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return parts[0];
     }
     // Handle HashRouter case if needed
-    const hashParts = location.hash.split('/').filter(Boolean);
+    const cleanHash = location.hash.startsWith('#') ? location.hash.slice(1) : location.hash;
+    const hashParts = cleanHash.split('/').filter(Boolean);
     if (hashParts.length > 0 && !['admin', 'platform', 'setup', 'cart', 'checkout'].includes(hashParts[0])) {
       return hashParts[0];
     }
