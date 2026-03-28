@@ -25,6 +25,7 @@ import { ProductsPage } from './pages/admin/ProductsPage';
 import { ReportsPage } from './pages/admin/ReportsPage';
 import { InventoryPage } from './pages/admin/InventoryPage';
 import { PrinterSettingsPage } from './pages/admin/PrinterSettingsPage';
+import { DatabaseSetup } from './pages/admin/DatabaseSetup';
 
 import { PlatformHome } from './pages/PlatformHome';
 import { LoginPage } from './pages/LoginPage';
@@ -119,6 +120,7 @@ const AppContent = () => {
         <Route path="/:slug/panel/theme" element={<ThemeSettingsPage />} />
         <Route path="/:slug/panel/inventory" element={<InventoryPage products={products} />} />
         <Route path="/:slug/panel/printer" element={<PrinterSettingsPage />} />
+        <Route path="/:slug/panel/database" element={<DatabaseSetup />} />
 
         <Route path="/:slug/panel/categories" element={
           <CategoriesPage
