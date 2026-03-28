@@ -95,6 +95,7 @@ interface AppContextType {
   setSidebarOpen: (open: boolean) => void;
   loading: boolean;
   store: Store | null;
+  slug: string | null;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -145,12 +146,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Manuelly parse slug from URL because we are outside <Routes>
   const currentSlug = useMemo(() => {
     const parts = location.pathname.split('/').filter(Boolean);
-    if (parts.length > 0 && !['admin', 'platform', 'setup'].includes(parts[0])) {
+    if (parts.length > 0 && !['admin', 'platform', 'setup', 'cart', 'checkout'].includes(parts[0])) {
       return parts[0];
     }
     // Handle HashRouter case if needed
     const hashParts = location.hash.split('/').filter(Boolean);
-    if (hashParts.length > 0 && !['admin', 'platform', 'setup'].includes(hashParts[0])) {
+    if (hashParts.length > 0 && !['admin', 'platform', 'setup', 'cart', 'checkout'].includes(hashParts[0])) {
       return hashParts[0];
     }
     return null;
@@ -346,7 +347,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addGroup, updateGroup, deleteGroup, addCoupon, updateCoupon, deleteCoupon,
     updateSettings, setAdminRole, addOrder, updateOrderStatus, deleteOrder,
     copyOrderToClipboard, checkStoreStatus: () => isStoreOpen ? 'open' : 'closed',
-    isStoreOpen, isSidebarOpen, setSidebarOpen, loading, store
+    isStoreOpen, isSidebarOpen, setSidebarOpen, loading, store,
+    slug: currentSlug
   };
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

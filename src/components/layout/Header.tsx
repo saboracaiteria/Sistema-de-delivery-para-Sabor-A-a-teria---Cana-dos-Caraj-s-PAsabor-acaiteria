@@ -4,7 +4,7 @@ import { Menu, ShoppingCart } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 
 export const Header: React.FC = () => {
-  const { setSidebarOpen, settings, cart } = useApp();
+  const { setSidebarOpen, settings, cart, slug } = useApp();
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const navigate = useNavigate();
 
@@ -38,7 +38,7 @@ export const Header: React.FC = () => {
 
         {/* Cart icon shortcut */}
         <button
-          onClick={() => navigate('/cart')}
+          onClick={() => navigate(`/${slug}/cart`)}
           className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 active:bg-white/20 transition-colors btn-press relative"
           aria-label="Ver carrinho"
         >

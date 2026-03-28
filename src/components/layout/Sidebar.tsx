@@ -4,21 +4,25 @@ import { X, Lock as LockIcon } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 
 export const Sidebar: React.FC = () => {
-  const { isSidebarOpen, setSidebarOpen, categories, setAdminRole } = useApp();
+  const { isSidebarOpen, setSidebarOpen, categories, setAdminRole, slug, store } = useApp();
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
   const handleAdminAccess = () => {
-    if (password === '1245') {
+    const isStoreAdmin = store?.password && password === store.password;
+    const isMasterAdmin = password === '1245';
+    const isEmployee = password === '777';
+
+    if (isStoreAdmin || isMasterAdmin) {
       setAdminRole('admin');
-      navigate('/panel');
+      navigate(`/${slug}/panel`);
       setShowPassword(false);
       setSidebarOpen(false);
       setPassword('');
-    } else if (password === '777') {
+    } else if (isEmployee) {
       setAdminRole('employee');
-      navigate('/panel');
+      navigate(`/${slug}/panel`);
       setShowPassword(false);
       setSidebarOpen(false);
       setPassword('');
@@ -50,8 +54,13 @@ export const Sidebar: React.FC = () => {
           <div className="border-t border-gray-100 my-2" />
           {categories.map(cat => (
             <button key={cat.id} onClick={() => {
-              navigate('/');
-              setTimeout(() => document.getElementById(`cat-${cat.id}`)?.scrollIntoView({ behavior: 'smooth' }), 100);
+              navigate(`/${slug}`);
+              setTimeout(() => {
+                const element = document.getElementById(`cat-${cat.id}`);
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth' });
+                }
+              }, 100);
               setSidebarOpen(false);
             }} className="w-full text-left px-4 py-3 hover:bg-gray-100 text-gray-600 flex items-center gap-2">
               <span>{cat.icon}</span> {cat.title}

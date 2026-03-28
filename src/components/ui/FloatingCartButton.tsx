@@ -4,7 +4,7 @@ import { ShoppingCart } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 
 export const FloatingCartButton: React.FC = () => {
-  const { cart } = useApp();
+  const { cart, slug } = useApp();
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const cartTotal = cart.reduce((acc, item) => acc + item.totalPrice * item.quantity, 0);
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ export const FloatingCartButton: React.FC = () => {
 
   return (
     <button
-      onClick={() => navigate('/cart')}
+      onClick={() => navigate(`/${slug}/cart`)}
       className={`fixed bottom-6 left-4 right-4 max-w-md mx-auto z-50 btn-press ${
         animate ? 'scale-105' : 'scale-100'
       } transition-transform duration-300`}
