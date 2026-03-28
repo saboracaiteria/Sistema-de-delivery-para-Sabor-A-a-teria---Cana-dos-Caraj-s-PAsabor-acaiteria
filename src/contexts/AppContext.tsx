@@ -96,6 +96,7 @@ interface AppContextType {
   loading: boolean;
   store: Store | null;
   slug: string | null;
+  isConfigured: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -345,22 +346,289 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateCartNote = (cartId: string, note: string) => setCart(prev => prev.map(item => item.cartId === cartId ? { ...item, note } : item));
   const clearCart = () => setCart([]);
 
-  const addProduct = async (p: any) => { /* logic */ };
-  const updateProduct = async (p: any) => { /* logic */ };
-  const deleteProduct = async (id: string) => { /* logic */ };
-  const reorderProducts = async (catId: string, prods: any[]) => { /* logic */ };
+  const addProduct = async (p: any) => {
+    if (isConfigured && store) {
+      const { data, error } = await supabase
+        .from('products')
+        .insert({
+          store_id: store.id,
+          name: p.name,
+          description: p.description,
+          price: p.price,
+          image: p.image,
+          category_id: p.categoryId,
+          display_order: p.displayOrder || 0,
+          active: p.active ?? true
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error adding product:', error);
+        return;
+      }
 
-  const addCategory = async (c: any) => { /* logic */ };
-  const updateCategory = async (c: any) => { /* logic */ };
-  const deleteCategory = async (id: string) => { /* logic */ };
+      // Handle group relations if any
+      if (p.groupIds && p.groupIds.length > 0) {
+        const relations = p.groupIds.map((gid: string) => ({
+          product_id: data.id,
+          group_id: gid
+        }));
+        await supabase.from('product_group_relations').insert(relations);
+      }
+      
+      await fetchProducts(store.id);
+    } else {
+      setProducts(prev => [...prev, p]);
+    }
+  };
 
-  const addGroup = async (g: any) => { /* logic */ };
-  const updateGroup = async (g: any) => { /* logic */ };
-  const deleteGroup = async (id: string) => { /* logic */ };
+  const updateProduct = async (p: any) => {
+    if (isConfigured && store) {
+      const { error } = await supabase
+        .from('products')
+        .update({
+          name: p.name,
+          description: p.description,
+          price: p.price,
+          image: p.image,
+          category_id: p.categoryId,
+          display_order: p.displayOrder,
+          active: p.active
+        })
+        .match({ id: p.id, store_id: store.id });
 
-  const addCoupon = async (c: any) => { /* logic */ };
-  const updateCoupon = async (c: any) => { /* logic */ };
-  const deleteCoupon = async (id: string) => { /* logic */ };
+      if (error) {
+          console.error('Error updating product:', error);
+          return;
+      }
+
+      // Handle group relations (simplified: clear and re-insert)
+      if (p.groupIds !== undefined) {
+        await supabase.from('product_group_relations').delete().eq('product_id', p.id);
+        if (p.groupIds.length > 0) {
+          const relations = p.groupIds.map((gid: string) => ({
+            product_id: p.id,
+            group_id: gid
+          }));
+          await supabase.from('product_group_relations').insert(relations);
+        }
+      }
+      
+      await fetchProducts(store.id);
+    } else {
+      setProducts(prev => prev.map(old => old.id === p.id ? { ...old, ...p } : old));
+    }
+  };
+
+  const deleteProduct = async (id: string) => {
+    if (isConfigured && store) {
+      const { error } = await supabase.from('products').delete().match({ id, store_id: store.id });
+      if (error) console.error('Error deleting product:', error);
+      else await fetchProducts(store.id);
+    } else {
+      setProducts(prev => prev.filter(p => p.id !== id));
+    }
+  };
+
+  const reorderProducts = async (catId: string, prods: any[]) => {
+    if (isConfigured && store) {
+      const updates = prods.map((p, idx) => ({
+        id: p.id,
+        store_id: store.id,
+        display_order: idx + 1
+      }));
+      // Using upsert for bulk update of display_order
+      const { error } = await supabase.from('products').upsert(updates);
+      if (error) console.error('Error reordering products:', error);
+      else await fetchProducts(store.id);
+    } else {
+      setProducts(prev => {
+        const otherCats = prev.filter(p => p.categoryId !== catId);
+        const updatedProds = prods.map((p, idx) => ({ ...p, displayOrder: idx + 1 }));
+        return [...otherCats, ...updatedProds];
+      });
+    }
+  };
+
+  const addCategory = async (c: any) => {
+    if (isConfigured && store) {
+      const { error } = await supabase
+        .from('categories')
+        .insert({
+          store_id: store.id,
+          title: c.title,
+          icon: c.icon,
+          display_order: c.displayOrder || 0,
+          active: c.active ?? true
+        });
+      if (error) console.error('Error adding category:', error);
+      else await fetchCategories(store.id);
+    } else {
+      setCategories(prev => [...prev, c]);
+    }
+  };
+
+  const updateCategory = async (c: any) => {
+    if (isConfigured && store) {
+      const { error } = await supabase
+        .from('categories')
+        .update({
+          title: c.title,
+          icon: c.icon,
+          display_order: c.displayOrder,
+          active: c.active
+        })
+        .match({ id: c.id, store_id: store.id });
+      if (error) console.error('Error updating category:', error);
+      else await fetchCategories(store.id);
+    } else {
+      setCategories(prev => prev.map(old => old.id === c.id ? { ...old, ...c } : old));
+    }
+  };
+
+  const deleteCategory = async (id: string) => {
+    if (isConfigured && store) {
+      const { error } = await supabase.from('categories').delete().match({ id, store_id: store.id });
+      if (error) console.error('Error deleting category:', error);
+      else await fetchCategories(store.id);
+    } else {
+      setCategories(prev => prev.filter(c => c.id !== id));
+    }
+  };
+
+  const addGroup = async (g: any) => {
+    if (isConfigured && store) {
+       const { data, error } = await supabase
+        .from('product_groups')
+        .insert({
+          store_id: store.id,
+          title: g.title,
+          min: g.min,
+          max: g.max,
+          active: g.active ?? true
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error adding group:', error);
+        return;
+      }
+
+      // Handle options
+      if (g.options && g.options.length > 0) {
+        const optionsData = g.options.map((o: any) => ({
+          group_id: data.id,
+          name: o.name,
+          price: o.price,
+          description: o.description,
+          active: o.active ?? true
+        }));
+        await supabase.from('product_options').insert(optionsData);
+      }
+      
+      await fetchGroups(store.id);
+    } else {
+      setGroups(prev => [...prev, g]);
+    }
+  };
+
+  const updateGroup = async (g: any) => {
+    if (isConfigured && store) {
+      const { error } = await supabase
+        .from('product_groups')
+        .update({
+          title: g.title,
+          min: g.min,
+          max: g.max,
+          active: g.active
+        })
+        .match({ id: g.id, store_id: store.id });
+
+      if (error) {
+          console.error('Error updating group:', error);
+          return;
+      }
+
+      // Handle options (clear and re-insert)
+      if (g.options !== undefined) {
+        await supabase.from('product_options').delete().eq('group_id', g.id);
+        if (g.options.length > 0) {
+          const optionsData = g.options.map((o: any) => ({
+            group_id: g.id,
+            name: o.name,
+            price: o.price,
+            description: o.description,
+            active: o.active ?? true
+          }));
+          await supabase.from('product_options').insert(optionsData);
+        }
+      }
+      
+      await fetchGroups(store.id);
+    } else {
+      setGroups(prev => prev.map(old => old.id === g.id ? { ...old, ...g } : old));
+    }
+  };
+
+  const deleteGroup = async (id: string) => {
+    if (isConfigured && store) {
+       const { error } = await supabase.from('product_groups').delete().match({ id, store_id: store.id });
+       if (error) console.error('Error deleting group:', error);
+       else await fetchGroups(store.id);
+    } else {
+      setGroups(prev => prev.filter(g => g.id !== id));
+    }
+  };
+
+  const addCoupon = async (c: any) => {
+     if (isConfigured && store) {
+       const { error } = await supabase
+        .from('coupons')
+        .insert({
+          store_id: store.id,
+          code: c.code,
+          type: c.type,
+          value: c.value,
+          min_order_value: c.minOrderValue,
+          active: c.active ?? true
+        });
+      if (error) console.error('Error adding coupon:', error);
+      else await fetchCoupons(store.id);
+    } else {
+      setCoupons(prev => [...prev, c]);
+    }
+  };
+
+  const updateCoupon = async (c: any) => {
+    if (isConfigured && store) {
+      const { error } = await supabase
+        .from('coupons')
+        .update({
+          code: c.code,
+          type: c.type,
+          value: c.value,
+          min_order_value: c.minOrderValue,
+          active: c.active
+        })
+        .match({ id: c.id, store_id: store.id });
+      if (error) console.error('Error updating coupon:', error);
+      else await fetchCoupons(store.id);
+    } else {
+      setCoupons(prev => prev.map(old => old.id === c.id ? { ...old, ...c } : old));
+    }
+  };
+
+  const deleteCoupon = async (id: string) => {
+    if (isConfigured && store) {
+      const { error } = await supabase.from('coupons').delete().match({ id, store_id: store.id });
+      if (error) console.error('Error deleting coupon:', error);
+      else await fetchCoupons(store.id);
+    } else {
+      setCoupons(prev => prev.filter(c => c.id !== id));
+    }
+  };
 
   const updateSettings = async (s: Partial<GlobalSettings>) => {
     const updated = { ...settings, ...s };
@@ -405,9 +673,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const removeCoupon = () => setAppliedCoupon(null);
 
-  const addOrder = (o: OrderRecord) => { /* logic */ };
-  const updateOrderStatus = (id: string, s: OrderStatus) => { /* logic */ };
-  const deleteOrder = (id: string) => { /* logic */ };
+  const addOrder = async (o: OrderRecord) => {
+    if (isConfigured && store) {
+      const { error } = await supabase
+        .from('orders')
+        .insert({
+          store_id: store.id,
+          customer_name: o.customerName,
+          whatsapp: o.whatsapp,
+          method: o.method,
+          address: o.address,
+          payment_method: o.paymentMethod,
+          total: o.total,
+          items_summary: o.itemsSummary,
+          full_details: o.fullDetails,
+          status: o.status,
+          discount_percent: o.discountPercent,
+          is_quote: o.isQuote
+        });
+      if (error) console.error('Error adding order:', error);
+      else await fetchOrders(store.id);
+    } else {
+      setOrders(prev => [o, ...prev]);
+    }
+  };
+
+  const updateOrderStatus = async (id: string, s: OrderStatus) => {
+    if (isConfigured && store) {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: s })
+        .match({ id, store_id: store.id });
+      if (error) console.error('Error updating order status:', error);
+      else await fetchOrders(store.id);
+    } else {
+      setOrders(prev => prev.map(o => o.id === id ? { ...o, status: s } : o));
+    }
+  };
+
+  const deleteOrder = async (id: string) => {
+    if (isConfigured && store) {
+      const { error } = await supabase.from('orders').delete().match({ id, store_id: store.id });
+      if (error) console.error('Error deleting order:', error);
+      else await fetchOrders(store.id);
+    } else {
+      setOrders(prev => prev.filter(o => o.id !== id));
+    }
+  };
   const copyOrderToClipboard = (o: OrderRecord) => { /* logic */ };
 
   const contextValue: AppContextType = {
@@ -419,7 +731,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateSettings, setAdminRole, addOrder, updateOrderStatus, deleteOrder,
     copyOrderToClipboard, checkStoreStatus: () => isStoreOpen ? 'open' : 'closed',
     isStoreOpen, isSidebarOpen, setSidebarOpen, loading, store,
-    slug: currentSlug
+    slug: currentSlug, isConfigured
   };
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
