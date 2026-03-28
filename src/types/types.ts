@@ -177,6 +177,7 @@ export interface GlobalSettings {
   noteTitle?: string;
   notePlaceholder?: string;
   checkoutReviewMessage?: string;
+  uiMode?: 'modern' | 'classic'; // Default UI mode for this store
 }
 
 export interface VisitorStat {

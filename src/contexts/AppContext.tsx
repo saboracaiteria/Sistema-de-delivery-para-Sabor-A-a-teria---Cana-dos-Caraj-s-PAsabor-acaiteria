@@ -142,6 +142,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => clearInterval(interval);
   }, [settings]);
 
+  // Manuelly parse slug from URL because we are outside <Routes>
+  const currentSlug = useMemo(() => {
+    const parts = location.pathname.split('/').filter(Boolean);
+    if (parts.length > 0 && !['admin', 'platform', 'setup'].includes(parts[0])) {
+      return parts[0];
+    }
+    // Handle HashRouter case if needed
+    const hashParts = location.hash.split('/').filter(Boolean);
+    if (hashParts.length > 0 && !['admin', 'platform', 'setup'].includes(hashParts[0])) {
+      return hashParts[0];
+    }
+    return null;
+  }, [location]);
+
   // Initial data fetch
   useEffect(() => {
     const init = async () => {
@@ -153,7 +167,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return;
       }
 
-      if (!slug) {
+      if (!currentSlug) {
         setLoading(false);
         return;
       }
@@ -165,11 +179,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const { data: storeData, error: storeError } = await supabase
             .from('stores')
             .select('*')
-            .eq('slug', slug)
+            .eq('slug', currentSlug)
             .single();
 
           if (storeError || !storeData) {
-            console.error('Store not found:', slug);
+            console.error('Store not found:', currentSlug);
             setLoading(false);
             return;
           }
@@ -202,7 +216,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (isStorageLoaded) {
       init();
     }
-  }, [isStorageLoaded, slug, location.pathname]);
+  }, [isStorageLoaded, currentSlug, location.pathname]);
 
   // Real-time subscriptions
   useEffect(() => {

@@ -1,11 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Clock, AlertCircle } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { ProductCarousel } from '../components/ui/ProductCarousel';
 import { Footer } from '../components/layout/Footer';
 
+import { useNavigate } from 'react-router-dom';
+
 export const HomePage: React.FC = () => {
-  const { categories, products, settings, isStoreOpen } = useApp();
+  const { categories, products, settings, isStoreOpen, store } = useApp();
+  const navigate = useNavigate();
+
+  // Redirect if preferred UI is modern
+  useEffect(() => {
+    if (settings.uiMode === 'modern') {
+      navigate(`/${store?.slug}/modern`, { replace: true });
+    }
+  }, [settings.uiMode, navigate, store?.slug]);
   const status = isStoreOpen ? 'open' : 'closed';
   const activeCategories = categories.filter(cat => cat.active !== false);
 

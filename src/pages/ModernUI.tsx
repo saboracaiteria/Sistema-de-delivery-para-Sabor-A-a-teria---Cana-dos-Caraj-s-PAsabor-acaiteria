@@ -297,8 +297,16 @@ export const ModernFloatingCart = () => {
 };
 
 // Storefront Container
-export const ModernUI = () => {
-    const { categories, products, settings, isStoreOpen, searchTerm } = useApp();
+export const ModernUI: React.FC = () => {
+    const { categories, products, settings, isStoreOpen, searchTerm, store } = useApp();
+    const navigate = useNavigate();
+
+    // Redirect if preferred UI is classic
+    useEffect(() => {
+        if (settings.uiMode === 'classic') {
+            navigate(`/${store?.slug}`, { replace: true });
+        }
+    }, [settings.uiMode, navigate, store?.slug]);
 
     // Memoize categorized products to avoid filtering on every render
     const categorizedProducts = useMemo(() => {

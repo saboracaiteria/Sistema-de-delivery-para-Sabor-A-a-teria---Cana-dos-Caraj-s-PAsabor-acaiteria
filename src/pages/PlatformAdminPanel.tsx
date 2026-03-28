@@ -712,6 +712,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
             { dayOfWeek: 5, open: '08:00', close: '22:00', enabled: true },
             { dayOfWeek: 6, open: '08:00', close: '22:00', enabled: true },
           ],
+          ui_mode: uiMode
         });
 
         // 4. Se o usuário escolheu o template da Açaiteria, importar os dados
