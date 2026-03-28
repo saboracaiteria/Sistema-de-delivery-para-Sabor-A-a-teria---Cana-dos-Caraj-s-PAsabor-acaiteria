@@ -135,13 +135,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Store status update
   useEffect(() => {
-    const updateStatus = () => {
-      const status = calculateStoreStatus(settings);
-      setIsStoreOpen(status);
-    };
-    updateStatus(); 
-    const interval = setInterval(updateStatus, 30000); 
-    return () => clearInterval(interval);
+    const status = calculateStoreStatus(settings);
+    setIsStoreOpen(status);
   }, [settings]);
 
   // Manuelly parse slug from URL because we are outside <Routes>
@@ -176,40 +171,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       try {
         setLoading(true);
-        if (isConfigured) {
-          // 1. Fetch Store by Slug
+        
+        if (isConfigured && currentSlug) {
+          // Tenta buscar a loja pelo slug
           const { data: storeData, error: storeError } = await supabase
             .from('stores')
             .select('*')
             .eq('slug', currentSlug)
             .single();
 
-          if (storeError || !storeData) {
-            console.error('Store not found:', currentSlug);
+          if (!storeError && storeData) {
+            setStore(storeData);
+            // Busca os dados reais
+            await Promise.all([
+              fetchProducts(storeData.id),
+              fetchCategories(storeData.id),
+              fetchGroups(storeData.id),
+              fetchCoupons(storeData.id),
+              fetchOrders(storeData.id),
+              fetchSettings(storeData.id)
+            ]);
             setLoading(false);
             return;
           }
+          console.warn('Loja não encontrada no Supabase, usando dados mock como fallback:', currentSlug);
+        }
 
-          setStore(storeData);
-
-          // 2. Fetch everything filtered by store_id
-          await Promise.all([
-            fetchProducts(storeData.id),
-            fetchCategories(storeData.id),
-            fetchGroups(storeData.id),
-            fetchCoupons(storeData.id),
-            fetchOrders(storeData.id),
-            fetchSettings(storeData.id)
-          ]);
-        } else {
-          setProducts(mockProducts);
-          setCategories(mockCategories);
-          setGroups(mockGroups);
-          setCoupons(mockCoupons);
-          setSettings(mockSettings);
+        // Fallback para Dados Mock (se não configurado ou loja não encontrada)
+        setProducts(mockProducts);
+        setCategories(mockCategories);
+        setGroups(mockGroups);
+        setCoupons(mockCoupons);
+        setSettings(mockSettings);
+        
+        // Se temos um slug mas não achamos na DB, criamos um objeto de loja mock 
+        if (currentSlug) {
+           setStore({ id: '00000000-0000-0000-0000-000000000001', slug: currentSlug, name: 'Sabor Açaíteria (Mock)' });
         }
       } catch (error) {
-        console.error('Data loading error:', error);
+        console.error('Erro crítico no AppContext:', error);
       } finally {
         setLoading(false);
       }
