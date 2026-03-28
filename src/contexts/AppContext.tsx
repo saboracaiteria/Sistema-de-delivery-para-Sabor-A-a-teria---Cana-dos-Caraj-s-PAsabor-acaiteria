@@ -243,8 +243,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .order('display_order', { ascending: true });
     
     if (data) setProducts(data.map((p: any) => ({ 
-      ...p, 
-      id: p.id, 
+      ...p,
+      storeId: p.store_id, 
+      categoryId: p.category_id,
+      displayOrder: p.display_order,
       groupIds: p.product_group_relations?.map((r: any) => r.group_id) || [] 
     })));
   };
@@ -255,7 +257,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .select('*')
       .eq('store_id', storeId)
       .order('display_order', { ascending: true });
-    if (data) setCategories(data);
+    if (data) setCategories(data.map((c: any) => ({
+      ...c,
+      storeId: c.store_id,
+      displayOrder: c.display_order
+    })));
   };
 
   const fetchGroups = async (storeId: string) => {
@@ -263,7 +269,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .from('product_groups')
       .select('*, options:product_options(*)')
       .eq('store_id', storeId);
-    if (data) setGroups(data);
+    if (data) setGroups(data.map((g: any) => ({
+      ...g,
+      storeId: g.store_id,
+      options: g.options?.map((o: any) => ({
+        ...o,
+        storeId: o.store_id
+      })) || []
+    })));
   };
 
   const fetchCoupons = async (storeId: string) => {
@@ -289,8 +302,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .select('*')
       .eq('store_id', storeId)
       .single();
-    if (data) setSettings(data);
-    else setSettings(mockSettings);
+    
+    if (data) {
+      // Normalize snake_case to camelCase for the application
+      const normalizedSettings: GlobalSettings = {
+        storeId: data.store_id,
+        storeName: data.store_name,
+        logoUrl: data.logo_url,
+        logoShape: data.logo_shape,
+        bannerUrl: data.banner_url,
+        whatsappNumber: data.whatsapp_number,
+        storeStatus: data.store_status,
+        deliveryFee: data.delivery_fee,
+        deliveryOnly: data.delivery_only,
+        openingHours: data.opening_hours || [],
+        themeColors: data.theme_colors,
+        closedMessage: data.closed_message,
+        openMessage: data.open_message,
+        deliveryTime: data.delivery_time,
+        pickupTime: data.pickup_time,
+        deliveryCloseTime: data.delivery_close_time,
+        instagramUrl: data.instagram_url,
+        businessAddress: data.business_address,
+        copyrightText: data.copyright_text,
+        noteTitle: data.note_title,
+        notePlaceholder: data.note_placeholder,
+        checkoutReviewMessage: data.checkout_review_message,
+        uiMode: data.ui_mode
+      };
+      setSettings(normalizedSettings);
+    } else {
+      setSettings(mockSettings);
+    }
   };
 
   // Actions
@@ -322,7 +365,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateSettings = async (s: Partial<GlobalSettings>) => {
     const updated = { ...settings, ...s };
     setSettings(updated as GlobalSettings);
-    if (isConfigured) await supabase.from('settings').update(s).match({ id: (settings as any).id });
+
+    if (isConfigured) {
+      // Map camelCase to snake_case for Supabase
+      const payload: any = {};
+      if (s.storeName !== undefined) payload.store_name = s.storeName;
+      if (s.logoUrl !== undefined) payload.logo_url = s.logoUrl;
+      if (s.logoShape !== undefined) payload.logo_shape = s.logoShape;
+      if (s.bannerUrl !== undefined) payload.banner_url = s.bannerUrl;
+      if (s.whatsappNumber !== undefined) payload.whatsapp_number = s.whatsappNumber;
+      if (s.storeStatus !== undefined) payload.store_status = s.storeStatus;
+      if (s.deliveryFee !== undefined) payload.delivery_fee = s.deliveryFee;
+      if (s.deliveryOnly !== undefined) payload.delivery_only = s.deliveryOnly;
+      if (s.openingHours !== undefined) payload.opening_hours = s.openingHours;
+      if (s.themeColors !== undefined) payload.theme_colors = s.themeColors;
+      if (s.closedMessage !== undefined) payload.closed_message = s.closedMessage;
+      if (s.openMessage !== undefined) payload.open_message = s.openMessage;
+      if (s.deliveryTime !== undefined) payload.delivery_time = s.deliveryTime;
+      if (s.pickupTime !== undefined) payload.pickup_time = s.pickupTime;
+      if (s.deliveryCloseTime !== undefined) payload.delivery_close_time = s.deliveryCloseTime;
+      if (s.instagramUrl !== undefined) payload.instagram_url = s.instagramUrl;
+      if (s.businessAddress !== undefined) payload.business_address = s.businessAddress;
+      if (s.copyrightText !== undefined) payload.copyright_text = s.copyrightText;
+      if (s.noteTitle !== undefined) payload.note_title = s.noteTitle;
+      if (s.notePlaceholder !== undefined) payload.note_placeholder = s.notePlaceholder;
+      if (s.checkoutReviewMessage !== undefined) payload.checkout_review_message = s.checkoutReviewMessage;
+      if (s.uiMode !== undefined) payload.ui_mode = s.uiMode;
+
+      await supabase.from('settings').update(payload).eq('store_id', store?.id);
+    }
   };
 
   const applyCoupon = (code: string) => {
