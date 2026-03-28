@@ -42,7 +42,7 @@ export const CouponsPage: React.FC = () => {
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/panel')} className="p-2 hover:bg-gray-200 rounded-lg"><ChevronLeft /></button>
+          <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-200 rounded-lg"><ChevronLeft /></button>
           <h1 className="text-xl font-bold">Cupons</h1>
         </div>
         <button onClick={() => { setEditingCoupon({ type: 'percent' }); setIsModalOpen(true); }} className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700 transition-colors">

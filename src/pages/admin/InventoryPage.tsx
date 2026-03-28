@@ -193,7 +193,9 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ products }) => {
         <div className="min-h-screen bg-gray-100 p-4 pb-20">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate(`/${store?.slug}/panel`)}><ChevronLeft /></button>
+                    <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-200 rounded-lg group transition-colors">
+                        <ChevronLeft className="text-gray-600 group-hover:text-purple-600" />
+                    </button>
                     <h1 className="text-xl font-bold">Controle de Estoque</h1>
                 </div>
             </div>

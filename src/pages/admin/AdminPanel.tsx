@@ -9,8 +9,8 @@ export const AdminPanel: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
 
   useEffect(() => {
-    if (!adminRole) navigate('/');
-  }, [adminRole, navigate]);
+    if (!adminRole) navigate(`/${slug}`);
+  }, [adminRole, navigate, slug]);
 
   const menuItems = [
     { title: 'Pedidos', icon: <FileText size={24} />, path: '/panel/orders', role: ['admin', 'employee'] },

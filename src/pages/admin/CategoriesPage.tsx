@@ -151,7 +151,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
         <div className="min-h-screen bg-gray-100 p-4">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate(`/${store?.slug}/panel`)}><ChevronLeft /></button>
+                    <button onClick={() => navigate(-1)}><ChevronLeft /></button>
                     <div>
                         <h1 className="text-xl font-bold">Categorias</h1>
                         {storeName && <p className="text-sm text-gray-500 font-medium">Loja: <span className="text-purple-600">{storeName}</span></p>}

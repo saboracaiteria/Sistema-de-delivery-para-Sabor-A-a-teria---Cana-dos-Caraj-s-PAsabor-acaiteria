@@ -64,7 +64,7 @@ export const OrdersPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate('/panel')} className="p-2 hover:bg-gray-200 rounded-lg"><ChevronLeft /></button>
+        <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-200 rounded-lg"><ChevronLeft /></button>
         <h1 className="text-xl font-bold">Pedidos</h1>
       </div>
       <div className="space-y-4">

@@ -48,7 +48,7 @@ export const Sidebar: React.FC = () => {
           <button onClick={() => setSidebarOpen(false)}><X style={{ color: 'var(--color-header-text, #ffffff)' }} /></button>
         </div>
         <div className="py-2">
-          <button onClick={() => { navigate('/'); setSidebarOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-100 border-l-4 border-transparent hover:border-brand-purple font-medium text-gray-700">
+          <button onClick={() => { navigate(`/${slug}`); setSidebarOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-100 border-l-4 border-transparent hover:border-brand-purple font-medium text-gray-700">
             Início
           </button>
           <div className="border-t border-gray-100 my-2" />

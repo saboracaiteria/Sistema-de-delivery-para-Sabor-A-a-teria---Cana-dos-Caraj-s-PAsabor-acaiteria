@@ -126,7 +126,7 @@ export const AddonsPage: React.FC = () => {
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/panel')} className="p-2 hover:bg-gray-200 rounded-lg"><ChevronLeft /></button>
+          <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-200 rounded-lg"><ChevronLeft /></button>
           <h1 className="text-xl font-bold">Adicionais / Combos</h1>
         </div>
         <button onClick={handleAddGroup} className="bg-purple-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-purple-700 transition-colors">

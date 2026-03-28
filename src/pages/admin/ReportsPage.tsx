@@ -263,7 +263,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ orders }) => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate(`/${store?.slug}/panel`)}><ChevronLeft /></button>
+                    <button onClick={() => navigate(-1)}><ChevronLeft /></button>
                     <h1 className="text-xl font-bold text-gray-800">Relatórios Financeiros</h1>
                 </div>
                 <div className="flex gap-2">

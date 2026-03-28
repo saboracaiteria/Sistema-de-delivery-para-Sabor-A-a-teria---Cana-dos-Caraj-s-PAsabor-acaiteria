@@ -30,7 +30,7 @@ export const PrinterSettingsPage = () => {
     return (
         <div className="min-h-screen bg-gray-100 p-4">
             <div className="flex items-center gap-3 mb-6">
-                <button onClick={() => navigate(`/${store?.slug}/panel`)}><ChevronLeft /></button>
+                <button onClick={() => navigate(-1)}><ChevronLeft /></button>
                 <h1 className="text-xl font-bold">Configuração de Impressora</h1>
             </div>
 
