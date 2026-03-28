@@ -12,8 +12,9 @@ export const HomePage: React.FC = () => {
 
   // Redirect if preferred UI is modern
   useEffect(() => {
-    if (settings.uiMode === 'modern') {
-      navigate(`/${store?.slug}/modern`, { replace: true });
+    // Só redireciona se tivermos o store e o slug carregado, para evitar /undefined/modern
+    if (settings.uiMode === 'modern' && store?.slug) {
+      navigate(`/${store.slug}/modern`, { replace: true });
     }
   }, [settings.uiMode, navigate, store?.slug]);
   const status = isStoreOpen ? 'open' : 'closed';

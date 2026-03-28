@@ -11,7 +11,7 @@ import { ShareQRCode } from '../components/ui/ShareQRCode';
 
 // Modern Hero Component
 export const ModernHero = () => {
-    const { settings, isStoreOpen, setSidebarOpen, searchTerm, setSearchTerm } = useApp();
+    const { settings, isStoreOpen, setSidebarOpen, searchTerm, setSearchTerm, store } = useApp();
     const [isSearchVisible, setIsSearchVisible] = useState(false);
 
     return (
@@ -133,7 +133,7 @@ export const ModernHero = () => {
 
                 <div className="text-center pt-2">
                     <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-tight mb-2">
-                        {settings.storeName}
+                        {settings.storeName || store?.name || 'Loja'}
                     </h1>
                     
                     <div className="flex items-center justify-center gap-3">
@@ -301,10 +301,12 @@ export const ModernUI: React.FC = () => {
     const { categories, products, settings, isStoreOpen, searchTerm, store } = useApp();
     const navigate = useNavigate();
 
-    // Redirect if preferred UI is classic
+    // Redireciona de volta para a HomePage se o UI Mode for classic ou se o store/slug estiver nulo
     useEffect(() => {
+        if (!store?.slug) return;
+        
         if (settings.uiMode === 'classic') {
-            navigate(`/${store?.slug}`, { replace: true });
+            navigate(`/${store.slug}`, { replace: true });
         }
     }, [settings.uiMode, navigate, store?.slug]);
 
