@@ -1,4 +1,4 @@
-import React, { useState, createContext, useContext, useEffect, useMemo } from 'react';
+import React, { useState, createContext, useContext, useEffect, useMemo, Component } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { supabase, isConfigured } from '../supabaseClient';
 import { 
@@ -97,6 +97,8 @@ interface AppContextType {
   store: Store | null;
   slug: string | null;
   isConfigured: boolean;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -130,6 +132,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [settings, setSettings] = useState<GlobalSettings>(mockSettings);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [isStoreOpen, setIsStoreOpen] = useState(false);
 
@@ -732,7 +735,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateSettings, setAdminRole, addOrder, updateOrderStatus, deleteOrder,
     copyOrderToClipboard, checkStoreStatus: () => isStoreOpen ? 'open' : 'closed',
     isStoreOpen, isSidebarOpen, setSidebarOpen, loading, store,
-    slug: currentSlug, isConfigured
+    slug: currentSlug, isConfigured, searchTerm, setSearchTerm
   };
 
   return (
@@ -744,9 +747,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 };
 
-// Simple Error Boundary
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: any }> {
-  constructor(props: any) {
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: any;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }

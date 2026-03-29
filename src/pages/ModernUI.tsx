@@ -317,7 +317,7 @@ export const ModernUI: React.FC = () => {
             products: products.filter(p => 
                 p.categoryId === cat.id && 
                 p.active !== false &&
-                (searchTerm === '' || p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.description?.toLowerCase().includes(searchTerm.toLowerCase()))
+                (!searchTerm || (p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || p.description?.toLowerCase().includes(searchTerm.toLowerCase())))
             )
         })).filter(cat => cat.products.length > 0 && cat.active !== false);
     }, [categories, products, searchTerm]);
