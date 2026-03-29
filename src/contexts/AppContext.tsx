@@ -735,5 +735,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     slug: currentSlug, isConfigured
   };
 
-  return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={contextValue}>
+      <ErrorBoundary>
+        {children}
+      </ErrorBoundary>
+    </AppContext.Provider>
+  );
 };
+
+// Simple Error Boundary
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: any }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("React Error Boundary:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 bg-red-50 text-red-900 min-h-screen">
+          <h1 className="text-2xl font-bold mb-4">Ops! Algo deu errado.</h1>
+          <pre className="p-4 bg-white border border-red-200 rounded-lg overflow-auto whitespace-pre-wrap text-sm">
+            {this.state.error?.toString()}
+          </pre>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg font-bold"
+          >
+            Recarregar Página
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}

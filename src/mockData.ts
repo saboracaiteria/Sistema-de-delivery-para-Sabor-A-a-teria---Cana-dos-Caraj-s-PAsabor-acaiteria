@@ -176,7 +176,15 @@ export const mockSettings = {
     ],
     deliveryOnly: false,
     instagramUrl: 'https://www.instagram.com/sabor_acaiteria/',
-    businessAddress: 'Canaã dos Carajás-PA 2025-2026'
+    businessAddress: 'Canaã dos Carajás-PA 2025-2026',
+    uiMode: 'modern' as const,
+    themeColors: {
+        headerBg: '#4E0797',
+        headerText: '#FFFFFF',
+        background: '#F9FAFB',
+        buttonPrimary: '#4E0797',
+        buttonText: '#FFFFFF'
+    }
 };
 
 export const mockCoupons = [
