@@ -142,6 +142,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsStoreOpen(status);
   }, [settings]);
 
+  // Update browser tab title
+  useEffect(() => {
+    if (settings && settings.storeName) {
+      document.title = `${settings.storeName} | Delivery`;
+    }
+  }, [settings?.storeName]);
+
   // Manuelly parse slug from URL because we are outside <Routes>
   const currentSlug = useMemo(() => {
     const parts = location.pathname.split('/').filter(Boolean);

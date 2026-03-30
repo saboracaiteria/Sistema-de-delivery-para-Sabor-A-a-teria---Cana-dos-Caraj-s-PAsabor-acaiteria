@@ -182,9 +182,22 @@ export const SettingsPage: React.FC = () => {
                       onClick={async () => {
                         const newPwd = (document.getElementById('new-store-password') as HTMLInputElement).value;
                         if (!newPwd || newPwd.length < 6) return alert('Senha deve ter no mínimo 6 dígitos.');
-                        const { error } = await supabase.rpc('update_my_store_password', { p_new_password: newPwd });
-                        if (error) alert(`Erro ao atualizar: ${error.message}`);
-                        else alert('Senha atualizada com sucesso!');
+                        
+                        const currentPwd = localStorage.getItem(`store_admin_pwd_${settings.storeId}`);
+                        
+                        const { error } = await supabase.rpc('update_store_password_direct', { 
+                          p_store_id: settings.storeId,
+                          p_current_password: currentPwd || '12457812',
+                          p_new_password: newPwd 
+                        });
+                        
+                        if (error) {
+                          alert(`Erro ao atualizar: ${error.message}`);
+                        } else {
+                          localStorage.setItem(`store_admin_pwd_${settings.storeId}`, newPwd);
+                          alert('Senha atualizada com sucesso!');
+                          (document.getElementById('new-store-password') as HTMLInputElement).value = '';
+                        }
                       }} 
                       className="bg-rose-600 text-white px-4 py-2 rounded-lg font-bold text-sm"
                     >

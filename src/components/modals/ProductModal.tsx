@@ -28,12 +28,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
   }, [product, groups]);
 
   const calculateTotal = () => {
-    let total = product.price;
+    let total = Number(product.price || 0);
     productGroups.forEach(group => {
       group.options.forEach(opt => {
         const qty = selectedOptions[opt.id] || 0;
         if (qty > 0 && opt.price) {
-          total += opt.price * qty;
+          total += Number(opt.price) * qty;
         }
       });
     });
@@ -41,9 +41,26 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
   };
 
   const handleOptionChange = (groupId: string, optionId: string, delta: number, max: number) => {
-    const currentQty = selectedOptions[optionId] || 0;
     const group = groups.find(g => g.id === groupId);
     if (!group) return;
+
+    // Se o grupo for de seleção única (max === 1), e o delta for de adição (+1),
+    // devemos desselecionar qualquer outra opção do mesmo grupo.
+    if (group.max === 1 && delta > 0) {
+      setSelectedOptions(prev => {
+        const newOptions = { ...prev };
+        // Zera todas as opções deste grupo
+        group.options.forEach(opt => {
+          newOptions[opt.id] = 0;
+        });
+        // Seta a atual para 1
+        newOptions[optionId] = 1;
+        return newOptions;
+      });
+      return;
+    }
+
+    const currentQty = selectedOptions[optionId] || 0;
     const currentGroupTotal = group.options.reduce((sum, opt) => sum + (selectedOptions[opt.id] || 0), 0);
 
     // Check max limit only when adding
@@ -122,7 +139,17 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
                     {filteredOptions.map(opt => {
                       const qty = selectedOptions[opt.id] || 0;
                       return (
-                        <div key={opt.id} className={`bg-white p-4 rounded-lg shadow-sm border ${qty > 0 ? 'border-purple-500 ring-1 ring-purple-500' : 'border-gray-200'} transition-all duration-300 ease-out hover:shadow-md hover:scale-[1.01] hover:bg-gray-50 cursor-pointer`}>
+                        <div
+                          key={opt.id}
+                          onClick={() => {
+                            if (group.max === 1) {
+                              handleOptionChange(group.id, opt.id, 1, group.max);
+                            } else if (qty < group.max) {
+                              handleOptionChange(group.id, opt.id, 1, group.max);
+                            }
+                          }}
+                          className={`bg-white p-4 rounded-lg shadow-sm border ${qty > 0 ? 'border-purple-500 ring-1 ring-purple-500' : 'border-gray-200'} transition-all duration-300 ease-out hover:shadow-md hover:scale-[1.01] hover:bg-gray-50 cursor-pointer`}
+                        >
                           <div className="flex justify-between items-start">
                             <div className="flex-1 pr-4">
                               <h4 className="font-bold text-gray-800">{opt.name}</h4>

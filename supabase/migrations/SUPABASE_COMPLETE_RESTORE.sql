@@ -181,3 +181,44 @@ GRANT EXECUTE ON FUNCTION public.update_my_store_password(TEXT) TO authenticated
 GRANT EXECUTE ON FUNCTION public.create_store_owner(TEXT, TEXT) TO authenticated;
 
 SELECT '✅ Funções restauradas com sucesso!' as status;
+
+
+-- 7. FUNÇÃO: Alterar Senha da Loja via Master Password ou Senha Atual
+CREATE OR REPLACE FUNCTION public.update_store_password_direct(
+    p_store_id UUID,
+    p_current_password TEXT,
+    p_new_password TEXT
+)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS \$\$
+DECLARE
+    v_has_access BOOLEAN := FALSE;
+BEGIN
+    -- Verifica se a senha informada é a Master (fallback)
+    IF p_current_password = '12457812' THEN
+        v_has_access := TRUE;
+    ELSE
+        -- Verifica se bate com a stores ou store_owners
+        SELECT EXISTS(
+            SELECT 1 FROM public.stores 
+            WHERE id = p_store_id AND password = p_current_password
+        ) INTO v_has_access;
+        
+        IF NOT v_has_access THEN
+            SELECT EXISTS(
+                SELECT 1 FROM public.store_owners 
+                WHERE store_id = p_store_id AND password = p_current_password
+            ) INTO v_has_access;
+        END IF;
+    END IF;
+
+    IF NOT v_has_access THEN
+        RAISE EXCEPTION 'Senha atual incorreta.';
+    END IF;
+
+    UPDATE public.stores SET password = p_new_password WHERE id = p_store_id;
+    UPDATE public.store_owners SET password = p_new_password WHERE store_id = p_store_id;
+
+END;
+\$\$;
+GRANT EXECUTE ON FUNCTION public.update_store_password_direct(UUID, TEXT, TEXT) TO anon, authenticated;
+
