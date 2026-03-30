@@ -189,7 +189,7 @@ CREATE OR REPLACE FUNCTION public.update_store_password_direct(
     p_current_password TEXT,
     p_new_password TEXT
 )
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS \$\$
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
     v_has_access BOOLEAN := FALSE;
 BEGIN
@@ -219,6 +219,6 @@ BEGIN
     UPDATE public.store_owners SET password = p_new_password WHERE store_id = p_store_id;
 
 END;
-\$\$;
+$$;
 GRANT EXECUTE ON FUNCTION public.update_store_password_direct(UUID, TEXT, TEXT) TO anon, authenticated;
 
