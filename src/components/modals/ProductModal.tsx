@@ -156,9 +156,22 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
                               {opt.description && (
                                 <p className="text-sm text-gray-500 mt-1 leading-tight">{opt.description}</p>
                               )}
-                              <div className="mt-2 inline-block px-3 py-1 rounded-full border border-gray-300 text-sm font-medium text-gray-700">
-                                R$ {opt.price ? Number(opt.price).toFixed(2).replace('.', ',') : '0,00'}
-                              </div>
+                              {(() => {
+                                const isMainChoice = group.min === 1 && group.max === 1;
+                                const optPrice = Number(opt.price || 0);
+                                const basePrice = Number(product.price || 0);
+                                const displayValue = isMainChoice ? (basePrice + optPrice) : optPrice;
+                                
+                                return (
+                                  <div className="mt-2 inline-block px-3 py-1 rounded-full border border-gray-300 text-sm font-medium text-gray-700 shadow-sm bg-gray-50/50">
+                                    {displayValue === 0 ? (
+                                      <span className="text-emerald-600 font-bold tracking-tight">Grátis</span>
+                                    ) : (
+                                      <>{!isMainChoice && optPrice > 0 ? '+ ' : ''}R$ {displayValue.toFixed(2).replace('.', ',')}</>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
 
                             <div className="flex items-center gap-3 self-center">
