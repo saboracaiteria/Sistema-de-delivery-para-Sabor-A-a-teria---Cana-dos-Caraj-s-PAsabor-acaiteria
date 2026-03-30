@@ -9,11 +9,35 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { addToCart, isStoreOpen } = useApp();
+  const { addToCart, isStoreOpen, groups } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showClosedToast, setShowClosedToast] = useState(false);
 
   const hasOptions = product.groupIds && product.groupIds.length > 0;
+
+  const calculateStartingPrice = () => {
+    let base = Number(product.price) || 0;
+    if (!hasOptions) return base;
+
+    let totalMinAdds = 0;
+    product.groupIds?.forEach(groupId => {
+      const g = groups.find(g => g.id === groupId);
+      if (g && g.min > 0 && g.options.length > 0) {
+        const sortedPrices = g.options
+          .map(o => Number(o.price) || 0)
+          .sort((a, b) => a - b);
+        
+        let sum = 0;
+        for (let i = 0; i < Math.min(g.min, sortedPrices.length); i++) {
+          sum += sortedPrices[i];
+        }
+        totalMinAdds += sum;
+      }
+    });
+    return base + totalMinAdds;
+  };
+
+  const startingPrice = calculateStartingPrice();
 
   const handleAdd = () => {
     if (!isStoreOpen) {
@@ -53,8 +77,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             loading="lazy"
           />
           <div className="absolute bottom-0 left-0 right-0 px-2.5 py-1.5 bg-gradient-to-t from-black/60 to-transparent">
+            {hasOptions && <p className="text-[9px] text-white/80 font-medium mb-[-2px] ml-[1px]">A partir de</p>}
             <span className="text-white font-heading font-bold text-sm drop-shadow">
-              R$ {product.price.toFixed(2)}
+              R$ {startingPrice.toFixed(2).replace('.', ',')}
             </span>
           </div>
           <div className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center shadow-md" style={{ backgroundColor: 'var(--color-button-primary)' }}>

@@ -157,7 +157,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
                                 <p className="text-sm text-gray-500 mt-1 leading-tight">{opt.description}</p>
                               )}
                               <div className="mt-2 inline-block px-3 py-1 rounded-full border border-gray-300 text-sm font-medium text-gray-700">
-                                + R$ {opt.price ? opt.price.toFixed(2).replace('.', ',') : '0,00'}
+                                R$ {opt.price ? Number(opt.price).toFixed(2).replace('.', ',') : '0,00'}
                               </div>
                             </div>
 

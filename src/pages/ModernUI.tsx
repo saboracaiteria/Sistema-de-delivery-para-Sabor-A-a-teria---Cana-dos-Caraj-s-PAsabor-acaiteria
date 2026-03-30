@@ -154,11 +154,35 @@ export const ModernHero = () => {
 
 // Modern Product Card
 export const ModernProductCard = React.memo(({ product, index }: { product: Product, index: number }) => {
-    const { addToCart, isStoreOpen } = useApp();
+    const { addToCart, isStoreOpen, groups } = useApp();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showClosedToast, setShowClosedToast] = useState(false);
 
     const hasOptions = product.groupIds && product.groupIds.length > 0;
+
+    const calculateStartingPrice = () => {
+        let base = Number(product.price) || 0;
+        if (!hasOptions) return base;
+
+        let totalMinAdds = 0;
+        product.groupIds?.forEach(groupId => {
+            const g = groups.find(g => g.id === groupId);
+            if (g && g.min > 0 && g.options.length > 0) {
+                const sortedPrices = g.options
+                    .map(o => Number(o.price) || 0)
+                    .sort((a, b) => a - b);
+                
+                let sum = 0;
+                for (let i = 0; i < Math.min(g.min, sortedPrices.length); i++) {
+                    sum += sortedPrices[i];
+                }
+                totalMinAdds += sum;
+            }
+        });
+        return base + totalMinAdds;
+    };
+
+    const startingPrice = calculateStartingPrice();
 
     const handleAdd = () => {
         if (!isStoreOpen) {
@@ -202,8 +226,12 @@ export const ModernProductCard = React.memo(({ product, index }: { product: Prod
 
                     <div className="flex items-end justify-between">
                         <div className="flex flex-col">
-                            <span className="text-[7px] md:text-[8px] text-gray-300 font-bold uppercase tracking-wider">De</span>
-                            <span className="font-black text-purple-700 text-[11px] md:text-sm leading-none">R$ {product.price.toFixed(2)}</span>
+                            {hasOptions ? (
+                                <span className="text-[7px] md:text-[8px] text-gray-300 font-bold uppercase tracking-wider">A partir de</span>
+                            ) : (
+                                <span className="text-[7px] md:text-[8px] text-gray-300 font-bold uppercase tracking-wider">Por</span>
+                            )}
+                            <span className="font-black text-purple-700 text-[11px] md:text-sm leading-none">R$ {startingPrice.toFixed(2).replace('.', ',')}</span>
                         </div>
 
                         <div className={`w-6 h-6 md:w-8 md:h-8 rounded-lg flex items-center justify-center transition-colors shadow-sm ${hasOptions ? 'bg-purple-50 text-purple-600 group-hover:bg-purple-100' : 'bg-[#4E0797] text-white group-hover:bg-[#3d0577] shadow-[0_4px_10px_rgba(78,7,151,0.3)]'}`}>
