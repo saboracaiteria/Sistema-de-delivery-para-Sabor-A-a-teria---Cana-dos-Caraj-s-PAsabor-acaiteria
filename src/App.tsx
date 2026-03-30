@@ -37,14 +37,21 @@ const AppContent = () => {
   const {
     categories, addCategory, updateCategory, deleteCategory,
     products, addProduct, updateProduct, deleteProduct, reorderProducts,
-    groups, orders, loading
+    groups, orders, loading, settings
   } = useApp();
 
   const location = useLocation();
   const navigate = useNavigate();
+  const pathParts = location.pathname.split('/').filter(Boolean);
+  
   const isPlatformHome = location.pathname === '/';
   const isAdminRoute = location.pathname.includes('/panel') || location.pathname.startsWith('/platform') || location.pathname.startsWith('/admin') || location.pathname.startsWith('/setup');
   const isStoreSpecificRoute = !isPlatformHome && !isAdminRoute;
+  
+  // Remove Global Headers and Carts from /modern, /cart, and /checkout
+  // Since they implement their own immersive local UI components.
+  // We also ensure uiMode isn't 'modern' to avoid a brief flash before redirect
+  const isClassicStorefront = isStoreSpecificRoute && pathParts.length === 1 && settings?.uiMode !== 'modern';
   const [showExitModal, setShowExitModal] = useState(false);
 
   useEffect(() => {
@@ -96,7 +103,7 @@ const AppContent = () => {
         onClose={() => setShowExitModal(false)}
         onConfirm={handleConfirmExit}
       />
-      {isStoreSpecificRoute && <Header />}
+      {isClassicStorefront && <Header />}
 
       <Routes>
         {/* === Rotas da Plataforma (Nível Superior) === */}
@@ -152,7 +159,7 @@ const AppContent = () => {
       </Routes>
 
       {isStoreSpecificRoute && <Sidebar />}
-      {isStoreSpecificRoute && <FloatingCartButton />}
+      {isClassicStorefront && <FloatingCartButton />}
     </div>
   );
 };
