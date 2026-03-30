@@ -39,13 +39,14 @@ export const PlatformHome = () => {
   const goModern = () => {
     localStorage.setItem('preferredUI', 'modern');
     window.dispatchEvent(new CustomEvent('changeUIMode', { detail: 'modern' }));
-    navigate('/sabor-acaiteria/modern');
+    // Redireciona para a loja padrão ou para a primeira loja ativa
+    navigate('/demo/modern');
   };
 
   const goLegacy = () => {
     localStorage.setItem('preferredUI', 'legacy');
     window.dispatchEvent(new CustomEvent('changeUIMode', { detail: 'legacy' }));
-    navigate('/sabor-acaiteria');
+    navigate('/demo');
   };
 
   const demos = [

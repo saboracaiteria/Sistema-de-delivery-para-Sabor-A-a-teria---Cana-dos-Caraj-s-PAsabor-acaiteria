@@ -164,6 +164,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const isPlatformRoute = ['/', '/admin', '/platform', '/setup'].includes(location.pathname);
       
       if (isPlatformRoute) {
+        setStore(null);
+        setSettings(mockSettings);
         setLoading(false);
         return;
       }
@@ -210,7 +212,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         
         // Se temos um slug mas não achamos na DB, criamos um objeto de loja mock 
         if (currentSlug) {
-           setStore({ id: '00000000-0000-0000-0000-000000000001', slug: currentSlug, name: 'Sabor Açaíteria (Mock)' });
+           setStore({ id: '00000000-0000-0000-0000-000000000001', slug: currentSlug, name: 'Nova Loja' });
         }
       } catch (error) {
         console.error('Erro crítico no AppContext:', error);
@@ -756,10 +758,11 @@ interface ErrorBoundaryState {
   error: any;
 }
 
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false, error: null };
+
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: any) {

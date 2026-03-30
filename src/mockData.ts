@@ -158,25 +158,25 @@ export const mockProductsCombos = combosData.map((combo, idx) => ({
 export const mockProducts = [...mockProductsAcai, ...mockProductsCombos];
 
 export const mockSettings = {
-    storeName: 'Sabor Açaíteria',
-    logoUrl: 'https://raw.githubusercontent.com/saboracaiteria/SABOR-/main/175.jpg',
+    storeName: 'Canaã Delivery OS',
+    logoUrl: 'https://images.unsplash.com/photo-1541167760496-162955ed8a9f?w=200',
     logoShape: 'circle' as const,
-    bannerUrl: 'https://raw.githubusercontent.com/saboracaiteria/SABOR-/main/175.jpg',
-    whatsappNumber: '5594991623576',
+    bannerUrl: 'https://images.unsplash.com/photo-1541167760496-162955ed8a9f?w=800',
+    whatsappNumber: '5500000000000',
     storeStatus: 'auto' as const,
-    deliveryFee: 7.00,
+    deliveryFee: 0.00,
     openingHours: [
-        { dayOfWeek: 0, open: '15:30', close: '21:45', enabled: true }, // Domingo
-        { dayOfWeek: 1, open: '19:15', close: '22:00', enabled: true }, // Segunda
-        { dayOfWeek: 2, open: '19:15', close: '22:00', enabled: true }, // Terça
-        { dayOfWeek: 3, open: '19:15', close: '22:00', enabled: true }, // Quarta
-        { dayOfWeek: 4, open: '19:15', close: '22:00', enabled: true }, // Quinta
-        { dayOfWeek: 5, open: '19:15', close: '22:00', enabled: true }, // Sexta
-        { dayOfWeek: 6, open: '15:30', close: '21:45', enabled: true }  // Sábado
+        { dayOfWeek: 0, open: '08:00', close: '22:00', enabled: true },
+        { dayOfWeek: 1, open: '08:00', close: '22:00', enabled: true },
+        { dayOfWeek: 2, open: '08:00', close: '22:00', enabled: true },
+        { dayOfWeek: 3, open: '08:00', close: '22:00', enabled: true },
+        { dayOfWeek: 4, open: '08:00', close: '22:00', enabled: true },
+        { dayOfWeek: 5, open: '08:00', close: '22:00', enabled: true },
+        { dayOfWeek: 6, open: '08:00', close: '22:00', enabled: true }
     ],
     deliveryOnly: false,
-    instagramUrl: 'https://www.instagram.com/sabor_acaiteria/',
-    businessAddress: 'Canaã dos Carajás-PA 2025-2026',
+    instagramUrl: '',
+    businessAddress: 'Seu Endereço Aqui',
     uiMode: 'modern' as const,
     themeColors: {
         headerBg: '#4E0797',

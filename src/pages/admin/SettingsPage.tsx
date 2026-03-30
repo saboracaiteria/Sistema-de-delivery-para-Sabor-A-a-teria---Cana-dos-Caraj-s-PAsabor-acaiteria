@@ -153,6 +153,39 @@ export const SettingsPage: React.FC = () => {
           </div>
         </div>
 
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <label className="block text-sm font-bold text-gray-700 mb-3">Banner da Loja (Capa)</label>
+          <div className="space-y-4">
+            {settings.bannerUrl && (
+              <img src={settings.bannerUrl} className="w-full h-32 object-cover border rounded-lg" alt="Banner" />
+            )}
+            <label className={`w-full flex-1 cursor-pointer bg-gray-50 p-4 rounded border border-dashed text-center flex flex-col items-center gap-2 ${isUploading ? 'opacity-50' : ''}`}>
+              <Upload size={24} className="text-gray-400" />
+              <span className="text-sm font-medium text-gray-600">{isUploading ? 'Enviando...' : 'Alterar Banner / Capa'}</span>
+              <input type="file" accept="image/*" hidden onChange={e => handleImage(e, 'bannerUrl')} disabled={isUploading} />
+            </label>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+            <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2"><MapPin size={20} /> Informações Adicionais</h3>
+            <div className="space-y-3">
+                <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-gray-400 ml-1">Endereço da Loja</label>
+                    <input className="w-full border rounded-lg p-3 text-sm" value={settings.businessAddress || ''} onChange={e => updateSettings({ businessAddress: e.target.value })} placeholder="Ex: Av. Principal, 123" />
+                </div>
+                <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-gray-400 ml-1">Link do Instagram (URL)</label>
+                    <input className="w-full border rounded-lg p-3 text-sm" value={settings.instagramUrl || ''} onChange={e => updateSettings({ instagramUrl: e.target.value })} placeholder="Ex: https://instagram.com/sualoja" />
+                </div>
+                <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-gray-400 ml-1">Rodapé (Copyright)</label>
+                    <input className="w-full border rounded-lg p-3 text-sm" value={settings.copyrightText || ''} onChange={e => updateSettings({ copyrightText: e.target.value })} placeholder="Ex: © 2026 Sabor Açaíteria" />
+                </div>
+                <button onClick={handleSave} className="w-full bg-purple-600 text-white py-2 rounded-lg font-bold">Salvar Informações</button>
+            </div>
+        </div>
+
         <div className="bg-gray-800 text-white p-4 rounded-lg text-xs font-mono">
             <h3 className="font-bold mb-2 flex items-center gap-2 text-blue-400"><Info size={16} /> Diagnóstico</h3>
             <div>SUPABASE: {isConfigured ? 'ON' : 'OFF'}</div>
