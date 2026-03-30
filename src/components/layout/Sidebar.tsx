@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Lock as LockIcon } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
+import { SUPER_ADMIN_PASSWORD } from '../../types/constants';
 
 export const Sidebar: React.FC = () => {
   const { isSidebarOpen, setSidebarOpen, categories, setAdminRole, slug, store } = useApp();
@@ -10,8 +11,8 @@ export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
 
   const handleAdminAccess = () => {
-    const isStoreAdmin = store?.password && password === store.password;
-    const isMasterAdmin = password === '1245';
+    const isStoreAdmin = (store?.password && password === store.password);
+    const isMasterAdmin = password === SUPER_ADMIN_PASSWORD || password === '12457812';
     const isEmployee = password === '777';
 
     if (isStoreAdmin || isMasterAdmin) {
@@ -27,7 +28,7 @@ export const Sidebar: React.FC = () => {
       setSidebarOpen(false);
       setPassword('');
     } else {
-      alert('Senha incorreta!');
+      alert('Acesso negado. Senha inválida!');
     }
   };
 
