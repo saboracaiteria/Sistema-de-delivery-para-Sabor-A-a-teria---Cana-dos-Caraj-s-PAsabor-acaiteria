@@ -11,6 +11,7 @@ export const SettingsPage: React.FC = () => {
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [cropModalData, setCropModalData] = useState<{ imageUrl: string; field: 'logoUrl' | 'bannerUrl'; aspectRatio: number } | null>(null);
+  const [newPassword, setNewPassword] = useState('');
 
   const handleSave = () => {
     setShowSaveConfirm(true);
@@ -174,29 +175,29 @@ export const SettingsPage: React.FC = () => {
                 <div className="flex gap-2">
                     <input 
                       type="text" 
-                      id="new-store-password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
                       className="w-full border rounded-lg p-3 text-sm font-mono" 
                       placeholder="Nova Senha" 
                     />
                     <button 
                       onClick={async () => {
-                        const newPwd = (document.getElementById('new-store-password') as HTMLInputElement).value;
-                        if (!newPwd || newPwd.length < 6) return alert('Senha deve ter no mínimo 6 dígitos.');
+                        if (!newPassword || newPassword.length < 6) return alert('Senha deve ter no mínimo 6 dígitos.');
                         
                         const currentPwd = localStorage.getItem(`store_admin_pwd_${settings.storeId}`);
                         
                         const { error } = await supabase.rpc('update_store_password_direct', { 
                           p_store_id: settings.storeId,
                           p_current_password: currentPwd || '12457812',
-                          p_new_password: newPwd 
+                          p_new_password: newPassword 
                         });
                         
                         if (error) {
                           alert(`Erro ao atualizar: ${error.message}`);
                         } else {
-                          localStorage.setItem(`store_admin_pwd_${settings.storeId}`, newPwd);
+                          localStorage.setItem(`store_admin_pwd_${settings.storeId}`, newPassword);
                           alert('Senha atualizada com sucesso!');
-                          (document.getElementById('new-store-password') as HTMLInputElement).value = '';
+                          setNewPassword('');
                         }
                       }} 
                       className="bg-rose-600 text-white px-4 py-2 rounded-lg font-bold text-sm"
