@@ -168,6 +168,33 @@ export const SettingsPage: React.FC = () => {
         </div>
 
         <div className="bg-white p-4 rounded-lg shadow-sm">
+            <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-rose-600"><Lock size={20} /> Senha de Acesso</h3>
+            <p className="text-xs text-gray-400 mb-3">Sua senha de login no painel administrativo.</p>
+            <div className="space-y-3">
+                <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      id="new-store-password"
+                      className="w-full border rounded-lg p-3 text-sm font-mono" 
+                      placeholder="Nova Senha" 
+                    />
+                    <button 
+                      onClick={async () => {
+                        const newPwd = (document.getElementById('new-store-password') as HTMLInputElement).value;
+                        if (!newPwd || newPwd.length < 6) return alert('Senha deve ter no mínimo 6 dígitos.');
+                        const { error } = await supabase.rpc('update_my_store_password', { p_new_password: newPwd });
+                        if (error) alert(`Erro ao atualizar: ${error.message}`);
+                        else alert('Senha atualizada com sucesso!');
+                      }} 
+                      className="bg-rose-600 text-white px-4 py-2 rounded-lg font-bold text-sm"
+                    >
+                      Alterar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-lg shadow-sm">
             <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2"><MapPin size={20} /> Informações Adicionais</h3>
             <div className="space-y-3">
                 <div className="space-y-1">

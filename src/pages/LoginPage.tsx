@@ -75,19 +75,15 @@ export const LoginPage = () => {
       });
 
       if (authError) {
-        // Se o Auth falhou mas a senha da loja está correta (conta pode estar dessincronizada),
-        // tenta recriar/sincronizar a conta via RPC e fazer login novamente
-        if (storeContext && storeContext.password === password) {
-          console.warn('Auth direto falhou, tentando sincronização via admin...');
-          // Como não temos uma sessão admin aqui, navegar com aviso para o usuário testar novamente
-          throw new Error(`Conta não sincronizada. Execute o BOOTSTRAP_V8_FINAL.sql no Supabase e tente novamente.`);
-        }
         throw authError;
       }
 
       if (data.user) {
-        setAdminRole('admin');
-        // Buscar a loja pelo owner_id do usuário autenticado
+        // Verificar se é um Super Admin pelo e-mail
+        const isSuperAdminEmail = SUPER_ADMIN_EMAILS.includes(data.user.email?.toLowerCase() || '');
+        setAdminRole(isSuperAdminEmail ? 'superadmin' : 'admin');
+
+        // Buscar a loja pelo owner_id ou slug
         let slug = storeContext?.slug;
         if (!slug) {
           const { data: sd } = await supabase.from('stores').select('slug').eq('owner_id', data.user.id).single();

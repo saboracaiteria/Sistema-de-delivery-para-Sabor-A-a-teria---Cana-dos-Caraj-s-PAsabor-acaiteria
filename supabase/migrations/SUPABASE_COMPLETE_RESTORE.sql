@@ -150,7 +150,6 @@ RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE v_user_id uuid;
 BEGIN
     IF NOT public.is_super_admin() THEN RAISE EXCEPTION 'Acesso negado.'; END IF;
-    -- Criação simplificada/correção do owner_id
     SELECT id INTO v_user_id FROM auth.users WHERE email = p_email;
     IF v_user_id IS NOT NULL THEN
         UPDATE public.stores SET owner_id = v_user_id WHERE owner_email = p_email;
@@ -159,9 +158,26 @@ BEGIN
 END;
 $$;
 
+-- 6. FUNÇÃO: Lojista Alterar Própria Senha (Self-service)
+CREATE OR REPLACE FUNCTION public.update_my_store_password(p_new_password text)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+    -- Atualiza no Auth (apenas para o usuário logado)
+    UPDATE auth.users SET encrypted_password = crypt(p_new_password, gen_salt('bf')) 
+    WHERE id = auth.uid();
+    
+    -- Sincroniza na tabela stores (apenas para a loja que o usuário é dono)
+    UPDATE public.stores SET password = p_new_password 
+    WHERE owner_id = auth.uid();
+END;
+$$;
+
 -- Permissões
 GRANT EXECUTE ON FUNCTION public.save_store_settings(UUID, JSONB, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.increment_visitor_count(UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.is_super_admin() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.update_store_owner_password(UUID, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.update_my_store_password(TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_store_owner(TEXT, TEXT) TO authenticated;
 
 SELECT '✅ Funções restauradas com sucesso!' as status;

@@ -178,9 +178,10 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
           <button
             disabled={!isValid}
             onClick={handleConfirm}
-            className="w-full h-12 bg-[#D32F2F] disabled:bg-gray-400 text-white font-bold rounded text-lg hover:bg-[#B71C1C] transition-colors uppercase tracking-wide"
+            className="w-full h-14 bg-[#D32F2F] disabled:bg-gray-400 text-white font-black rounded-xl text-lg hover:bg-[#B71C1C] transition-all uppercase tracking-wider flex items-center justify-between px-6 shadow-lg shadow-red-900/20 active:scale-95"
           >
-            CONTINUAR
+            <span>CONTINUAR</span>
+            <span className="text-xl">R$ {(calculateTotal() / quantity).toFixed(2).replace('.', ',')}</span>
           </button>
         </div>
       </div>
