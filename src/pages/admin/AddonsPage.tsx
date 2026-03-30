@@ -229,7 +229,7 @@ export const AddonsPage: React.FC = () => {
             <div className="space-y-4">
               <input type="text" placeholder="Nome da Opção" value={editingOption.option.name} onChange={e => setEditingOption({ ...editingOption, option: { ...editingOption.option!, name: e.target.value } })} className="w-full border p-3 rounded-lg" />
               <textarea placeholder="Descrição" value={editingOption.option.description || ''} onChange={e => setEditingOption({ ...editingOption, option: { ...editingOption.option!, description: e.target.value } })} className="w-full border p-3 rounded-lg" rows={2} />
-              <input type="number" step="0.01" placeholder="Preço" value={editingOption.option.price || ''} onChange={e => setEditingOption({ ...editingOption, option: { ...editingOption.option!, price: parseFloat(e.target.value) || 0 } })} className="w-full border p-3 rounded-lg" />
+              <input type="text" inputMode="decimal" placeholder="Preço" value={editingOption.option.price || ''} onChange={e => setEditingOption({ ...editingOption, option: { ...editingOption.option!, price: parseFloat(e.target.value.replace(',', '.')) || 0 } })} className="w-full border p-3 rounded-lg" />
               <div className="flex gap-2 pt-2">
                 <button onClick={() => setEditingOption(null)} className="flex-1 py-3 bg-gray-200 rounded-lg font-bold">Cancelar</button>
                 <button onClick={handleSaveOption} className="flex-1 py-3 bg-purple-600 text-white rounded-lg font-bold">Salvar</button>

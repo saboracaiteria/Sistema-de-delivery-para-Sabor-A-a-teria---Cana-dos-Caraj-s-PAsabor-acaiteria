@@ -82,15 +82,15 @@ export const CouponsPage: React.FC = () => {
               <button onClick={() => setEditingCoupon({ ...editingCoupon, type: 'fixed' })} className={`flex-1 py-2 border rounded font-medium transition-colors ${editingCoupon.type === 'fixed' ? 'bg-purple-50 border-purple-500 text-purple-700' : 'text-gray-500'}`}>R$</button>
             </div>
             <input
-              type="number" className="w-full border p-2 rounded text-gray-800 focus:ring-2 focus:ring-purple-400 outline-none" placeholder="Valor"
-              value={editingCoupon.value || ''} onChange={e => setEditingCoupon({ ...editingCoupon, value: parseFloat(e.target.value) })}
+              type="text" inputMode="decimal" className="w-full border p-2 rounded text-gray-800 focus:ring-2 focus:ring-purple-400 outline-none" placeholder="Valor"
+              value={editingCoupon.value || ''} onChange={e => setEditingCoupon({ ...editingCoupon, value: parseFloat(e.target.value.replace(',', '.')) || 0 })}
             />
             <input
-              type="number"
+              type="text" inputMode="decimal"
               className="w-full border p-2 rounded text-gray-800 focus:ring-2 focus:ring-purple-400 outline-none"
               placeholder="Valor Mínimo do Pedido (opcional)"
               value={editingCoupon.minOrderValue || ''}
-              onChange={e => setEditingCoupon({ ...editingCoupon, minOrderValue: e.target.value ? parseFloat(e.target.value) : undefined })}
+              onChange={e => setEditingCoupon({ ...editingCoupon, minOrderValue: e.target.value ? parseFloat(e.target.value.replace(',', '.')) : undefined })}
             />
             <div className="flex gap-2 pt-2">
                 <button onClick={() => setIsModalOpen(false)} className="flex-1 text-gray-500 py-3 font-semibold hover:bg-gray-50 rounded-lg">Cancelar</button>

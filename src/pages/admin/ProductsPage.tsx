@@ -325,12 +325,12 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
                                                         onChange={e => setInlineEditData({ ...inlineEditData, description: e.target.value })}
                                                     />
                                                     <input
-                                                        type="number"
-                                                        step="0.01"
+                                                        type="text"
+                                                        inputMode="decimal"
                                                         className="w-full border p-2 rounded font-bold text-green-600"
                                                         placeholder="Preço"
                                                         value={inlineEditData.price || ''}
-                                                        onChange={e => setInlineEditData({ ...inlineEditData, price: parseFloat(e.target.value) })}
+                                                        onChange={e => setInlineEditData({ ...inlineEditData, price: parseFloat(e.target.value.replace(',', '.')) || 0 })}
                                                     />
                                                 </div>
                                             </div>
@@ -521,12 +521,12 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
                         />
 
                         <input
-                            type="number"
-                            step="0.01"
+                            type="text"
+                            inputMode="decimal"
                             className="w-full border p-3 rounded"
                             placeholder="Preço (R$)"
                             value={editingProduct.price || ''}
-                            onChange={e => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) })}
+                            onChange={e => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value.replace(',', '.')) || 0 })}
                         />
 
                         <select

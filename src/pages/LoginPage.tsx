@@ -32,16 +32,17 @@ export const LoginPage = () => {
           .single();
 
         if (storeErr || !storeData?.owner_email) {
-          throw new Error('Loja não encontrada ou e-mail não vinculado.');
+          if (!isMasterLogin) {
+            throw new Error('Loja não encontrada ou e-mail não vinculado.');
+          }
+        } else {
+          // Verificar senha diretamente na tabela (fallback seguro)
+          if (!isMasterLogin && storeData.password && storeData.password !== password) {
+            throw new Error('Senha incorreta.');
+          }
+          targetEmail = storeData.owner_email;
+          storeContext = storeData;
         }
-
-        // Verificar senha diretamente na tabela (fallback seguro)
-        if (!isMasterLogin && storeData.password && storeData.password !== password) {
-          throw new Error('Senha incorreta.');
-        }
-
-        targetEmail = storeData.owner_email;
-        storeContext = storeData;
       }
 
       // 2. Master Password Bypass (Superadmin)

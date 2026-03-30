@@ -17,6 +17,8 @@ export const PlatformAdminPanel = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingStoreId, setEditingStoreId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [editingPasswordStoreId, setEditingPasswordStoreId] = useState<string | null>(null);
+  const [editingPasswordValue, setEditingPasswordValue] = useState('');
   const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({});
   const [renewingStore, setRenewingStore] = useState<StoreType | null>(null);
 
@@ -494,17 +496,78 @@ export const PlatformAdminPanel = () => {
                           )}
 
                           {/* Credentials */}
-                          <div className="space-y-1.5">
+                          <div className="space-y-2">
                             {store.owner_email && (
-                              <div className="flex items-center gap-1.5">
-                                <Activity size={9} className="text-purple-400 shrink-0" />
-                                <span className="text-[9px] text-purple-300 truncate">{store.owner_email}</span>
+                              <div className="flex items-center gap-1.5 p-1">
+                                <Activity size={10} className="text-purple-400 shrink-0" />
+                                <span className="text-[10px] text-purple-300 truncate">{store.owner_email}</span>
                               </div>
                             )}
-                            <div className="flex items-center gap-1.5">
-                              <Lock size={9} className="text-white/30 shrink-0" />
-                              <span className="text-[9px] text-white/40 font-mono">{store.password || '••••'}</span>
-                            </div>
+                            
+                            {editingPasswordStoreId === store.id ? (
+                              <div className="flex items-center gap-1.5">
+                                <Lock size={10} className="text-white/30 shrink-0" />
+                                <input
+                                  type="text"
+                                  value={editingPasswordValue}
+                                  onChange={(e) => setEditingPasswordValue(e.target.value)}
+                                  className="flex-1 bg-white/5 border border-white/20 rounded-md px-2 py-1 text-[10px] text-white outline-none focus:border-purple-500 transition-colors"
+                                  placeholder="Nova senha..."
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    await handleUpdateStorePassword(store.id, editingPasswordValue);
+                                    setEditingPasswordStoreId(null);
+                                    setEditingPasswordValue('');
+                                  }}
+                                  className="p-1.5 text-emerald-400 hover:bg-emerald-500/20 rounded-md transition-colors"
+                                >
+                                  <Save size={10} />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingPasswordStoreId(null);
+                                    setEditingPasswordValue('');
+                                  }}
+                                  className="p-1.5 text-red-400 hover:bg-red-500/20 rounded-md transition-colors"
+                                >
+                                  <X size={10} />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-between group/pwd p-1 rounded-md hover:bg-white/5 transition-colors">
+                                <div className="flex items-center gap-1.5">
+                                  <Lock size={10} className="text-white/30 shrink-0" />
+                                  <span className="text-[10px] text-white/60 font-mono">
+                                    {visibleSecrets[store.id] ? (store.password || '••••') : '••••••••'}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleSecret(store.id);
+                                    }}
+                                    className="p-1.5 text-white/30 hover:text-white/70 transition-colors"
+                                  >
+                                    {visibleSecrets[store.id] ? <EyeOff size={10} /> : <Eye size={10} />}
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingPasswordValue(store.password || '');
+                                      setEditingPasswordStoreId(store.id);
+                                    }}
+                                    className="p-1.5 text-white/30 hover:text-purple-400 transition-colors"
+                                  >
+                                    <Pencil size={10} />
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           {/* Actions Row */}
