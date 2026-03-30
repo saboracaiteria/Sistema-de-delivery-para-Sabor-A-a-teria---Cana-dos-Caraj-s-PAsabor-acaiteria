@@ -164,4 +164,4 @@ GRANT EXECUTE ON FUNCTION public.save_store_settings(UUID, JSONB, TEXT) TO anon,
 GRANT EXECUTE ON FUNCTION public.increment_visitor_count(UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.is_super_admin() TO authenticated;
 
-RAISE NOTICE '✅ Funções restauradas com sucesso!';
+SELECT '✅ Funções restauradas com sucesso!' as status;
