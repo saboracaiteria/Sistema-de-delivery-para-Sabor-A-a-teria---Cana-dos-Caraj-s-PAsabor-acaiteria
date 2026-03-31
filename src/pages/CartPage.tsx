@@ -128,25 +128,27 @@ export const CartPage: React.FC = () => {
                   Subtotal: <strong className="text-gray-700">{formatCurrency(item.totalPrice * item.quantity)}</strong>
                 </span>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => updateCartQuantity(item.cartId, item.quantity - 1)}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-red-500 bg-red-50 hover:bg-red-100 btn-press"
-                  >
-                    <Minus size={14} />
-                  </button>
-                  <span className="font-bold text-gray-800 w-5 text-center text-sm">{item.quantity}</span>
-                  <button
-                    onClick={() => updateCartQuantity(item.cartId, item.quantity + 1)}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-emerald-600 bg-emerald-50 hover:bg-emerald-100 btn-press"
-                  >
-                    <Plus size={14} />
-                  </button>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center bg-gray-100 rounded-xl p-1 gap-2 shadow-inner border border-gray-100">
+                    <button
+                      onClick={() => updateCartQuantity(item.cartId, item.quantity - 1)}
+                      className="w-9 h-9 rounded-lg flex items-center justify-center text-red-600 bg-white hover:bg-red-50 transition-all shadow-sm active:scale-90 border border-gray-200"
+                    >
+                      <Minus size={18} />
+                    </button>
+                    <span className="font-black text-gray-900 w-6 text-center tabular-nums">{item.quantity}</span>
+                    <button
+                      onClick={() => updateCartQuantity(item.cartId, item.quantity + 1)}
+                      className="w-9 h-9 rounded-lg flex items-center justify-center text-emerald-600 bg-white hover:bg-emerald-50 transition-all shadow-sm active:scale-90 border border-gray-200"
+                    >
+                      <Plus size={18} />
+                    </button>
+                  </div>
                   <button
                     onClick={() => removeFromCart(item.cartId)}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-red-400 bg-red-50 hover:bg-red-100 btn-press ml-1"
+                    className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors active:scale-90"
                   >
-                    <Trash2 size={13} />
+                    <Trash2 size={18} />
                   </button>
                 </div>
               </div>

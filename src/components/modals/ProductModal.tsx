@@ -213,15 +213,34 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-4 bg-white border-t border-gray-200 shadow-[0_-5px_10px_rgba(0,0,0,0.05)]">
+        {/* Footer with Quantity and Confirm */}
+        <div className="p-4 bg-white border-t border-gray-200 shadow-[0_-5px_10px_rgba(0,0,0,0.05)] space-y-4">
+          <div className="flex items-center justify-center gap-6">
+            <button
+              onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
+              className="w-12 h-12 rounded-full flex items-center justify-center bg-gray-100 text-gray-600 hover:bg-gray-200 active:scale-90 transition-all border border-gray-200"
+            >
+              <Minus size={24} />
+            </button>
+            <div className="flex flex-col items-center">
+              <span className="text-2xl font-black text-gray-800 tabular-nums">{quantity}</span>
+              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">Qtde</span>
+            </div>
+            <button
+              onClick={() => setQuantity(prev => prev + 1)}
+              className="w-12 h-12 rounded-full flex items-center justify-center bg-gray-100 text-gray-600 hover:bg-gray-200 active:scale-90 transition-all border border-gray-200"
+            >
+              <Plus size={24} />
+            </button>
+          </div>
+
           <button
             disabled={!isValid}
             onClick={handleConfirm}
             className="w-full h-14 bg-[#D32F2F] disabled:bg-gray-400 text-white font-black rounded-xl text-lg hover:bg-[#B71C1C] transition-all uppercase tracking-wider flex items-center justify-between px-6 shadow-lg shadow-red-900/20 active:scale-95"
           >
             <span>CONTINUAR</span>
-            <span className="text-xl">R$ {(calculateTotal() / quantity).toFixed(2).replace('.', ',')}</span>
+            <span className="text-xl">R$ {calculateTotal().toFixed(2).replace('.', ',')}</span>
           </button>
         </div>
       </div>
