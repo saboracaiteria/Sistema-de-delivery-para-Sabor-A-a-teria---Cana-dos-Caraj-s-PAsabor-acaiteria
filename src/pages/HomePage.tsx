@@ -7,7 +7,7 @@ import { Footer } from '../components/layout/Footer';
 import { useNavigate } from 'react-router-dom';
 
 export const HomePage: React.FC = () => {
-  const { categories, products, settings, isStoreOpen, store } = useApp();
+  const { categories, products, settings, isStoreOpen, store, searchTerm } = useApp();
   const navigate = useNavigate();
 
   // Redirect if preferred UI is modern
@@ -111,7 +111,11 @@ export const HomePage: React.FC = () => {
 
         <div className="space-y-7 pb-32">
           {activeCategories.map(cat => {
-            const catProducts = products.filter(p => p.categoryId === cat.id && p.active !== false);
+            const catProducts = products.filter(p => 
+              p.categoryId === cat.id && 
+              p.active !== false &&
+              (!searchTerm || (p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || p.description?.toLowerCase().includes(searchTerm.toLowerCase())))
+            );
             return (
               <section key={cat.id} id={`cat-${cat.id}`} className="animate-fade-in">
                 <div className="flex items-center gap-2 mb-3">

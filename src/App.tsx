@@ -48,9 +48,9 @@ const AppContent = () => {
   const isAdminRoute = location.pathname.includes('/panel') || location.pathname.startsWith('/platform') || location.pathname.startsWith('/admin') || location.pathname.startsWith('/setup');
   const isStoreSpecificRoute = !isPlatformHome && !isAdminRoute;
   
-  // Remove Global Headers and Carts from /modern, /cart, and /checkout
+  // Remove Global Headers and Carts from /cart, and /checkout
   // Since they implement their own immersive local UI components.
-  // We also ensure uiMode isn't 'modern' to avoid a brief flash before redirect
+  const isStorefront = isStoreSpecificRoute && (pathParts.length === 1 || pathParts[1] === 'modern');
   const isClassicStorefront = isStoreSpecificRoute && pathParts.length === 1 && settings?.uiMode !== 'modern';
   const [showExitModal, setShowExitModal] = useState(false);
 
@@ -91,7 +91,7 @@ const AppContent = () => {
         onClose={() => setShowExitModal(false)}
         onConfirm={handleConfirmExit}
       />
-      {isClassicStorefront && <Header />}
+      {isStorefront && <Header />}
 
       <Routes>
         {/* === Rotas da Plataforma (Nível Superior) === */}

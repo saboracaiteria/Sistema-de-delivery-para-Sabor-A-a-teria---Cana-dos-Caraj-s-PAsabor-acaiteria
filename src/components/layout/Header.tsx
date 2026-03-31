@@ -1,55 +1,61 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Menu, ShoppingCart } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Menu, Search, X } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
+import { ShareQRCode } from '../ui/ShareQRCode';
+import { PwaInstallPrompt } from '../ui/PwaInstallPrompt';
 
 export const Header: React.FC = () => {
-  const { setSidebarOpen, settings, cart, slug } = useApp();
-  const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
-  const navigate = useNavigate();
+    const { setSidebarOpen, searchTerm, setSearchTerm } = useApp();
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
 
-  return (
-    <header
-      className="h-16 flex items-center justify-between px-4 sticky top-0 z-40 header-glass transition-all duration-300"
-      style={{
-        backgroundColor: 'var(--color-header-bg, #4E0797)',
-        boxShadow: '0 2px 20px rgba(0,0,0,0.25)'
-      }}
-    >
-      <div className="max-w-lg mx-auto w-full flex items-center justify-between">
-        {/* Menu button */}
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 active:bg-white/20 transition-colors btn-press"
-          aria-label="Abrir menu"
-        >
-          <Menu size={24} style={{ color: 'var(--color-header-text, #ffffff)' }} />
-        </button>
+    return (
+        <div className="fixed top-0 left-0 right-0 z-[60] p-3 md:p-4 flex flex-col pointer-events-none">
+            <div className="flex items-center justify-between w-full">
+                <button
+                    onClick={() => setSidebarOpen(true)}
+                    className="pointer-events-auto p-2.5 bg-white/80 backdrop-blur-lg border border-white/50 rounded-2xl text-slate-800 hover:bg-white transition-all shadow-sm active:scale-95 flex items-center justify-center"
+                    aria-label="Abrir menu"
+                >
+                    <Menu strokeWidth={2.5} size={20} />
+                </button>
 
-        {/* Store name - centered */}
-        <div className="flex flex-col items-center">
-          <span
-            className="font-heading font-bold text-lg leading-tight tracking-wide"
-            style={{ color: 'var(--color-header-text, #ffffff)', fontFamily: 'Poppins, sans-serif' }}
-          >
-            {settings.storeName || 'Açaíteria'}
-          </span>
+                <div className="flex items-center gap-2 pointer-events-auto">
+                    <ShareQRCode variant="modern" />
+                    
+                    <div className="flex items-center gap-2 text-slate-800">
+                        <AnimatePresence>
+                            {isSearchVisible && (
+                                <motion.div
+                                    initial={{ width: 0, opacity: 0 }}
+                                    animate={{ width: 220, opacity: 1 }}
+                                    exit={{ width: 0, opacity: 0 }}
+                                    className="relative overflow-hidden"
+                                >
+                                    <input
+                                        type="text"
+                                        autoFocus
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        placeholder="Buscar..."
+                                        className="w-full h-10 bg-white/80 backdrop-blur-lg border border-white/50 rounded-2xl px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white transition-all shadow-sm"
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                        <button 
+                            onClick={() => setIsSearchVisible(!isSearchVisible)}
+                            className={`p-2.5 backdrop-blur-lg border border-white/50 rounded-2xl transition-all shadow-sm active:scale-95 flex items-center justify-center ${isSearchVisible ? 'bg-purple-600 text-white' : 'bg-white/80 hover:bg-white'}`}
+                        >
+                            {isSearchVisible ? <X strokeWidth={2.5} size={20} /> : <Search strokeWidth={2.5} size={20} />}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="pointer-events-auto w-full max-w-sm self-center pointer-events-auto" style={{ marginTop: '0.5rem', pointerEvents: 'auto' }}>
+                <PwaInstallPrompt variant="modern" />
+            </div>
         </div>
-
-        {/* Cart icon shortcut */}
-        <button
-          onClick={() => navigate(`/${slug}/cart`)}
-          className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 active:bg-white/20 transition-colors btn-press relative"
-          aria-label="Ver carrinho"
-        >
-          <ShoppingCart size={22} style={{ color: 'var(--color-header-text, #ffffff)' }} />
-          {cartCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-400 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-              {cartCount}
-            </span>
-          )}
-        </button>
-      </div>
-    </header>
-  );
+    );
 };

@@ -12,54 +12,11 @@ import { Footer } from '../components/layout/Footer';
 
 // Modern Hero Component
 export const ModernHero = () => {
-    const { settings, isStoreOpen, setSidebarOpen, searchTerm, setSearchTerm, store } = useApp();
-    const [isSearchVisible, setIsSearchVisible] = useState(false);
+    const { settings, isStoreOpen, store } = useApp();
 
     return (
         <div className="w-full bg-white md:bg-gray-50 mb-6 md:mb-10 font-outfit">
             <div className="relative w-full h-[180px] md:h-[480px] overflow-hidden md:rounded-b-[4rem] group">
-                {/* Top Navigation Bar */}
-                <div className="absolute top-0 left-0 right-0 z-[55] p-3 md:p-4 flex items-center justify-between pointer-events-none">
-                    <button
-                        onClick={() => setSidebarOpen(true)}
-                        className="pointer-events-auto p-2.5 bg-white/80 backdrop-blur-lg border border-white/50 rounded-2xl text-slate-800 hover:bg-white transition-all shadow-sm active:scale-95 flex items-center justify-center"
-                    >
-                        <Menu strokeWidth={2.5} size={20} md:size={22} />
-                    </button>
-
-                    <div className="flex items-center gap-2 pointer-events-auto">
-                        <ShareQRCode variant="modern" />
-                        <div className="flex items-center gap-2">
-                            <AnimatePresence>
-                                {isSearchVisible && (
-                                    <motion.div
-                                        initial={{ width: 0, opacity: 0 }}
-                                        animate={{ width: 200, opacity: 1 }}
-                                        exit={{ width: 0, opacity: 0 }}
-                                        className="relative overflow-hidden"
-                                    >
-                                        <input
-                                            type="text"
-                                            autoFocus
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                            placeholder="Buscar..."
-                                            className="w-full h-10 bg-white/80 backdrop-blur-lg border border-white/50 rounded-2xl px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white transition-all shadow-sm"
-                                        />
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                            <button 
-                                onClick={() => setIsSearchVisible(!isSearchVisible)}
-                                className={`p-2.5 backdrop-blur-lg border border-white/50 rounded-2xl transition-all shadow-sm active:scale-95 flex items-center justify-center ${isSearchVisible ? 'bg-purple-600 text-white' : 'bg-white/80 text-slate-800 hover:bg-white'}`}
-                            >
-                                {isSearchVisible ? <X strokeWidth={2.5} size={20} /> : <Search strokeWidth={2.5} size={20} md:size={22} />}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <PwaInstallPrompt variant="modern" />
 
                 {/* Banner Image with subtle zoom and light treatment */}
                 <motion.div
