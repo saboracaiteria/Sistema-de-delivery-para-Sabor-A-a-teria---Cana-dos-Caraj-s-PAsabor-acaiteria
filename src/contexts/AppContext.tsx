@@ -11,40 +11,8 @@ import { mockCategories, mockGroups, mockProducts, mockCoupons, mockSettings } f
 import { calculateStoreStatus } from '../utils/storeStatus';
 
 // Custom Hooks for Persistence
-const usePersistedState = <T,>(key: string, initialValue: T) => {
-  const [state, setState] = useState<T>(initialValue);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    const loadState = async () => {
-      try {
-        const { value } = await Preferences.get({ key });
-        if (value) {
-          setState(JSON.parse(value));
-        }
-      } catch (error) {
-        console.error(`Error loading ${key} from Preferences:`, error);
-      } finally {
-        setIsLoaded(true);
-      }
-    };
-    loadState();
-  }, [key]);
-
-  useEffect(() => {
-    if (!isLoaded) return;
-    const saveState = async () => {
-      try {
-        await Preferences.set({ key, value: JSON.stringify(state) });
-      } catch (error) {
-        console.error(`Error saving ${key} to Preferences:`, error);
-      }
-    };
-    saveState();
-  }, [key, state, isLoaded]);
-
-  return [state, setState, isLoaded] as const;
-};
+// O hook usePersistedState agora é interno ao AppProvider para acessar currentSlug se necessário
+// ou removido em favor de lógica explícita para evitar conflitos de ciclo de vida.
 
 interface AppContextType {
   products: Product[];
@@ -112,18 +80,21 @@ export const useApp = () => {
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Persistence state
-  const [cart, setCart, cartLoaded] = usePersistedState<CartItem[]>('cart', []);
+  // Persistence state (Managed manually to be slug-aware)
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cartLoaded, setCartLoaded] = useState(false);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const [adminRole, setAdminRole, roleLoaded] = usePersistedState<Role>('adminRole', null);
-  const [appliedCoupon, setAppliedCoupon, couponLoaded] = usePersistedState<Coupon | null>('appliedCoupon', null);
+  const [adminRole, setAdminRole] = useState<Role>(null);
+  const [roleLoaded, setRoleLoaded] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [couponLoaded, setCouponLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const navigate = useNavigate();
   const [store, setStore] = useState<Store | null>(null);
 
-  const isStorageLoaded = cartLoaded && roleLoaded && couponLoaded;
+  const isStorageLoaded = roleLoaded && couponLoaded; // Cart load is slug-dependent
 
   // Supabase state
   const [products, setProducts] = useState<Product[]>([]);
@@ -162,7 +133,58 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return hashParts[0];
     }
     return null;
-  }, [location]);
+  }, [location.pathname, location.hash]);
+
+  // Load Persistence (Role & Global things)
+  useEffect(() => {
+    const loadGlobal = async () => {
+      const { value: r } = await Preferences.get({ key: 'adminRole' });
+      if (r) setAdminRole(JSON.parse(r));
+      setRoleLoaded(true);
+
+      const { value: c } = await Preferences.get({ key: 'appliedCoupon' });
+      if (c) setAppliedCoupon(JSON.parse(c));
+      setCouponLoaded(true);
+    };
+    loadGlobal();
+  }, []);
+
+  // Save Global Persistence
+  useEffect(() => {
+    if (roleLoaded) Preferences.set({ key: 'adminRole', value: JSON.stringify(adminRole) });
+  }, [adminRole, roleLoaded]);
+
+  useEffect(() => {
+    if (couponLoaded) Preferences.set({ key: 'appliedCoupon', value: JSON.stringify(appliedCoupon) });
+  }, [appliedCoupon, couponLoaded]);
+
+  // Namespace Cart by Slug
+  useEffect(() => {
+    const loadCart = async () => {
+      setCartLoaded(false);
+      if (!currentSlug) {
+        setCart([]);
+        setCartLoaded(true);
+        return;
+      }
+      const key = `cart_${currentSlug}`;
+      const { value } = await Preferences.get({ key });
+      if (value) {
+        setCart(JSON.parse(value));
+      } else {
+        setCart([]);
+      }
+      setCartLoaded(true);
+    };
+    loadCart();
+  }, [currentSlug]);
+
+  useEffect(() => {
+    if (cartLoaded && currentSlug) {
+      const key = `cart_${currentSlug}`;
+      Preferences.set({ key, value: JSON.stringify(cart) });
+    }
+  }, [cart, currentSlug, cartLoaded]);
 
   // Initial data fetch
   useEffect(() => {
@@ -228,10 +250,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     };
 
-    if (isStorageLoaded) {
+    if (isStorageLoaded && cartLoaded) {
       init();
     }
-  }, [isStorageLoaded, currentSlug, location.pathname]);
+  }, [isStorageLoaded, cartLoaded, currentSlug, location.pathname]);
 
   // Real-time subscriptions
   useEffect(() => {
