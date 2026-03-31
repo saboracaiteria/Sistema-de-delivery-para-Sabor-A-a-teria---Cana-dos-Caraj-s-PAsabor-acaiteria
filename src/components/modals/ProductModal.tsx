@@ -9,7 +9,7 @@ interface ProductModalProps {
 }
 
 export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
-  const { groups, addToCart } = useApp();
+  const { groups, addToCart, settings } = useApp();
   const [selectedOptions, setSelectedOptions] = useState<Record<string, number>>({});
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
@@ -205,7 +205,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Ex: Sem cebola, caprichar no molho..."
+                placeholder={settings.notePlaceholder || "Digite suas observações..."}
                 className="w-full p-3 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none text-sm"
                 rows={3}
               />
