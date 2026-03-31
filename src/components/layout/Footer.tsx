@@ -20,19 +20,6 @@ export const Footer: React.FC = () => {
 
       <div className="relative z-10 text-white py-6 px-4">
         <div className="max-w-md mx-auto">
-          {/* Store icon + name */}
-          <div className="text-center mb-4 flex flex-col items-center">
-            <div className={`w-10 h-10 bg-white/5 border border-white/10 ${settings.logoShape === 'circle' ? 'rounded-full' : 'rounded-xl'} flex items-center justify-center mb-2 shadow-inner`}>
-              {settings.logoUrl ? (
-                <img src={settings.logoUrl} className={`w-full h-full object-cover ${settings.logoShape === 'circle' ? 'rounded-full' : 'rounded-xl'}`} alt="Logo" />
-              ) : (
-                <span className="text-xl">🏪</span>
-              )}
-            </div>
-            <h3 className="font-heading font-black text-xl bg-gradient-to-r from-purple-200 to-white bg-clip-text text-transparent tracking-tight">
-              {settings.storeName || 'Nossa Loja'}
-            </h3>
-          </div>
 
           {/* Instagram Link */}
           {settings.instagramUrl && (
