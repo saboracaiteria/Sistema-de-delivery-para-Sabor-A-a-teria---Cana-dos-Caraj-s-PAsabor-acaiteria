@@ -75,22 +75,10 @@ const AppContent = () => {
 
   if (loading) {
     return (
-      <div
-        className="min-h-screen flex flex-col items-center justify-center"
-        style={{ background: 'linear-gradient(135deg, #2d0d5a 0%, #4E0797 50%, #7c3aed 100%)' }}
-      >
-        <div className="absolute w-72 h-72 rounded-full opacity-10 bg-white" style={{ top: '-10%', right: '-15%' }} />
-        <div className="absolute w-48 h-48 rounded-full opacity-10 bg-white" style={{ bottom: '-5%', left: '-10%' }} />
-        <div className="relative z-10 flex flex-col items-center gap-6">
-          <div className="text-7xl animate-bounce" style={{ animationDuration: '1.2s' }}>🍇</div>
-          <div className="relative w-14 h-14">
-            <div className="absolute inset-0 rounded-full border-4 border-white/20" />
-            <div className="absolute inset-0 rounded-full border-4 border-t-white border-r-transparent border-b-transparent border-l-transparent animate-spin" />
-          </div>
-          <div className="text-center">
-            <p className="text-white font-heading font-bold text-xl tracking-wide">Carregando...</p>
-            <p className="text-purple-200 text-sm mt-1">Preparando os melhores sabores 🍨</p>
-          </div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <div className="relative w-10 h-10">
+          <div className="absolute inset-0 rounded-full border-4 border-gray-200" />
+          <div className="absolute inset-0 rounded-full border-4 border-t-purple-600 border-r-transparent border-b-transparent border-l-transparent animate-spin" />
         </div>
       </div>
     );
