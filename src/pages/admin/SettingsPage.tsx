@@ -101,6 +101,36 @@ export const SettingsPage: React.FC = () => {
           </div>
         </div>
 
+        <div className="bg-white p-4 rounded-lg shadow-sm font-outfit">
+            <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm uppercase tracking-wider"><MapPin size={18} className="text-purple-600" /> Logística e Taxas</h3>
+            <div className="space-y-4">
+                <div>
+                   <label className="text-[10px] uppercase font-black text-gray-400 ml-1">Taxa de Entrega (R$)</label>
+                   <input 
+                     type="number" 
+                     step="0.50"
+                     className="w-full border-2 border-gray-100 focus:border-purple-500 rounded-xl p-3 text-sm font-bold outline-none transition-all" 
+                     value={settings.deliveryFee || 0} 
+                     onChange={e => updateSettings({ deliveryFee: parseFloat(e.target.value) || 0 })} 
+                     placeholder="Ex: 5.00" 
+                   />
+                </div>
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-xl border border-purple-100">
+                    <div className="flex flex-col">
+                        <span className="text-xs font-bold text-purple-900">Apenas Retirada</span>
+                        <span className="text-[10px] text-purple-600 font-medium">Desativa a entrega no checkout</span>
+                    </div>
+                    <button 
+                        onClick={() => updateSettings({ deliveryOnly: !settings.deliveryOnly })} 
+                        className={`h-6 w-11 rounded-full transition-colors flex items-center px-1 ${settings.deliveryOnly ? 'bg-purple-600' : 'bg-gray-300'}`}
+                    >
+                        <div className={`h-4 w-4 bg-white rounded-full transition-all ${settings.deliveryOnly ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                </div>
+                <button onClick={handleSave} className="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-lg active:scale-95">Salvar Logística</button>
+            </div>
+        </div>
+
         <div className="bg-white p-4 rounded-lg shadow-sm">
             <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2"><MessageSquare size={20} /> Mensagens</h3>
             <div className="space-y-3">

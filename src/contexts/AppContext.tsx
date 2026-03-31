@@ -123,6 +123,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [settings?.storeName]);
 
+  // Inject Theme Colors as CSS Variables
+  useEffect(() => {
+    if (settings.themeColors) {
+      const root = document.documentElement;
+      const themeColors = settings.themeColors as any;
+      
+      // Map setting keys to CSS variables
+      const colorMap: Record<string, string> = {
+        headerBg: '--color-header-bg',
+        headerText: '--color-header-text',
+        background: '--color-background',
+        cardBg: '--color-card-bg',
+        cardText: '--color-card-text',
+        buttonPrimary: '--color-button-primary',
+        buttonText: '--color-button-text',
+        textPrimary: '--color-text-primary',
+        textSecondary: '--color-text-secondary',
+      };
+
+      Object.entries(colorMap).forEach(([key, varName]) => {
+        if (themeColors[key]) {
+          root.style.setProperty(varName, themeColors[key]);
+        }
+      });
+    }
+  }, [settings.themeColors]);
+
   // Manuelly parse slug from URL because we are outside <Routes>
   const currentSlug = useMemo(() => {
     const parts = location.pathname.split('/').filter(Boolean);

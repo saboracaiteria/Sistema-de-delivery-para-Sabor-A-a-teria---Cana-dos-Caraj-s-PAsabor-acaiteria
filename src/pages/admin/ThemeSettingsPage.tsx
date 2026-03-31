@@ -18,6 +18,8 @@ export const ThemeSettingsPage: React.FC = () => {
     { key: 'buttonText', label: 'Texto do Botão', default: '#ffffff' },
     { key: 'textPrimary', label: 'Texto Principal', default: '#1e1e1e' },
     { key: 'textSecondary', label: 'Texto Secundário', default: '#666666' },
+    { key: 'footerBg', label: 'Fundo do Rodapé', default: '#1a0533' },
+    { key: 'footerText', label: 'Texto do Rodapé', default: '#ffffff' },
   ];
 
   const handleColorChange = (key: string, value: string) => {

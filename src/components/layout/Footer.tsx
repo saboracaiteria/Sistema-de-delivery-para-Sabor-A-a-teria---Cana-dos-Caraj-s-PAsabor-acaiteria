@@ -6,19 +6,18 @@ export const Footer: React.FC = () => {
   const { settings } = useApp();
 
   return (
-    <footer className="relative overflow-hidden mt-8">
-      {/* Gradient background */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: 'linear-gradient(to bottom, #1a0533 0%, #110324 100%)'
-        }}
-      />
+    <footer 
+      className="relative overflow-hidden mt-8" 
+      style={{ 
+        backgroundColor: (settings.themeColors as any)?.footerBg || '#1a0533',
+        color: (settings.themeColors as any)?.footerText || '#ffffff'
+      }}
+    >
       {/* Decorative circles */}
       <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-5" style={{ background: 'var(--color-header-bg)', transform: 'translate(30%, -30%)' }} />
       <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full opacity-5" style={{ background: 'var(--color-button-primary)', transform: 'translate(-30%, 30%)' }} />
 
-      <div className="relative z-10 text-white py-6 px-4">
+      <div className="relative z-10 py-6 px-4">
         <div className="max-w-md mx-auto">
 
           {/* Instagram Link */}
