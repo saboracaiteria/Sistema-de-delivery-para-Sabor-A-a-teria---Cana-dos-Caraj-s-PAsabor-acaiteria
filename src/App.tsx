@@ -34,8 +34,8 @@ import { SetupPage } from './pages/SetupPage';
 import { ModernUI } from './pages/ModernUI';
 
 const StorefrontWrapper = () => {
-  const { settings } = useApp();
-  return settings.uiMode === 'modern' ? <ModernUI /> : <HomePage />;
+  const { localUiMode } = useApp();
+  return localUiMode === 'modern' ? <ModernUI /> : <HomePage />;
 };
 
 const AppContent = () => {

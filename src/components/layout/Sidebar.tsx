@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Lock as LockIcon } from 'lucide-react';
+import { X, Lock as LockIcon, LayoutTemplate } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { SUPER_ADMIN_PASSWORD } from '../../types/constants';
 
 export const Sidebar: React.FC = () => {
-  const { isSidebarOpen, setSidebarOpen, categories, setAdminRole, slug, store } = useApp();
+  const { 
+    isSidebarOpen, setSidebarOpen, categories, setAdminRole, slug, store,
+    localUiMode, setLocalUiMode 
+  } = useApp();
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
@@ -67,6 +70,14 @@ export const Sidebar: React.FC = () => {
               <span>{cat.icon}</span> {cat.title}
             </button>
           ))}
+          <div className="border-t border-gray-100 my-2" />
+          <button 
+            onClick={() => { setLocalUiMode(localUiMode === 'modern' ? 'classic' : 'modern'); setSidebarOpen(false); }} 
+            className="w-full text-left px-4 py-3 hover:bg-gray-100 text-gray-600 flex items-center gap-2"
+          >
+            <LayoutTemplate size={20} className="text-purple-600" />
+            Visualização: <strong>{localUiMode === 'modern' ? 'Moderna' : 'Clássica'}</strong>
+          </button>
           <div className="border-t border-gray-100 my-2" />
           <button onClick={() => setShowPassword(true)} className="w-full text-left px-4 py-3 hover:bg-gray-100 text-gray-600 flex items-center justify-center gap-2">
             <LockIcon size={24} />

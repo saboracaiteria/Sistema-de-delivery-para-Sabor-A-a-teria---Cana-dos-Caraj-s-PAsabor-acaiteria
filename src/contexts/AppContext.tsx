@@ -67,6 +67,8 @@ interface AppContextType {
   isConfigured: boolean;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
+  localUiMode: 'modern' | 'classic';
+  setLocalUiMode: (mode: 'modern' | 'classic') => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -104,6 +106,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [settings, setSettings] = useState<GlobalSettings>(mockSettings);
   const [searchTerm, setSearchTerm] = useState('');
+  const [localUiMode, setLocalUiMode] = useState<'modern' | 'classic'>('modern');
 
   const [isStoreOpen, setIsStoreOpen] = useState(false);
 
@@ -367,6 +370,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         uiMode: data.ui_mode
       };
       setSettings(normalizedSettings);
+      setLocalUiMode(data.ui_mode as any || 'classic');
     } else {
       setSettings(mockSettings);
     }
@@ -766,7 +770,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateSettings, setAdminRole, addOrder, updateOrderStatus, deleteOrder,
     copyOrderToClipboard, checkStoreStatus: () => isStoreOpen ? 'open' : 'closed',
     isStoreOpen, isSidebarOpen, setSidebarOpen, loading, store,
-    slug: currentSlug, isConfigured, searchTerm, setSearchTerm
+    slug: currentSlug, isConfigured, searchTerm, setSearchTerm,
+    localUiMode, setLocalUiMode
   };
 
   return (
