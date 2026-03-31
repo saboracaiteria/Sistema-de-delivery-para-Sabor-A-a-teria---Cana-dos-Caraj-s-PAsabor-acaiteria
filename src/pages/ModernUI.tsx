@@ -309,39 +309,41 @@ export const ModernUI: React.FC = () => {
     }, [categories, products, searchTerm]);
 
     return (
-        <div className="bg-[#FAFAFA] min-h-screen pb-32 font-outfit selection:bg-purple-200">
-            <ModernHero />
+        <div className="bg-[#FAFAFA] min-h-screen flex flex-col font-outfit selection:bg-purple-200">
+            <div className="flex-grow">
+                <ModernHero />
 
-            <div className="max-w-6xl mx-auto px-4 md:px-0">
-                {/* Notice Alert */}
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-100 rounded-2xl p-4 mb-8 flex items-start gap-3 shadow-sm"
-                >
-                    <Info className="text-orange-500 shrink-0 mt-0.5" size={20} />
-                    <div>
-                        <span className="block font-bold text-gray-800 text-sm">Atenção ao horário</span>
-                        <span className="block text-xs text-gray-600 mt-1 font-medium">Entregas somente até as {settings.deliveryCloseTime || '21:00'}hrs!</span>
-                    </div>
-                </motion.div>
- 
-                {/* Categories */}
-                <div className="space-y-10">
-                    {categorizedProducts.map((cat, catIdx) => (
-                        <div key={cat.id} id={`cat-${cat.id}`}>
-                            <h2 className="text-xl font-black text-gray-900 mb-4 pl-2 flex items-center gap-3 tracking-tight">
-                                <span className="bg-white p-1.5 rounded-lg shadow-sm border border-gray-100 text-base">{cat.icon}</span>
-                                {cat.title}
-                            </h2>
- 
-                            <div className="grid grid-cols-4 lg:grid-cols-5 gap-2">
-                                {cat.products.map((product, idx) => (
-                                    <ModernProductCard key={product.id} product={product} index={idx} />
-                                ))}
-                            </div>
+                <div className="max-w-6xl mx-auto px-4 md:px-0">
+                    {/* Notice Alert */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-100 rounded-2xl p-4 mb-8 flex items-start gap-3 shadow-sm"
+                    >
+                        <Info className="text-orange-500 shrink-0 mt-0.5" size={20} />
+                        <div>
+                            <span className="block font-bold text-gray-800 text-sm">Atenção ao horário</span>
+                            <span className="block text-xs text-gray-600 mt-1 font-medium">Entregas somente até as {settings.deliveryCloseTime || '21:00'}hrs!</span>
                         </div>
-                    ))}
+                    </motion.div>
+    
+                    {/* Categories */}
+                    <div className="space-y-10 pb-20">
+                        {categorizedProducts.map((cat, catIdx) => (
+                            <div key={cat.id} id={`cat-${cat.id}`}>
+                                <h2 className="text-xl font-black text-gray-900 mb-4 pl-2 flex items-center gap-3 tracking-tight">
+                                    <span className="bg-white p-1.5 rounded-lg shadow-sm border border-gray-100 text-base">{cat.icon}</span>
+                                    {cat.title}
+                                </h2>
+    
+                                <div className="grid grid-cols-4 lg:grid-cols-5 gap-2">
+                                    {cat.products.map((product, idx) => (
+                                        <ModernProductCard key={product.id} product={product} index={idx} />
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
