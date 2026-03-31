@@ -7,6 +7,7 @@ import { ProductModal } from '../components/modals/ProductModal';
 import { Product, ProductGroup } from '../types/types';
 import { PwaInstallPrompt } from '../components/ui/PwaInstallPrompt';
 import { ShareQRCode } from '../components/ui/ShareQRCode';
+import { Footer } from '../components/layout/Footer';
 
 
 // Modern Hero Component
@@ -387,6 +388,7 @@ export const ModernUI: React.FC = () => {
                 </div>
             </div>
 
+            <Footer />
             <ModernFloatingCart />
         </div>
     );
