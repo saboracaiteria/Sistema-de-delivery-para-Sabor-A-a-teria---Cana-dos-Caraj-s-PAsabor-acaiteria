@@ -430,8 +430,15 @@ export const PlatformAdminPanel = () => {
                   </div>
 
                   {/* Store Name */}
-                  <h3 className="text-sm sm:text-base font-bold text-white tracking-tight truncate mb-1">{store.name}</h3>
-                  <p className="text-[9px] sm:text-[10px] text-white/30 font-mono truncate">/{store.slug}</p>
+                  <h3 className="text-sm sm:text-base font-bold text-white tracking-tight truncate mb-0.5">{store.name}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-[9px] sm:text-[10px] text-white/30 font-mono truncate">/{store.slug}</p>
+                    {store.business_type && (
+                      <span className="text-[8px] font-black uppercase bg-white/5 text-purple-300 px-1.5 py-0.5 rounded border border-white/5">
+                        {store.business_type}
+                      </span>
+                    )}
+                  </div>
 
                   {/* Compact Remaining Badge */}
                   {remaining && (
@@ -673,6 +680,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
   const [ownerEmail, setOwnerEmail] = useState('');
   const [ownerPassword, setOwnerPassword] = useState('');
   const [dataTemplate, setDataTemplate] = useState<'acaiteria' | 'empty'>('acaiteria');
+  const [businessType, setBusinessType] = useState<'livre' | 'acaiteria' | 'sorveteria'>('acaiteria');
   const [uiMode, setUiMode] = useState<'modern' | 'classic'>('modern');
   const [saving, setSaving] = useState(false);
   const [planDuration, setPlanDuration] = useState<number>(7);
@@ -741,6 +749,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
           plan_duration_days: planDuration,
           plan_start_date: new Date().toISOString(),
           plan_expiry_date: expiryDate.toISOString(),
+          business_type: businessType,
         })
         .select()
         .single();
@@ -764,8 +773,8 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
           delivery_fee: 5.00,
           delivery_only: false,
           banner_url: dataTemplate === 'empty' ? 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2670&auto=format&fit=crop' : null,
-          note_title: dataTemplate === 'empty' ? 'Observações' : 'Alguma observação?',
-          note_placeholder: dataTemplate === 'empty' ? 'Ex: Detalhes sobre a entrega, cor, tamanho, etc...' : 'Ex: Sem cebola, caprichar no creme...',
+          note_title: 'Observações',
+          note_placeholder: '',
           opening_hours: [
             { dayOfWeek: 0, open: '08:00', close: '22:00', enabled: true },
             { dayOfWeek: 1, open: '08:00', close: '22:00', enabled: true },
@@ -917,6 +926,34 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
                       <div className="text-[8px] opacity-70 mt-0.5">
                         {d <= 15 ? 'Teste' : d === 365 ? 'Anual' : 'Plano'}
                       </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Business Type Selector */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3 ml-1">Ramo de Atividade</label>
+                <div className="flex gap-2">
+                  {[
+                    { id: 'livre', label: 'Livre', color: 'blue' },
+                    { id: 'acaiteria', label: 'Açaíteria', color: 'purple' },
+                    { id: 'sorveteria', label: 'Sorveteria', color: 'pink' }
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setBusinessType(item.id as any);
+                        setDataTemplate(item.id === 'livre' ? 'empty' : 'acaiteria');
+                      }}
+                      className={`flex-1 py-3 rounded-xl text-xs font-bold border-2 transition-all ${
+                        businessType === item.id
+                          ? `border-${item.color}-600 bg-${item.color}-600 text-white shadow-md`
+                          : 'border-gray-100 bg-gray-50 text-gray-400 hover:border-gray-200'
+                      }`}
+                    >
+                      {item.label}
                     </button>
                   ))}
                 </div>

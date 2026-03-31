@@ -162,7 +162,7 @@ export const CartPage: React.FC = () => {
             <textarea
               value={noteText}
               onChange={(e) => setNoteText(e.target.value)}
-              placeholder="Ex: Sem granola, caprichar no leite condensado..."
+              placeholder={settings.notePlaceholder || "Digite aqui sua observação..."}
               className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 outline-none text-sm bg-gray-50 resize-none"
               rows={4}
               autoFocus

@@ -11,6 +11,7 @@ export interface Store {
   plan_start_date?: string;
   plan_expiry_date?: string;
   settings?: any; // To avoid type issues in PlatformAdminPanel
+  business_type?: 'livre' | 'acaiteria' | 'sorveteria';
 }
 
 export interface ProductOption {
