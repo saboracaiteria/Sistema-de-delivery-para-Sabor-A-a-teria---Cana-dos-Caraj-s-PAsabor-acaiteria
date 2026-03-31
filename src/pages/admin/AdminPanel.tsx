@@ -23,7 +23,6 @@ export const AdminPanel: React.FC = () => {
     { title: 'Cores do Site', icon: <Palette size={24} />, path: '/panel/theme', role: ['admin'] },
     { title: 'Estoque', icon: <Package size={24} />, path: '/panel/inventory', role: ['admin'] },
     { title: 'Impressora', icon: <Printer size={24} />, path: '/panel/printer', role: ['admin', 'employee'] },
-    { title: 'Setup DB', icon: <Database size={24} />, path: '/panel/database', role: ['admin'] },
   ];
 
   return (
