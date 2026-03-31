@@ -10,13 +10,6 @@ export const HomePage: React.FC = () => {
   const { categories, products, settings, isStoreOpen, store, searchTerm } = useApp();
   const navigate = useNavigate();
 
-  // Redirect if preferred UI is modern
-  useEffect(() => {
-    // Só redireciona se tivermos o store e o slug carregado, para evitar /undefined/modern
-    if (settings.uiMode === 'modern' && store?.slug) {
-      navigate(`/${store.slug}/modern`, { replace: true });
-    }
-  }, [settings.uiMode, navigate, store?.slug]);
   const status = isStoreOpen ? 'open' : 'closed';
   const activeCategories = categories.filter(cat => cat.active !== false);
 

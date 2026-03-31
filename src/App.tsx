@@ -33,6 +33,11 @@ import { PlatformAdminPanel } from './pages/PlatformAdminPanel';
 import { SetupPage } from './pages/SetupPage';
 import { ModernUI } from './pages/ModernUI';
 
+const StorefrontWrapper = () => {
+  const { settings } = useApp();
+  return settings.uiMode === 'modern' ? <ModernUI /> : <HomePage />;
+};
+
 const AppContent = () => {
   const {
     categories, addCategory, updateCategory, deleteCategory,
@@ -101,8 +106,7 @@ const AppContent = () => {
         <Route path="/setup" element={<SetupPage />} />
 
         {/* === Rotas da Loja (Baseadas no Slug) === */}
-        <Route path="/:slug" element={<HomePage />} />
-        <Route path="/:slug/modern" element={<ModernUI />} />
+        <Route path="/:slug" element={<StorefrontWrapper />} />
         <Route path="/:slug/cart" element={<CartPage />} />
         <Route path="/:slug/checkout" element={<CheckoutPage />} />
 

@@ -40,7 +40,7 @@ export const PlatformHome = () => {
     localStorage.setItem('preferredUI', 'modern');
     window.dispatchEvent(new CustomEvent('changeUIMode', { detail: 'modern' }));
     // Redireciona para a loja padrão ou para a primeira loja ativa
-    navigate('/demo/modern');
+    navigate('/demo');
   };
 
   const goLegacy = () => {
