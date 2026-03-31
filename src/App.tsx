@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Component } from 'react';
-import { HashRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
 
 import { AppProvider, useApp } from './contexts/AppContext';
@@ -109,8 +109,11 @@ const AppContent = () => {
         <Route path="/:slug" element={<StorefrontWrapper />} />
         <Route path="/:slug/cart" element={<CartPage />} />
         <Route path="/:slug/checkout" element={<CheckoutPage />} />
+        
+        {/* Redirecionar rotas antigas para as rotas limpas */}
+        <Route path="/:slug/modern" element={<Navigate to="/:slug" replace />} />
 
-        {/* --- Painel Admin da Loja --- */}
+        {/* === Rotas Administrativas da Loja === */}
         <Route path="/:slug/panel" element={<AdminPanel />} />
         <Route path="/:slug/panel/orders" element={<OrdersPage />} />
         <Route path="/:slug/panel/coupons" element={<CouponsPage />} />
