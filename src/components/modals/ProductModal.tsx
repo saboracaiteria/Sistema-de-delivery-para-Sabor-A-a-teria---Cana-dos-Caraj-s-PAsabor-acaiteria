@@ -223,7 +223,14 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
               <Minus size={24} />
             </button>
             <div className="flex flex-col items-center">
-              <span className="text-2xl font-black text-gray-800 tabular-nums">{quantity}</span>
+              <input 
+                type="number" 
+                value={quantity} 
+                min="1"
+                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-20 text-2xl font-black text-gray-800 tabular-nums text-center bg-transparent border-b-2 border-gray-100 focus:border-purple-500 outline-none transition-colors"
+                onFocus={(e) => e.target.select()}
+              />
               <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">Qtde</span>
             </div>
             <button

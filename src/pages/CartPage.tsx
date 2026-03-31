@@ -136,7 +136,14 @@ export const CartPage: React.FC = () => {
                     >
                       <Minus size={18} />
                     </button>
-                    <span className="font-black text-gray-900 w-6 text-center tabular-nums">{item.quantity}</span>
+                    <input 
+                      type="number" 
+                      value={item.quantity} 
+                      min="1"
+                      onChange={(e) => updateCartQuantity(item.cartId, Math.max(1, parseInt(e.target.value) || 1))}
+                      onFocus={(e) => e.target.select()}
+                      className="w-10 font-black text-gray-900 text-center tabular-nums bg-transparent border-b-2 border-gray-50 focus:border-purple-300 outline-none transition-colors" 
+                    />
                     <button
                       onClick={() => updateCartQuantity(item.cartId, item.quantity + 1)}
                       className="w-9 h-9 rounded-lg flex items-center justify-center text-emerald-600 bg-white hover:bg-emerald-50 transition-all shadow-sm active:scale-90 border border-gray-200"
