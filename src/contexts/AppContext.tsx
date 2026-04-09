@@ -266,6 +266,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return;
       }
 
+      // Se for o slug de demonstração, usa dados mock diretamente
+      if (currentSlug === 'demo') {
+        setProducts(mockProducts);
+        setCategories(mockCategories);
+        setGroups(mockGroups);
+        setCoupons(mockCoupons);
+        setSettings(mockSettings);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         
