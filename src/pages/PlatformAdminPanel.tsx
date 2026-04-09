@@ -20,8 +20,6 @@ export const PlatformAdminPanel = () => {
   const [editingName, setEditingName] = useState('');
   const [editingPasswordStoreId, setEditingPasswordStoreId] = useState<string | null>(null);
   const [editingPasswordValue, setEditingPasswordValue] = useState('');
-  const [editingWhatsappStoreId, setEditingWhatsappStoreId] = useState<string | null>(null);
-  const [editingWhatsappValue, setEditingWhatsappValue] = useState('');
   const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({});
   const [renewingStore, setRenewingStore] = useState<StoreType | null>(null);
   const [showCloneModal, setShowCloneModal] = useState(false);
@@ -218,30 +216,6 @@ export const PlatformAdminPanel = () => {
     }
   };
 
-  const handleUpdateWhatsapp = async (storeId: string, newWhatsapp: string) => {
-    try {
-      const { error } = await supabase
-        .from('settings')
-        .update({ whatsapp_number: newWhatsapp })
-        .eq('store_id', storeId);
-
-      if (error) throw error;
-      
-      setStores(prev => prev.map(s => {
-        if (s.id === storeId) {
-          const updatedSettings = Array.isArray(s.settings) 
-            ? [{ ...s.settings[0], whatsapp_number: newWhatsapp }]
-            : { ...s.settings, whatsapp_number: newWhatsapp };
-          return { ...s, settings: updatedSettings };
-        }
-        return s;
-      }));
-      setEditingWhatsappStoreId(null);
-    } catch (err) {
-      console.error("Error updating whatsapp:", err);
-      alert("Erro ao atualizar o WhatsApp.");
-    }
-  };
 
   const handleUpdateStoreName = async (id: string, name: string) => {
     if (!name.trim()) {
@@ -605,44 +579,6 @@ export const PlatformAdminPanel = () => {
 
                           {/* Credentials */}
                           <div className="space-y-2">
-                            {editingWhatsappStoreId === store.id ? (
-                              <div className="flex items-center gap-1.5 px-1">
-                                <Smartphone size={10} className="text-white/30 shrink-0" />
-                                <input
-                                  type="text"
-                                  value={editingWhatsappValue}
-                                  onChange={(e) => setEditingWhatsappValue(e.target.value)}
-                                  className="flex-1 bg-white/5 border border-white/20 rounded-md px-2 py-1 text-[10px] text-white outline-none focus:border-purple-500 transition-colors"
-                                  placeholder="WhatsApp (ex: 55949...)"
-                                  autoFocus
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleUpdateWhatsapp(store.id, editingWhatsappValue);
-                                    if (e.key === 'Escape') setEditingWhatsappStoreId(null);
-                                  }}
-                                />
-                                <button
-                                  onClick={() => handleUpdateWhatsapp(store.id, editingWhatsappValue)}
-                                  className="p-1 px-2 rounded-md bg-purple-600 text-white text-[9px] font-bold"
-                                >
-                                  OK
-                                </button>
-                              </div>
-                            ) : (
-                              <div 
-                                className="flex items-center gap-1.5 p-1 group/wa cursor-pointer hover:bg-white/5 rounded-md transition-all"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingWhatsappStoreId(store.id);
-                                  setEditingWhatsappValue(store.settings?.whatsapp_number || "");
-                                }}
-                              >
-                                <Smartphone size={10} className={`${store.settings?.whatsapp_number ? 'text-emerald-400' : 'text-white/30'} shrink-0`} />
-                                <span className="text-[10px] text-white/50 group-hover/wa:text-white transition-colors truncate">
-                                  {store.settings?.whatsapp_number ? store.settings.whatsapp_number : 'Sem WhatsApp'}
-                                </span>
-                                <Pencil size={8} className="text-white/10 group-hover/wa:text-purple-400 ml-auto opacity-0 group-hover/wa:opacity-100" />
-                              </div>
-                            )}
 
                             {store.owner_email && (
                               <div className="flex items-center gap-1.5 p-1">
