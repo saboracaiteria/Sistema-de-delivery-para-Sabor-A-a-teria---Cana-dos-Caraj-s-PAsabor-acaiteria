@@ -607,7 +607,7 @@ export const PlatformAdminPanel = () => {
                           <div className="space-y-2">
                             {editingWhatsappStoreId === store.id ? (
                               <div className="flex items-center gap-1.5 px-1">
-                                <Phone size={10} className="text-white/30 shrink-0" />
+                                <Smartphone size={10} className="text-white/30 shrink-0" />
                                 <input
                                   type="text"
                                   value={editingWhatsappValue}
@@ -636,7 +636,7 @@ export const PlatformAdminPanel = () => {
                                   setEditingWhatsappValue(store.settings?.whatsapp_number || "");
                                 }}
                               >
-                                <Phone size={10} className={`${store.settings?.whatsapp_number ? 'text-emerald-400' : 'text-white/30'} shrink-0`} />
+                                <Smartphone size={10} className={`${store.settings?.whatsapp_number ? 'text-emerald-400' : 'text-white/30'} shrink-0`} />
                                 <span className="text-[10px] text-white/50 group-hover/wa:text-white transition-colors truncate">
                                   {store.settings?.whatsapp_number ? store.settings.whatsapp_number : 'Sem WhatsApp'}
                                 </span>
