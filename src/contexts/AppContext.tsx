@@ -223,6 +223,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const isPlatformRoute = ['/', '/admin', '/platform', '/setup'].includes(location.pathname);
       
       if (isPlatformRoute) {
+        const masterSlug = 'sabor-acaiteria';
+        try {
+          if (isConfigured) {
+             const { data: storeData } = await supabase
+              .from('stores')
+              .select('id')
+              .eq('slug', masterSlug)
+              .single();
+            
+            if (storeData) {
+              await fetchSettings(storeData.id);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (e) {
+          console.error('Error loading master settings:', e);
+        }
         setStore(null);
         setSettings(mockSettings);
         setLoading(false);

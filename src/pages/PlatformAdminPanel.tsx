@@ -7,6 +7,7 @@ import { useApp } from '../contexts/AppContext';
 import type { Store as StoreType } from '../types/types';
 import { SUPER_ADMIN_PASSWORD } from '../types/constants';
 import { applyAcaiteriaTemplate } from '../storeTemplateUtils';
+import { cloneStoreData } from '../utils/cloneStoreUtils';
 
 export const PlatformAdminPanel = () => {
   const { adminRole, setAdminRole } = useApp();
@@ -19,8 +20,24 @@ export const PlatformAdminPanel = () => {
   const [editingName, setEditingName] = useState('');
   const [editingPasswordStoreId, setEditingPasswordStoreId] = useState<string | null>(null);
   const [editingPasswordValue, setEditingPasswordValue] = useState('');
+  const [editingWhatsappStoreId, setEditingWhatsappStoreId] = useState<string | null>(null);
+  const [editingWhatsappValue, setEditingWhatsappValue] = useState('');
   const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({});
   const [renewingStore, setRenewingStore] = useState<StoreType | null>(null);
+  const [showCloneModal, setShowCloneModal] = useState(false);
+  const [storeToClone, setStoreToClone] = useState<StoreType | null>(null);
+  const [isEditingName, setIsEditingName] = useState<string | null>(null);
+
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // remove accents
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+  };
 
   const toggleSecret = (id: string) => {
     setVisibleSecrets(prev => ({ ...prev, [id]: !prev[id] }));
@@ -30,7 +47,7 @@ export const PlatformAdminPanel = () => {
     try {
       const { data, error } = await supabase
         .from('stores')
-        .select('*, settings(store_status)')
+        .select('*, settings(store_status, whatsapp_number)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -201,23 +218,62 @@ export const PlatformAdminPanel = () => {
     }
   };
 
-  const handleUpdateStoreName = async (id: string) => {
-    if (!editingName.trim()) {
-      setEditingStoreId(null);
-      return;
-    }
+  const handleUpdateWhatsapp = async (storeId: string, newWhatsapp: string) => {
     try {
       const { error } = await supabase
-        .from('stores')
-        .update({ name: editingName.trim() })
-        .eq('id', id);
+        .from('settings')
+        .update({ whatsapp_number: newWhatsapp })
+        .eq('store_id', storeId);
 
       if (error) throw error;
       
-      setStores(prev => prev.map(s => s.id === id ? { ...s, name: editingName.trim() } : s));
-      setEditingStoreId(null);
+      setStores(prev => prev.map(s => {
+        if (s.id === storeId) {
+          const updatedSettings = Array.isArray(s.settings) 
+            ? [{ ...s.settings[0], whatsapp_number: newWhatsapp }]
+            : { ...s.settings, whatsapp_number: newWhatsapp };
+          return { ...s, settings: updatedSettings };
+        }
+        return s;
+      }));
+      setEditingWhatsappStoreId(null);
+    } catch (err) {
+      console.error("Error updating whatsapp:", err);
+      alert("Erro ao atualizar o WhatsApp.");
+    }
+  };
+
+  const handleUpdateStoreName = async (id: string, name: string) => {
+    if (!name.trim()) {
+      setIsEditingName(null);
+      return;
+    }
+    
+    const newSlug = generateSlug(name);
+    
+    try {
+      // 1. Update store name and slug
+      const { error: storeError } = await supabase
+        .from('stores')
+        .update({ 
+          name: name.trim(),
+          slug: newSlug
+        })
+        .eq('id', id);
+
+      if (storeError) throw storeError;
+      
+      // 2. Update store name in settings too
+      await supabase
+        .from('settings')
+        .update({ store_name: name.trim() })
+        .eq('store_id', id);
+
+      setStores(prev => prev.map(s => s.id === id ? { ...s, name: name.trim(), slug: newSlug } : s));
+      setIsEditingName(null);
+      setEditingName('');
     } catch (err: any) {
-      alert(`Erro ao atualizar nome: ${err.message}`);
+      alert(`Erro ao atualizar nome e URL: ${err.message}`);
     }
   };
 
@@ -429,16 +485,61 @@ export const PlatformAdminPanel = () => {
                     </div>
                   </div>
 
-                  {/* Store Name */}
-                  <h3 className="text-sm sm:text-base font-bold text-white tracking-tight truncate mb-0.5">{store.name}</h3>
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-[9px] sm:text-[10px] text-white/30 font-mono truncate">/{store.slug}</p>
-                    {store.business_type && (
-                      <span className="text-[8px] font-black uppercase bg-white/5 text-purple-300 px-1.5 py-0.5 rounded border border-white/5">
-                        {store.business_type}
-                      </span>
-                    )}
-                  </div>
+                  {/* Store Name & Link */}
+                  {isEditingName === store.id ? (
+                    <div className="flex items-center gap-2 mb-2" onClick={e => e.stopPropagation()}>
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="w-full bg-white/10 border border-purple-500/50 rounded-lg px-2 py-1 text-sm text-white outline-none focus:ring-1 focus:ring-purple-500"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleUpdateStoreName(store.id, editingName);
+                            if (e.key === 'Escape') setIsEditingName(null);
+                          }}
+                        />
+                        <p className="text-[8px] text-purple-400 mt-1 font-bold">Nova URL: /{generateSlug(editingName)}</p>
+                      </div>
+                      <button
+                        onClick={() => handleUpdateStoreName(store.id, editingName)}
+                        className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500/30 transition-all shadow-lg"
+                      >
+                        <Save size={14} />
+                      </button>
+                      <button
+                        onClick={() => setIsEditingName(null)}
+                        className="p-1.5 bg-white/5 text-white/50 rounded-lg hover:bg-white/10 transition-all"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between group/name mb-0.5">
+                        <h3 className="text-sm sm:text-base font-bold text-white tracking-tight truncate">{store.name}</h3>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingName(store.name);
+                            setIsEditingName(store.id);
+                          }}
+                          className="p-1 text-white/20 hover:text-purple-400 opacity-0 group-hover/name:opacity-100 transition-all shrink-0"
+                        >
+                          <Pencil size={12} />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-[9px] sm:text-[10px] text-white/30 font-mono truncate">/{store.slug}</p>
+                        {store.business_type && (
+                          <span className="text-[8px] font-black uppercase bg-white/5 text-purple-300 px-1.5 py-0.5 rounded border border-white/5">
+                            {store.business_type}
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  )}
 
                   {/* Compact Remaining Badge */}
                   {remaining && (
@@ -504,6 +605,45 @@ export const PlatformAdminPanel = () => {
 
                           {/* Credentials */}
                           <div className="space-y-2">
+                            {editingWhatsappStoreId === store.id ? (
+                              <div className="flex items-center gap-1.5 px-1">
+                                <Phone size={10} className="text-white/30 shrink-0" />
+                                <input
+                                  type="text"
+                                  value={editingWhatsappValue}
+                                  onChange={(e) => setEditingWhatsappValue(e.target.value)}
+                                  className="flex-1 bg-white/5 border border-white/20 rounded-md px-2 py-1 text-[10px] text-white outline-none focus:border-purple-500 transition-colors"
+                                  placeholder="WhatsApp (ex: 55949...)"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleUpdateWhatsapp(store.id, editingWhatsappValue);
+                                    if (e.key === 'Escape') setEditingWhatsappStoreId(null);
+                                  }}
+                                />
+                                <button
+                                  onClick={() => handleUpdateWhatsapp(store.id, editingWhatsappValue)}
+                                  className="p-1 px-2 rounded-md bg-purple-600 text-white text-[9px] font-bold"
+                                >
+                                  OK
+                                </button>
+                              </div>
+                            ) : (
+                              <div 
+                                className="flex items-center gap-1.5 p-1 group/wa cursor-pointer hover:bg-white/5 rounded-md transition-all"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingWhatsappStoreId(store.id);
+                                  setEditingWhatsappValue(store.settings?.whatsapp_number || "");
+                                }}
+                              >
+                                <Phone size={10} className={`${store.settings?.whatsapp_number ? 'text-emerald-400' : 'text-white/30'} shrink-0`} />
+                                <span className="text-[10px] text-white/50 group-hover/wa:text-white transition-colors truncate">
+                                  {store.settings?.whatsapp_number ? store.settings.whatsapp_number : 'Sem WhatsApp'}
+                                </span>
+                                <Pencil size={8} className="text-white/10 group-hover/wa:text-purple-400 ml-auto opacity-0 group-hover/wa:opacity-100" />
+                              </div>
+                            )}
+
                             {store.owner_email && (
                               <div className="flex items-center gap-1.5 p-1">
                                 <Activity size={10} className="text-purple-400 shrink-0" />
@@ -600,14 +740,30 @@ export const PlatformAdminPanel = () => {
                             </a>
                           </div>
 
-                          {/* Delete */}
-                          <button
-                            onClick={() => setDeleteTarget(store)}
-                            className="w-full py-1 rounded-lg text-[9px] text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all flex items-center justify-center gap-1"
-                          >
-                            <Trash2 size={10} />
-                            Excluir
-                          </button>
+                          {/* Delete & Clone */}
+                          <div className="flex flex-col gap-1.5 pt-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setStoreToClone(store);
+                                setShowCloneModal(true);
+                              }}
+                              className="w-full py-1 rounded-lg text-[9px] text-white/20 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all flex items-center justify-center gap-1"
+                            >
+                              <Copy size={10} />
+                              Clonar Loja
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteTarget(store);
+                              }}
+                              className="w-full py-1 rounded-lg text-[9px] text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all flex items-center justify-center gap-1"
+                            >
+                              <Trash2 size={10} />
+                              Excluir
+                            </button>
+                          </div>
                         </div>
                       </motion.div>
                     )}
@@ -655,6 +811,19 @@ export const PlatformAdminPanel = () => {
       </AnimatePresence>
 
       <AnimatePresence>
+        {showCloneModal && storeToClone && (
+          <CloneStoreModal
+            sourceStore={storeToClone}
+            onClose={() => {
+              setShowCloneModal(false);
+              setStoreToClone(null);
+            }}
+            onCreated={handleStoreCreated}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {renewingStore && (
           <RenewPlanModal
             store={renewingStore}
@@ -679,6 +848,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
   const [storeName, setStoreName] = useState('');
   const [ownerEmail, setOwnerEmail] = useState('');
   const [ownerPassword, setOwnerPassword] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
   const [dataTemplate, setDataTemplate] = useState<'acaiteria' | 'empty'>('acaiteria');
   const [businessType, setBusinessType] = useState<'livre' | 'acaiteria' | 'sorveteria'>('acaiteria');
   const [uiMode, setUiMode] = useState<'modern' | 'classic'>('modern');
@@ -769,6 +939,7 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
         await supabase.from('settings').insert({
           store_id: storeData.id,
           store_name: storeName.trim(),
+          whatsapp_number: whatsappNumber,
           store_status: 'open',
           delivery_fee: 5.00,
           delivery_only: false,
@@ -904,6 +1075,22 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
                 />
                 <p className="mt-1.5 text-xs text-gray-400 font-medium leading-relaxed">
                   O lojista usará esta senha para acessar o próprio painel.
+                </p>
+              </div>
+
+              {/* Whatsapp Number */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Número do WhatsApp</label>
+                <input
+                  type="text"
+                  required
+                  value={whatsappNumber}
+                  onChange={e => setWhatsappNumber(e.target.value)}
+                  className="w-full border border-gray-200 p-3 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500 outline-none font-medium text-gray-800"
+                  placeholder="Ex: 55949xxxx-xxxx"
+                />
+                <p className="mt-1.5 text-xs text-gray-400 font-medium leading-relaxed">
+                  WhatsApp que receberá os pedidos e aparecerá no cardápio.
                 </p>
               </div>
 
@@ -1043,10 +1230,38 @@ const CreateStoreModal: React.FC<CreateStoreModalProps> = ({ onClose, onCreated 
                 </div>
               </div>
 
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Número do WhatsApp</label>
+                <input
+                  type="text"
+                  required
+                  value={whatsappNumber}
+                  onChange={e => setWhatsappNumber(e.target.value)}
+                  className="w-full border border-gray-200 p-3 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500 outline-none font-medium text-gray-800"
+                  placeholder="Ex: 55949xxxx-xxxx"
+                />
+              </div>
+
+              {/* Whatsapp Number */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Número do WhatsApp</label>
+                <input
+                  type="text"
+                  required
+                  value={whatsappNumber}
+                  onChange={e => setWhatsappNumber(e.target.value)}
+                  className="w-full border border-gray-200 p-3 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500 outline-none font-medium text-gray-800"
+                  placeholder="Ex: 55949xxxx-xxxx"
+                />
+                <p className="mt-1.5 text-xs text-gray-400 font-medium leading-relaxed">
+                  WhatsApp que receberá os pedidos e aparecerá no cardápio.
+                </p>
+              </div>
+
               {/* Submit Button */}
               <button
                 onClick={handleCreate}
-                disabled={saving || !storeName.trim() || !ownerPassword.trim()}
+                disabled={saving || !storeName.trim() || !ownerPassword.trim() || !whatsappNumber.trim()}
                 className="w-full bg-gradient-to-r from-purple-600 to-purple-800 text-white py-3.5 rounded-xl font-bold text-lg shadow-lg shadow-purple-200 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? (
@@ -1318,3 +1533,227 @@ const RenewPlanModal: React.FC<RenewPlanModalProps> = ({ store, onClose, onConfi
     </motion.div>
   );
 };
+
+// --- Clone Store Modal ---
+
+interface CloneStoreModalProps {
+  sourceStore: StoreType;
+  onClose: () => void;
+  onCreated: () => void;
+}
+
+const CloneStoreModal: React.FC<CloneStoreModalProps> = ({ sourceStore, onClose, onCreated }) => {
+  const [storeName, setStoreName] = useState(`${sourceStore.name} (Cópia)`);
+  const [ownerPassword, setOwnerPassword] = useState(sourceStore.password || '');
+  const [whatsappNumber, setWhatsappNumber] = useState(sourceStore.settings?.whatsapp_number || '');
+  const [saving, setSaving] = useState(false);
+  const [planDuration, setPlanDuration] = useState<number>(sourceStore.plan_duration_days || 7);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [createdLink, setCreatedLink] = useState('');
+
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // remove accents
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+  };
+
+  const slug = generateSlug(storeName);
+
+  const handleClone = async () => {
+    if (!storeName.trim() || !ownerPassword.trim()) {
+      setError('Preencha o nome da loja e a senha.');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    const generatedEmail = `${slug.toLowerCase()}@internal.com`;
+
+    try {
+      // 1. Create the auth user
+      const { data: userId, error: rpcError } = await supabase.rpc('create_store_owner', {
+        p_email: generatedEmail,
+        p_password: ownerPassword
+      });
+
+      if (rpcError) {
+        setError(`Erro ao criar conta de login: ${rpcError.message}`);
+        setSaving(false);
+        return;
+      }
+
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + planDuration);
+
+      // 2. Create the store record
+      const { data: storeData, error: storeError } = await supabase
+        .from('stores')
+        .insert({
+          name: storeName.trim(),
+          slug: slug,
+          owner_id: userId || null,
+          owner_email: generatedEmail,
+          password: ownerPassword,
+          plan_type: planDuration <= 15 ? 'test' : 'paid',
+          plan_duration_days: planDuration,
+          plan_start_date: new Date().toISOString(),
+          plan_expiry_date: expiryDate.toISOString(),
+          business_type: sourceStore.business_type,
+        })
+        .select()
+        .single();
+
+      if (storeError) {
+        setError(`Erro ao criar cópia: ${storeError.message}`);
+        setSaving(false);
+        return;
+      }
+
+      // 3. Clone all data using utility
+      if (storeData) {
+        const result = await cloneStoreData(sourceStore.id, storeData.id);
+        if (!result) {
+          setError('Loja criada, mas houve um erro ao copiar os dados. Verifique manualmente.');
+        } else {
+          // Atualiza o WhatsApp e Nome da Loja na nova loja clonada (para não herdar o da origem se for diferente)
+          await supabase
+            .from('settings')
+            .update({ 
+              store_name: storeName.trim(),
+              whatsapp_number: whatsappNumber 
+            })
+            .eq('store_id', storeData.id);
+        }
+      }
+
+      const link = `${window.location.origin}/#/${slug}`;
+      setCreatedLink(link);
+      setSuccess(true);
+    } catch (err: any) {
+      setError(`Erro inesperado: ${err.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 z-50"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-800 p-6 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Copy size={24} className="text-white" />
+            <h2 className="text-xl font-black text-white">Clonar Loja</h2>
+          </div>
+          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {success ? (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center py-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle size={32} className="text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Loja Clonada! 🚀</h3>
+              <p className="text-gray-500 mb-4">Todos os dados de "{sourceStore.name}" foram copiados.</p>
+
+              <div className="bg-gray-50 rounded-xl p-4 flex items-center gap-2 mb-4">
+                <input type="text" readOnly value={createdLink} className="bg-transparent flex-1 font-medium text-sm text-gray-700 outline-none" />
+                <button onClick={() => navigator.clipboard.writeText(createdLink)} className="bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm font-bold hover:bg-emerald-700 transition-colors">
+                  Copiar
+                </button>
+              </div>
+
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-sm text-emerald-700 mb-4">
+                <strong>Novo Login:</strong><br/>
+                Loja: <strong>{slug}</strong><br/>
+                Senha: <strong>{ownerPassword}</strong>
+              </div>
+
+              <button onClick={onCreated} className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors">
+                Ver na Plataforma
+              </button>
+            </motion.div>
+          ) : (
+            <>
+              {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm font-medium border border-red-100">{error}</div>}
+
+              <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold shrink-0">
+                  <Store size={24} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Origem</p>
+                  <p className="font-bold text-gray-700">{sourceStore.name}</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5 font-bold">Novo Nome da Loja</label>
+                <input
+                  type="text"
+                  value={storeName}
+                  onChange={e => setStoreName(e.target.value)}
+                  className="w-full border border-gray-200 p-3 rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500 outline-none font-medium"
+                  placeholder="Ex: Açaí do João (Nova Unidade)"
+                />
+                <p className="mt-1.5 text-xs text-gray-400 font-medium">Nova URL: <span className="text-emerald-600 font-bold">/{slug}</span></p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">Nova Senha</label>
+                <input
+                  type="text"
+                  value={ownerPassword}
+                  onChange={e => setOwnerPassword(e.target.value)}
+                  className="w-full border border-gray-200 p-3 rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500 outline-none font-medium"
+                  placeholder="Mínimo 6 caracteres"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5 font-bold">Número do WhatsApp</label>
+                <input
+                  type="text"
+                  value={whatsappNumber}
+                  onChange={e => setWhatsappNumber(e.target.value)}
+                  className="w-full border border-gray-200 p-3 rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500 outline-none font-medium"
+                  placeholder="Ex: 55949xxxx-xxxx"
+                />
+              </div>
+
+              <button
+                onClick={handleClone}
+                disabled={saving || !storeName.trim() || !ownerPassword.trim() || !whatsappNumber.trim()}
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-800 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-emerald-100 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                {saving ? <><Loader2 size={20} className="animate-spin" /> Clonando Dados...</> : <><Copy size={20} /> Iniciar Clonagem</>}
+              </button>
+            </>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+

@@ -203,6 +203,19 @@ export const SettingsPage: React.FC = () => {
             <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2"><MapPin size={20} /> Informações Adicionais</h3>
             <div className="space-y-3">
                 <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-black text-gray-400 ml-1">WhatsApp para Pedidos</label>
+                    <div className="relative">
+                        <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input 
+                            className="w-full border-2 border-gray-100 focus:border-purple-500 rounded-xl p-3 pl-10 text-sm font-bold outline-none transition-all" 
+                            value={settings.whatsappNumber || ''} 
+                            onChange={e => updateSettings({ whatsappNumber: e.target.value })} 
+                            placeholder="Ex: 5594991234567" 
+                        />
+                    </div>
+                    <p className="text-[10px] text-gray-400 ml-1">Inclua o código do país e DDD (apenas números). Ex: 55949...</p>
+                </div>
+                <div className="space-y-1">
                     <label className="text-[10px] uppercase font-bold text-gray-400 ml-1">Endereço da Loja</label>
                     <input className="w-full border rounded-lg p-3 text-sm" value={settings.businessAddress || ''} onChange={e => updateSettings({ businessAddress: e.target.value })} placeholder="Ex: Av. Principal, 123" />
                 </div>
