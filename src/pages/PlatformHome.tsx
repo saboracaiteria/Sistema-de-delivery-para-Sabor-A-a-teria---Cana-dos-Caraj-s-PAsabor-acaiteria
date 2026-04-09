@@ -295,7 +295,7 @@ export const PlatformHome = () => {
                   price: '0,00',
                   period: '7 e 15 dias grátis',
                   tag: 'OFERTA INICIAL',
-                  features: ['Cardápio Digital PWA', 'Pedidos via WhatsApp', 'Até 50 produtos', 'Suporte Básico'],
+                  features: ['Cardápio Digital PWA', 'Pedidos via WhatsApp', 'Até 20 produtos', 'Suporte Básico'],
                   gradient: 'from-gray-500 to-slate-700',
                   highlight: false,
                   delay: 0
