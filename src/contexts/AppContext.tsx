@@ -291,7 +291,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             setLoading(false);
             return;
           }
-          console.warn('Loja não encontrada no Supabase, usando dados mock como fallback:', currentSlug);
+          
+          // Se chegou aqui, a loja não foi encontrada.
+          // Redireciona para a landing page em vez de mostrar dados mock (exemplo)
+          console.warn('Loja não encontrada no Supabase, redirecionando para a landing page:', currentSlug);
+          navigate('/', { replace: true });
+          setLoading(false);
+          return;
         }
 
         // Fallback para Dados Mock (se não configurado ou loja não encontrada)
