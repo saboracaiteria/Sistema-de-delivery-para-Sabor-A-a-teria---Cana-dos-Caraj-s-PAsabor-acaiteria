@@ -223,23 +223,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const isPlatformRoute = ['/', '/admin', '/platform', '/setup'].includes(location.pathname);
       
       if (isPlatformRoute) {
-        const masterSlug = 'sabor-acaiteria';
+        setLoading(true);
         try {
           if (isConfigured) {
-             const { data: storeData } = await supabase
+            // 1. Fetch global platform settings (for WhatsApp)
+            const { data: globalData } = await supabase
+              .from('platform_settings')
+              .select('value')
+              .eq('key', 'landing_page_whatsapp')
+              .single();
+
+            // 2. Original logic for theme/etc (from master store)
+            const { data: storeData } = await supabase
               .from('stores')
               .select('id')
-              .eq('slug', masterSlug)
+              .eq('slug', 'sabor-acaiteria')
               .single();
             
             if (storeData) {
               await fetchSettings(storeData.id);
+              
+              // Override WhatsApp with global one if it exists
+              if (globalData?.value) {
+                setSettings(prev => ({ ...prev, whatsappNumber: globalData.value }));
+              }
+              
               setLoading(false);
               return;
             }
           }
         } catch (e) {
-          console.error('Error loading master settings:', e);
+          console.error('Error loading platform settings:', e);
         }
         setStore(null);
         setSettings(mockSettings);

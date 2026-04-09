@@ -51,15 +51,18 @@ export const PlatformAdminPanel = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      if (data) {
-        setStores(data);
-        // Find master store whatsapp
-        const master = data.find(s => s.slug === 'sabor-acaiteria');
-        if (master) {
-          const wa = Array.isArray(master.settings) ? master.settings[0]?.whatsapp_number : master.settings?.whatsapp_number;
-          setGlobalWhatsapp(wa || '');
-          setEditingWhatsappValue(wa || '');
-        }
+      if (data) setStores(data);
+
+      // Fetch global platform settings
+      const { data: globalData } = await supabase
+        .from('platform_settings')
+        .select('value')
+        .eq('key', 'landing_page_whatsapp')
+        .single();
+      
+      if (globalData) {
+        setGlobalWhatsapp(globalData.value || '');
+        setEditingWhatsappValue(globalData.value || '');
       }
     } catch (err) {
       console.error("Error fetching stores:", err);
@@ -264,31 +267,18 @@ export const PlatformAdminPanel = () => {
 
   const handleUpdateGlobalWhatsapp = async () => {
     try {
-      const masterStore = stores.find(s => s.slug === 'sabor-acaiteria');
-      if (!masterStore) throw new Error("Loja mestre não encontrada.");
+      if (!editingWhatsappValue.trim()) throw new Error("Número inválido.");
 
       const { error } = await supabase
-        .from('settings')
-        .update({ whatsapp_number: editingWhatsappValue })
-        .eq('store_id', masterStore.id);
+        .from('platform_settings')
+        .update({ value: editingWhatsappValue })
+        .eq('key', 'landing_page_whatsapp');
 
       if (error) throw error;
       
       setGlobalWhatsapp(editingWhatsappValue);
       setIsEditingGlobalWhatsapp(false);
-      
-      // Update local stores state to keep consistency
-      setStores(prev => prev.map(s => {
-        if (s.id === masterStore.id) {
-          const updatedSettings = Array.isArray(s.settings) 
-            ? [{ ...s.settings[0], whatsapp_number: editingWhatsappValue }]
-            : { ...s.settings, whatsapp_number: editingWhatsappValue };
-          return { ...s, settings: updatedSettings };
-        }
-        return s;
-      }));
-      
-      alert('WhatsApp da Landing Page atualizado!');
+      alert('WhatsApp da Landing Page atualizado na tabela oficial!');
     } catch (err: any) {
       alert(`Erro: ${err.message}`);
     }
