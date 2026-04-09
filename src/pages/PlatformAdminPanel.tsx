@@ -19,7 +19,9 @@ export const PlatformAdminPanel = () => {
   const [editingStoreId, setEditingStoreId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [editingPasswordStoreId, setEditingPasswordStoreId] = useState<string | null>(null);
-  const [editingPasswordValue, setEditingPasswordValue] = useState('');
+  const [editingWhatsappValue, setEditingWhatsappValue] = useState('');
+  const [isEditingGlobalWhatsapp, setIsEditingGlobalWhatsapp] = useState(false);
+  const [globalWhatsapp, setGlobalWhatsapp] = useState('');
   const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({});
   const [renewingStore, setRenewingStore] = useState<StoreType | null>(null);
   const [showCloneModal, setShowCloneModal] = useState(false);
@@ -49,7 +51,16 @@ export const PlatformAdminPanel = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      if (data) setStores(data);
+      if (data) {
+        setStores(data);
+        // Find master store whatsapp
+        const master = data.find(s => s.slug === 'sabor-acaiteria');
+        if (master) {
+          const wa = Array.isArray(master.settings) ? master.settings[0]?.whatsapp_number : master.settings?.whatsapp_number;
+          setGlobalWhatsapp(wa || '');
+          setEditingWhatsappValue(wa || '');
+        }
+      }
     } catch (err) {
       console.error("Error fetching stores:", err);
     } finally {
@@ -251,6 +262,38 @@ export const PlatformAdminPanel = () => {
     }
   };
 
+  const handleUpdateGlobalWhatsapp = async () => {
+    try {
+      const masterStore = stores.find(s => s.slug === 'sabor-acaiteria');
+      if (!masterStore) throw new Error("Loja mestre não encontrada.");
+
+      const { error } = await supabase
+        .from('settings')
+        .update({ whatsapp_number: editingWhatsappValue })
+        .eq('store_id', masterStore.id);
+
+      if (error) throw error;
+      
+      setGlobalWhatsapp(editingWhatsappValue);
+      setIsEditingGlobalWhatsapp(false);
+      
+      // Update local stores state to keep consistency
+      setStores(prev => prev.map(s => {
+        if (s.id === masterStore.id) {
+          const updatedSettings = Array.isArray(s.settings) 
+            ? [{ ...s.settings[0], whatsapp_number: editingWhatsappValue }]
+            : { ...s.settings, whatsapp_number: editingWhatsappValue };
+          return { ...s, settings: updatedSettings };
+        }
+        return s;
+      }));
+      
+      alert('WhatsApp da Landing Page atualizado!');
+    } catch (err: any) {
+      alert(`Erro: ${err.message}`);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0118] flex flex-col items-center justify-center gap-4">
@@ -410,12 +453,48 @@ export const PlatformAdminPanel = () => {
                 />
               </div>
             </div>
-            <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-4 col-span-2 flex flex-col gap-1 justify-center">
-              <p className="text-xs font-bold text-white/40 uppercase tracking-wider">Sistema</p>
-              <p className="text-white font-bold text-sm flex items-center gap-2">
-                <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                Online · Todos os sistemas operacionais
-              </p>
+            <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-4 col-span-2 flex items-center justify-between">
+              <div className="flex flex-col gap-1">
+                <p className="text-xs font-bold text-white/40 uppercase tracking-wider">Sistema</p>
+                <p className="text-white font-bold text-sm flex items-center gap-2">
+                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Online · Todos os sistemas 
+                </p>
+              </div>
+
+              {/* WhatsApp Config (Where the user circled) */}
+              <div className="flex flex-col items-end gap-1">
+                <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest">WhatsApp Landing Page</p>
+                {isEditingGlobalWhatsapp ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editingWhatsappValue}
+                      onChange={(e) => setEditingWhatsappValue(e.target.value)}
+                      className="bg-purple-900/30 border border-purple-500/50 rounded-lg px-3 py-1 text-xs text-white outline-none w-36"
+                      autoFocus
+                    />
+                    <button onClick={handleUpdateGlobalWhatsapp} className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500/30 transition-all">
+                      <Save size={14} />
+                    </button>
+                    <button onClick={() => setIsEditingGlobalWhatsapp(false)} className="p-1.5 bg-white/5 text-white/50 rounded-lg hover:bg-white/10 transition-all">
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => {
+                      setEditingWhatsappValue(globalWhatsapp);
+                      setIsEditingGlobalWhatsapp(true);
+                    }}
+                    className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2 transition-all group"
+                  >
+                    <Smartphone size={14} className="text-purple-400" />
+                    <span className="text-sm font-bold text-white">{globalWhatsapp || 'Configurar'}</span>
+                    <Pencil size={12} className="text-white/20 group-hover:text-purple-400 transition-colors" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
