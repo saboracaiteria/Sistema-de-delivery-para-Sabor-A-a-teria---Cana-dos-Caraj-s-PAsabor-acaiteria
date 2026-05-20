@@ -47,13 +47,40 @@ export const LoginPage = () => {
 
       // 2. Master Password Bypass (Superadmin)
       if (isMasterLogin) {
-        const { error: masterAuthErr } = await supabase.auth.signInWithPassword({
-          email: SUPER_ADMIN_EMAILS[0],
-          password: SUPER_ADMIN_PASSWORD
-        });
+        let authenticated = false;
+        let lastAuthError = null;
 
-        if (masterAuthErr) {
-          console.warn("Master Auth Error:", masterAuthErr.message);
+        // Try the entered email first if it's one of the superadmins
+        if (SUPER_ADMIN_EMAILS.includes(inputLabel)) {
+          const { error: authErr } = await supabase.auth.signInWithPassword({
+            email: inputLabel,
+            password: password
+          });
+          if (!authErr) {
+            authenticated = true;
+          } else {
+            lastAuthError = authErr.message;
+          }
+        }
+
+        // Fallback: try all super admin emails in order until one succeeds
+        if (!authenticated) {
+          for (const saEmail of SUPER_ADMIN_EMAILS) {
+            const { error: authErr } = await supabase.auth.signInWithPassword({
+              email: saEmail,
+              password: password
+            });
+            if (!authErr) {
+              authenticated = true;
+              break;
+            } else {
+              lastAuthError = authErr.message;
+            }
+          }
+        }
+
+        if (!authenticated && lastAuthError) {
+          console.warn("Master Auth warning (continuing to UI but RPCs may fail):", lastAuthError);
         }
 
         setAdminRole('superadmin');
